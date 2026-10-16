@@ -858,7 +858,8 @@ class Urto:
 
     @property
     def sigla(self):
-        return "S"
+        """'S' (urto) o 'N' se l'urto ha intensità nulla (Ms = 1)."""
+        return "N" if abs(self.Ms - 1.0) < TOL_NULLA else "S"
 
     @property
     def xi(self):
@@ -1028,3 +1029,386 @@ def natura_salto(A: State, B: State, tol: float = 1e-4) -> dict:
         if abs(A.R2 - B.R2) / ref_u <= tol:
             return {"tipo": "onda semplice u-a (isentropica)", **out}
     return {"tipo": "incompatibile: nessuna onda singola collega i due stati", **out}
+
+
+def urto_isotermo(M1: float) -> dict:
+    """Salti attraverso un urto in flusso **omotermo** (p = a²ρ, a costante): **fuori formulario** (B62-E02).
+
+    Con M1 = |v1|/a (Mach relativo a monte): massa ρ1v1 = ρ2v2 e quantità di moto
+    p + ρv² ⇒ ρ2/ρ1 = p2/p1 = M1², v2/v1 = 1/M1², relazione di Prandtl v1v2 = a²,
+    M2 = 1/M1. L'energia non è conservata (serve un flusso di calore). Per
+    M1 → ∞ il rapporto di densità è illimitato, a differenza del caso adiabatico
+    ((γ+1)/(γ−1)).
+    """
+    if M1 < 1:
+        raise NessunaSoluzione("M1 < 1")
+    return {"rho2_rho1": M1**2, "p2_p1": M1**2, "v2_v1": 1.0 / M1**2, "M2": 1.0 / M1}
+
+
+# =============================================================================
+# 5. Onde semplici 1D, pistoni, formazione dell'urto (F §3–6, S p.6–16)
+# =============================================================================
+def _stato_da_a_s(gas: Gas, a: float, s: float, u: float, nome="") -> State:
+    """Stato da velocità del suono, variabile entropica s = p/ρ^γ e velocità."""
+    g = gas.gamma
+    if a <= 0:
+        return State(gas, 0.0, u, 0.0, 0.0, nome)
+    rho = (a * a / (g * s)) ** (1.0 / (g - 1.0))
+    return State(gas, rho, u, s * rho**g, 0.0, nome)
+
+
+def punto_caratteristiche(A: State, B: State, nome: str = "P") -> State:
+    """Stato nel punto P in cui la caratteristica u+a uscente da A incontra la u−a uscente da B (F §3).
+
+    a_P = (a_A + δu_A + a_B − δu_B)/2, u_P = (a_A − a_B + δ(u_A + u_B))/(2δ).
+    Ipotesi omoentropica: p e ρ si ricavano con la s di A (se s_A ≠ s_B il
+    risultato termodinamico vale solo nell'ipotesi del corso e va controllato).
+    """
+    d = A.gas.delta
+    aP = 0.5 * (A.R2 + B.R1)
+    uP = (A.R2 - B.R1) / (2.0 * d)
+    return _stato_da_a_s(A.gas, aP, A.s, uP, nome)
+
+
+def curva_onda(stato: State, famiglia: str, p):
+    """Curva u(p) degli stati raggiungibili con un'onda della famiglia data (F §8).
+
+    ``famiglia='u-a'``: curva sinistra u_L(p) generata dallo stato 1 a sinistra;
+    ``famiglia='u+a'``: curva destra u_R(p) generata dallo stato 4 a destra.
+    Per p ≤ p_i espansione isentropica, per p > p_i urto (Hugoniot), con
+    A_i = 2/((γ+1)ρ_i), B_i = (γ−1)/(γ+1) p_i. Accetta array.
+    """
+    sgn = _segno_famiglia(famiglia)
+    g = stato.gas.gamma
+    p = np.asarray(p, dtype=float)
+    Ai = 2.0 / ((g + 1.0) * stato.rho)
+    Bi = (g - 1.0) / (g + 1.0) * stato.p
+    with np.errstate(invalid="ignore", divide="ignore"):
+        R = stato.a / stato.gas.delta * (1.0 - (p / stato.p) ** stato.gas.q)
+        S = -(p - stato.p) * np.sqrt(Ai / (p + Bi))
+    du = np.where(p <= stato.p, R, S)
+    u = stato.u - sgn * du
+    return float(u) if np.ndim(u) == 0 else u
+
+
+def onda_semplice(stato: State, famiglia: str, *, u: float = None, p: float = None,
+                  a: float = None, rho: float = None, nome: str = "") -> State:
+    """Stato collegato a ``stato`` da un'onda semplice isentropica della famiglia data (F §4).
+
+    Onda u+a: R1 = a − δu uniforme (da = δ du); onda u−a: R2 = a + δu uniforme
+    (da = −δ du). Si assegna una fra ``u``, ``p``, ``a``, ``rho``; il resto segue
+    dal completamento isentropico p/p_i = (a/a_i)^(2γ/(γ−1)). Vale sia per
+    espansioni sia per compressioni (finché non si forma l'urto).
+    Solleva :class:`Vuoto` se a ≤ 0.
+    """
+    sgn = _segno_famiglia(famiglia)
+    gas = stato.gas
+    d = gas.delta
+    if sum(x is not None for x in (u, p, a, rho)) != 1:
+        raise GasdynError("onda_semplice: specificare esattamente una fra u, p, a, rho")
+    if p is not None:
+        a = stato.a * (p / stato.p) ** gas.q
+    elif rho is not None:
+        a = stato.a * (rho / stato.rho) ** d
+    if a is not None:
+        u = stato.u + sgn * (a - stato.a) / d
+    else:
+        a = stato.a + sgn * d * (u - stato.u)
+    if a <= 0:
+        raise Vuoto(f"onda {famiglia}: a = {a:.5g} ≤ 0, il gas non può seguire (vuoto per "
+                    f"u {'≤' if sgn > 0 else '≥'} {stato.u - sgn * stato.a / d:.6g})")
+    return _stato_da_a_s(gas, a, stato.s, u, nome)
+
+
+@dataclass(frozen=True)
+class Ventaglio:
+    """Onda semplice centrata (ventaglio) nel piano x–t (F §5).
+
+    ``monte``: stato indisturbato in cui avanza la testa; ``valle``: stato dietro
+    la coda. Famiglia u+a: monte a destra; u−a: monte a sinistra.
+    Pendenze: testa λ(monte), coda λ(valle) con λ = u ± a. Dentro il ventaglio,
+    con ξ = x/t (F §5): u+a → u = (ξ − R1)/(1+δ), a = (R1 + δξ)/(1+δ);
+    u−a → u = (ξ + R2)/(1+δ), a = (R2 − δξ)/(1+δ).
+    ``vuoto=True`` se la coda raggiunge a = 0 (stato valle di vuoto).
+    ``compressione=True`` per una compressione isentropica (solo nel modello
+    isentropico: le caratteristiche convergono e il ventaglio non è campionabile).
+    """
+
+    famiglia: str
+    monte: State
+    valle: State
+    vuoto: bool = False
+    compressione: bool = False
+
+    @property
+    def tipo(self):
+        return "compressione isentropica" if self.compressione else "espansione"
+
+    @property
+    def sigla(self):
+        if abs(self.valle.p / self.monte.p - 1.0) < TOL_NULLA:
+            return "N"
+        return "R" if not self.compressione else "S"
+
+    @property
+    def _sgn(self):
+        return _segno_famiglia(self.famiglia)
+
+    @property
+    def xi_testa(self):
+        return self.monte.u + self._sgn * self.monte.a
+
+    @property
+    def xi_coda(self):
+        if self.vuoto:
+            return self.valle.u
+        return self.valle.u + self._sgn * self.valle.a
+
+    @property
+    def transonico(self):
+        """True se il ventaglio contiene ξ = 0 (punto sonico fermo in x0)."""
+        return self.xi_testa * self.xi_coda < 0
+
+    def stato_xi(self, xi: float, nome="") -> State:
+        """Stato in ξ = (x−x0)/(t−t0) (fuori dal ventaglio restituisce monte o valle)."""
+        if self.compressione:
+            raise GasdynError("compressione isentropica: il ventaglio non è a un sol valore")
+        sgn = self._sgn
+        if sgn * (xi - self.xi_testa) >= 0:
+            return self.monte
+        if sgn * (xi - self.xi_coda) <= 0:
+            return self.valle
+        d = self.monte.gas.delta
+        if sgn > 0:
+            K = self.monte.R1
+            u, a = (xi - K) / (1.0 + d), (K + d * xi) / (1.0 + d)
+        else:
+            K = self.monte.R2
+            u, a = (xi + K) / (1.0 + d), (K - d * xi) / (1.0 + d)
+        return _stato_da_a_s(self.monte.gas, a, self.monte.s, u, nome)
+
+    def __repr__(self):
+        v = " (VUOTO in coda)" if self.vuoto else ""
+        t = " transonico" if self.transonico else ""
+        return (f"Ventaglio {self.famiglia} [{self.tipo}{t}]{v}: testa ξ={_fmt(self.xi_testa)}, "
+                f"coda ξ={_fmt(self.xi_coda)}, p2/p1={_fmt(self.valle.p / self.monte.p)}\n"
+                f"  monte: {self.monte}\n  valle: {self.valle}")
+
+
+def onda_verso(stato: State, famiglia: str, *, u: float = None, p: float = None,
+               consenti_vuoto: bool = False, modello: str = "esatto", nome: str = ""):
+    """Onda della famiglia data che porta ``stato`` (monte, indisturbato) a una velocità o pressione assegnata.
+
+    È la condizione al contorno del corso (F §9): parete (u = 0), pistone
+    (u = u_p), pressione imposta (p = p_b). Restituisce un :class:`Urto` se
+    l'onda comprime (modello 'esatto'), un :class:`Ventaglio` se espande.
+    Con ``modello='isentropico'`` anche la compressione è isentropica
+    (Ventaglio con compressione=True).
+    Famiglia u+a: ``stato`` sta a destra dell'onda (es. gas a destra di un
+    pistone o di un contorno sinistro); u−a: a sinistra.
+    Se l'espansione richiesta supera il vuoto solleva :class:`Vuoto`, salvo
+    ``consenti_vuoto=True`` (ventaglio fino ad a = 0, il gas si stacca).
+    """
+    sgn = _segno_famiglia(famiglia)
+    if (u is None) == (p is None):
+        raise GasdynError("onda_verso: specificare esattamente uno fra u e p")
+    if u is not None:
+        compr = sgn * (u - stato.u) > 0
+    else:
+        compr = p > stato.p
+    if compr and modello == "esatto":
+        if u is not None:
+            return urto_mobile(stato, famiglia, u_valle=u, nome_valle=nome)
+        return urto_mobile(stato, famiglia, p_valle=p, nome_valle=nome)
+    try:
+        valle = onda_semplice(stato, famiglia, u=u, p=p, nome=nome)
+        return Ventaglio(_nome_famiglia(sgn), stato, valle, compressione=compr)
+    except Vuoto:
+        if not consenti_vuoto:
+            raise
+        u_vuoto = stato.u - sgn * stato.a / stato.gas.delta
+        return Ventaglio(_nome_famiglia(sgn), stato, State(stato.gas, 0.0, u_vuoto, 0.0, 0.0, nome),
+                         vuoto=True)
+
+
+def pistone_impulsivo(stato0: State, u_p: float, lato: str = "sinistro", nome: str = "1"):
+    """Pistone messo in moto impulsivamente con velocità ``u_p`` (F §5, §7; S p.9, p.19).
+
+    ``lato='sinistro'``: pistone a sinistra, gas a destra ⇒ onda u+a;
+    ``'destro'``: gas a sinistra ⇒ onda u−a. Compressione ⇒ :class:`Urto`
+    (w da w² − (1+δ)v_p w − a0² = 0 per gas in quiete); espansione ⇒
+    :class:`Ventaglio` centrato. Se il pistone è più veloce della velocità di
+    fuga (|u_p − u0| ≥ a0/δ) il ventaglio arriva al vuoto (``vuoto=True``) e
+    il pistone si stacca dal gas.
+    """
+    fam = "u+a" if lato.startswith("sin") else "u-a"
+    return onda_verso(stato0, fam, u=u_p, consenti_vuoto=True, nome=nome)
+
+
+def _derivata(f, t, h=None):
+    h = h or 1e-5 * max(1.0, abs(t))
+    return (f(t + h) - f(t - h)) / (2.0 * h)
+
+
+def _derivata2(f, t, h=None):
+    h = h or 1e-4 * max(1.0, abs(t))
+    return (f(t + h) - 2.0 * f(t) + f(t - h)) / (h * h)
+
+
+@dataclass
+class PistoneLegge:
+    """Campo d'onda semplice generato da un pistone con legge x_p(t) (S p.15–16, F §6).
+
+    Ogni caratteristica della famiglia dell'onda parte dalla faccia del pistone
+    all'istante t_p con lo stato del pistone (u = ẋ_p, a dall'invariante) e
+    pendenza λ(t_p) costante. Il blow-up è il primo punto dell'inviluppo:
+    t̂(t_p) = t_p + (λ − ẋ_p)/λ', λ' = (1+δ)ẍ_p (S p.15), minimizzato su t_p.
+    Attributi: ``t_bu``, ``x_bu``, ``tp_bu`` (istante di emissione della
+    caratteristica che coalesce per prima; inf se non c'è compressione).
+    """
+
+    x_p: Callable
+    dx_p: Callable
+    ddx_p: Callable
+    stato0: State
+    famiglia: str
+    t_max: float
+    t_bu: float = math.inf
+    x_bu: float = math.nan
+    tp_bu: float = math.nan
+
+    @property
+    def _sgn(self):
+        return _segno_famiglia(self.famiglia)
+
+    def stato_pistone(self, tp: float, nome="") -> State:
+        """Stato del gas sulla faccia del pistone all'istante tp (onda semplice dallo stato0)."""
+        return onda_semplice(self.stato0, self.famiglia, u=float(self.dx_p(tp)), nome=nome)
+
+    def lam(self, tp: float) -> float:
+        """Pendenza dx/dt della caratteristica emessa in tp."""
+        st = self.stato_pistone(tp)
+        return st.u + self._sgn * st.a
+
+    def t_inviluppo(self, tp: float) -> float:
+        """t̂(tp) in cui la caratteristica emessa in tp tocca l'inviluppo (inf se non converge)."""
+        st = self.stato_pistone(tp)
+        dl = (1.0 + st.gas.delta) * float(self.ddx_p(tp))
+        num = self._sgn * st.a  # λ − ẋ
+        if dl == 0 or num / dl <= 0:
+            return math.inf
+        return tp + num / dl
+
+    def caratteristica(self, tp: float):
+        """(x0, t0, λ) della caratteristica emessa dal pistone in tp: x = x0 + λ(t − t0)."""
+        return float(self.x_p(tp)), tp, self.lam(tp)
+
+    def x_testa(self, t: float) -> float:
+        x0, t0, l = self.caratteristica(0.0)
+        return x0 + l * (t - t0)
+
+    def stato(self, x: float, t: float, nome="") -> State:
+        """Stato in (x, t) per t < t_bu: indisturbato oltre la testa, altrimenti
+        lungo la caratteristica che passa per (x, t) (tp trovato con brentq)."""
+        if t > self.t_bu * (1 + 1e-12):
+            raise GasdynError(f"t = {t} > t_BU = {self.t_bu}: oltre il blow-up le relazioni isentropiche non valgono")
+        sgn = self._sgn
+        if sgn * (x - self.x_testa(t)) >= 0:
+            return self.stato0
+        if sgn * (x - float(self.x_p(t))) < 0:
+            raise GasdynError(f"x = {x} è dietro il pistone (x_p = {float(self.x_p(t))})")
+        tmax = min(t, self.t_max)
+        g = lambda tp: (lambda c: c[0] + c[2] * (t - c[1]))(self.caratteristica(tp)) - x
+        if t > self.t_max and sgn * g(tmax) < 0:
+            raise GasdynError("(x, t) raggiunto da caratteristiche emesse dopo t_max")
+        tp = brentq(g, 0.0, tmax, xtol=1e-14, rtol=1e-13)
+        return self.stato_pistone(tp, nome)
+
+
+def pistone_legge(x_p: Callable, stato0: State, t_max: float, lato: str = "sinistro",
+                  dx_p: Callable = None, ddx_p: Callable = None, n: int = 4001) -> PistoneLegge:
+    """Onda semplice generata da un pistone con legge del moto qualsiasi x_p(t), t ∈ [0, t_max] (S p.15–16).
+
+    ``lato='sinistro'``: pistone a sinistra del gas (onda u+a); ``'destro'``: u−a.
+    ``stato0``: gas uniforme iniziale (anche in moto). Le derivate, se non date,
+    si calcolano per differenze centrate. Il blow-up si cerca minimizzando
+    t̂(t_p) su n punti e raffinando con ``minimize_scalar`` (tolleranza 1e-12).
+    Per pistone partito da fermo con ẍ(0) > 0 e gas in quiete si ritrova
+    t_BU = a0/((1+δ)ẍ(0)), x_BU = a0 t_BU (F §6).
+    """
+    fam = "u+a" if lato.startswith("sin") else "u-a"
+    dx = dx_p or (lambda t: _derivata(x_p, t))
+    ddx = ddx_p or (lambda t: _derivata2(x_p, t))
+    P = PistoneLegge(x_p, dx, ddx, stato0, fam, t_max)
+    tps = np.linspace(0.0, t_max, n)
+    th = np.array([P.t_inviluppo(t) for t in tps])
+    if np.all(~np.isfinite(th)):
+        return P
+    i = int(np.nanargmin(np.where(np.isfinite(th), th, np.nan)))
+    lo, hi = tps[max(i - 1, 0)], tps[min(i + 1, n - 1)]
+    if hi > lo:
+        r = minimize_scalar(P.t_inviluppo, bounds=(lo, hi), method="bounded",
+                            options={"xatol": 1e-13 * max(1.0, t_max)})
+        tp, tb = (r.x, r.fun) if r.fun <= th[i] else (tps[i], th[i])
+    else:
+        tp, tb = tps[i], th[i]
+    x0, t0, l = P.caratteristica(tp)
+    P.t_bu, P.tp_bu, P.x_bu = float(tb), float(tp), float(x0 + l * (tb - t0))
+    return P
+
+
+def t_bu_lineare(x1: float, v1: float, x2: float, v2: float) -> float:
+    """Blow-up per profilo lineare di v = u ± a su [x1, x2]: t_BU = |x2−x1|/|v(x2)−v(x1)| (F §6).
+
+    Restituisce inf se v non decresce verso valle (nessuna coalescenza).
+    """
+    dv = (v2 - v1) / (x2 - x1)
+    return math.inf if dv >= 0 else -1.0 / dv
+
+
+def formazione_urto_ci(u0, a0, gas: Gas, intervallo=None, x=None, n: int = 20001) -> dict:
+    """Tempo e posizione di formazione dell'urto da condizioni iniziali (F §6, S p.13–15).
+
+    Dati: ``u0``, ``a0`` come funzioni di x su ``intervallo`` = (x1, x2) oppure
+    come array campionati su ``x``. Per ciascuna famiglia (v = u+a e v = u−a)
+    calcola t_BU = −1/min v'(ξ), ξ*, x_BU = ξ* + v(ξ*) t_BU.
+    Le formule sono esatte per un'onda semplice (l'invariante dell'altra
+    famiglia uniforme); per ciascuna famiglia il risultato riporta
+    ``onda_semplice`` (True/False) e, se False, va considerato una stima.
+    Restituisce {'u+a': {...}, 'u-a': {...}, 'prima': famiglia con t_BU minore}.
+    """
+    d = gas.delta
+    if x is None:
+        if intervallo is None:
+            raise GasdynError("dare intervallo=(x1, x2) con funzioni, oppure x con array")
+        xs = np.linspace(intervallo[0], intervallo[1], n)
+        U = np.array([u0(t) for t in xs], dtype=float)
+        A = np.array([a0(t) for t in xs], dtype=float)
+    else:
+        xs = np.asarray(x, float)
+        U, A = np.asarray(u0, float), np.asarray(a0, float)
+    out = {}
+    for fam, sgn in (("u+a", 1), ("u-a", -1)):
+        v = U + sgn * A
+        dv = np.gradient(v, xs)
+        altro = A - sgn * d * U  # R1 per u+a, R2 per u−a
+        scala = max(np.max(np.abs(A)), 1e-300)
+        semplice = bool((altro.max() - altro.min()) / scala < 1e-6)
+        i = int(np.argmin(dv))
+        if dv[i] >= 0:
+            out[fam] = {"t_bu": math.inf, "x_bu": math.nan, "xi": math.nan, "onda_semplice": semplice}
+            continue
+        xi, dvm = xs[i], dv[i]
+        if x is None and 0 < i < len(xs) - 1:
+            vf = lambda t: u0(t) + sgn * a0(t)
+            r = minimize_scalar(lambda t: _derivata(vf, t, 1e-6 * max(1.0, abs(t))),
+                                bounds=(xs[i - 1], xs[i + 1]), method="bounded",
+                                options={"xatol": 1e-12})
+            if r.fun < dvm:
+                xi, dvm = r.x, r.fun
+        vxi = float(np.interp(xi, xs, v)) if x is not None else u0(xi) + sgn * a0(xi)
+        tb = -1.0 / dvm
+        out[fam] = {"t_bu": tb, "x_bu": xi + vxi * tb, "xi": xi, "v_xi": vxi,
+                    "dv_min": dvm, "onda_semplice": semplice}
+    out["prima"] = min(("u+a", "u-a"), key=lambda f: out[f]["t_bu"])
+    return out

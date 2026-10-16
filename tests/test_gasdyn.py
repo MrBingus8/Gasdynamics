@@ -349,3 +349,139 @@ class TestArea4:
         assert r["tipo"] == "urto u-a" and r["w"] == pytest.approx(3.0, abs=5e-3)
         st = gd.State(ARIA_ADIM, 1.0, 0.0, 1.0)
         assert gd.natura_salto(st, st.con(rho=2.0))["tipo"] == "contatto"
+
+
+# =============================================================================
+# Area 5 — onde semplici, pistoni, formazione dell'urto
+# =============================================================================
+class TestArea5:
+    st = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0, u=0.3)
+
+    def test_punto_caratteristiche(self):
+        P = gd.punto_caratteristiche(self.st, self.st)
+        assert P.u == pytest.approx(self.st.u) and P.a == pytest.approx(self.st.a)
+        A = gd.onda_semplice(self.st, "u+a", u=0.5)  # stesso R1
+        B = gd.onda_semplice(self.st, "u-a", u=0.1)  # stesso R2
+        P = gd.punto_caratteristiche(A, B)
+        assert P.R2 == pytest.approx(A.R2) and P.R1 == pytest.approx(B.R1)
+
+    def test_onda_semplice_invarianti(self):
+        for fam, inv in [("u+a", "R1"), ("u-a", "R2")]:
+            for kw in [dict(u=0.6), dict(p=0.5), dict(a=1.1), dict(rho=1.2)]:
+                s2 = gd.onda_semplice(self.st, fam, **kw)
+                assert getattr(s2, inv) == pytest.approx(getattr(self.st, inv))
+                assert s2.s == pytest.approx(self.st.s)
+        with pytest.raises(gd.Vuoto):
+            gd.onda_semplice(self.st, "u+a", u=self.st.u - 1.0 / 0.2 - 0.01)
+
+    def test_curva_onda(self):
+        for fam in ["u+a", "u-a"]:
+            # ramo d'espansione = onda semplice; ramo d'urto = Hugoniot
+            assert gd.curva_onda(self.st, fam, 0.4) == pytest.approx(
+                gd.onda_semplice(self.st, fam, p=0.4).u)
+            assert gd.curva_onda(self.st, fam, 3.0) == pytest.approx(
+                gd.urto_mobile(self.st, fam, p_valle=3.0).valle.u)
+            # contatto del secondo ordine in p_i (urto debole ≈ isentropico)
+            h = 1e-3
+            up = gd.curva_onda(self.st, fam, 1 + h)
+            um = gd.curva_onda(self.st, fam, 1 - h)
+            u0 = gd.curva_onda(self.st, fam, 1.0)
+            d2 = (up - 2 * u0 + um) / h**2
+            iso = (gd.onda_semplice(self.st, fam, p=1 + h).u - 2 * u0
+                   + gd.onda_semplice(self.st, fam, p=1 - h).u) / h**2
+            assert d2 == pytest.approx(iso, rel=1e-3)
+
+    def test_ventaglio(self):
+        for fam in ["u+a", "u-a"]:
+            V = gd.onda_verso(self.st, fam, p=0.3)
+            assert isinstance(V, gd.Ventaglio) and V.sigla == "R"
+            e = 1e-9
+            s_testa = V.stato_xi(V.xi_testa - (1 if fam == "u+a" else -1) * e)
+            s_coda = V.stato_xi(V.xi_coda + (1 if fam == "u+a" else -1) * e)
+            assert s_testa.p == pytest.approx(self.st.p, rel=1e-7)
+            assert s_coda.p == pytest.approx(0.3, rel=1e-7)
+            xm = 0.5 * (V.xi_testa + V.xi_coda)
+            sm = V.stato_xi(xm)
+            lam = sm.u + (1 if fam == "u+a" else -1) * sm.a
+            assert lam == pytest.approx(xm)  # ξ = u ± a dentro il ventaglio
+            assert sm.s == pytest.approx(self.st.s)
+
+    def test_ventaglio_transonico(self):
+        quiete = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0)
+        # pistone sinistro che arretra con v_p > a0/(1+δ): coda supersonica
+        V = gd.pistone_impulsivo(quiete, -1.0, "sinistro")
+        assert V.xi_coda == pytest.approx(1.0 - 1.2 * 1.0)
+        assert V.transonico
+        s0 = V.stato_xi(0.0)
+        assert abs(s0.u) == pytest.approx(s0.a)
+
+    def test_pistone_vuoto(self):
+        quiete = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0)
+        V = gd.pistone_impulsivo(quiete, -6.0, "sinistro")
+        assert V.vuoto and V.xi_coda == pytest.approx(-5.0)
+        with pytest.raises(gd.Vuoto):
+            gd.onda_verso(quiete, "u+a", u=-6.0)
+
+    def test_pistone_compressione(self):
+        quiete = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0)
+        S = gd.pistone_impulsivo(quiete, 1.0, "sinistro")
+        assert isinstance(S, gd.Urto) and S.w == pytest.approx((1.2 + math.sqrt(1.44 + 4)) / 2)
+        S = gd.pistone_impulsivo(quiete, -1.0, "destro")
+        assert S.w == pytest.approx(-(1.2 + math.sqrt(1.44 + 4)) / 2)
+
+    def test_pistone_legge_parabolica(self):
+        # F §6: t_BU = a0/((1+δ)ẍ(0)), x_BU = a0 t_BU (pistone da fermo)
+        quiete = gd.State(ARIA_ADIM, 1.0, 0.0, 1.0)  # a0 = √γ
+        P = gd.pistone_legge(lambda t: 0.74 * t**2, quiete, 1.0)
+        a0 = math.sqrt(1.4)
+        assert P.t_bu == pytest.approx(a0 / (1.2 * 1.48), rel=1e-9)
+        assert P.x_bu == pytest.approx(a0 * P.t_bu, rel=1e-9)
+        # stato sulla faccia del pistone e lungo una caratteristica
+        t = 0.5
+        sp = P.stato(0.74 * t**2 + 1e-12, t)
+        assert sp.u == pytest.approx(1.48 * t, rel=1e-6)
+        x0, t0, lam = P.caratteristica(0.2)
+        s = P.stato(x0 + lam * (0.6 - t0), 0.6)
+        assert s.u == pytest.approx(1.48 * 0.2, rel=1e-6)
+
+    def test_pistone_legge_destro(self):
+        quiete = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0)
+        P = gd.pistone_legge(lambda t: 2.0 - t**2, quiete, 1.0, lato="destro")
+        assert P.t_bu == pytest.approx(1.0 / (1.2 * 2.0), rel=1e-9)
+        assert P.x_bu == pytest.approx(2.0 - P.t_bu, rel=1e-9)
+
+    def test_compressione_centrata(self):
+        # B71-E02: legge che genera una compressione centrata in (x, t) = (1, 1)
+        g = 1.4
+        quiete = gd.State.da_pa(ARIA_ADIM, 1.0, 1.0)
+        xp = lambda t: 1 + (2 * (1 - t) - (g + 1) * (1 - t) ** (2 / (g + 1))) / (g - 1)
+        P = gd.pistone_legge(xp, quiete, 0.5)
+        assert P.t_bu == pytest.approx(1.0, rel=1e-6)
+        assert P.x_bu == pytest.approx(1.0, rel=1e-6)
+        assert P.t_inviluppo(0.1) == pytest.approx(1.0, rel=1e-5)
+        assert P.t_inviluppo(0.4) == pytest.approx(1.0, rel=1e-5)
+
+    def test_formazione_ci_onda_semplice(self):
+        # B64-E03: R2 = a + δu uniforme ⇒ onda semplice u−a
+        u0 = lambda x: 3 - 2.5 * x**2 + 1.667 * x**3
+        a0 = lambda x: 1 + 0.5 * x**2 - 0.3334 * x**3
+        r = gd.formazione_urto_ci(u0, a0, ARIA_ADIM, (0.0, 1.0))
+        assert r["prima"] == "u-a" and r["u-a"]["onda_semplice"]
+        v = lambda x: u0(x) - a0(x)
+        dvmin = -6 * 0.5 + 6.0012 * 0.25  # circa, controllo grossolano
+        assert r["u-a"]["t_bu"] == pytest.approx(-1 / dvmin, rel=2e-3)
+        xi = r["u-a"]["xi"]
+        assert r["u-a"]["x_bu"] == pytest.approx(xi + v(xi) * r["u-a"]["t_bu"])
+        # con array
+        xs = np.linspace(0, 1, 20001)
+        r2 = gd.formazione_urto_ci(u0(xs), a0(xs), ARIA_ADIM, x=xs)
+        assert r2["u-a"]["t_bu"] == pytest.approx(r["u-a"]["t_bu"], rel=1e-6)
+
+    def test_t_bu_lineare(self):
+        assert gd.t_bu_lineare(0.0, 2.0, 1.0, 1.0) == pytest.approx(1.0)
+        assert gd.t_bu_lineare(0.0, 1.0, 1.0, 2.0) == math.inf
+
+    def test_urto_isotermo(self):
+        r = gd.urto_isotermo(3.0)
+        assert r["rho2_rho1"] == 9 and r["v2_v1"] * 9 == pytest.approx(1)
+        assert r["M2"] * 3 == pytest.approx(1)  # Prandtl v1 v2 = a²

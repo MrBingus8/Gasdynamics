@@ -1,0 +1,9 @@
+# Dipendenze del modulo gasdyn.py (le sole ammesse nell'ambiente claude.ai)
+numpy==2.5.4
+scipy==1.18.1
+matplotlib==3.11.2
+# Test e verifica (non necessarie per usare il modulo)
+pytest==9.1.1
+pypdf==6.21.0
+pypdfium2==5.14.0
+pillow==12.3.0

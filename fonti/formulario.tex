@@ -1,0 +1,913 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[a4paper,margin=1.65cm]{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+
+\hypersetup{hidelinks}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\allowdisplaybreaks
+
+\title{Formulario di Gas Dinamica}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section*{I. Fondamenti e flussi 1D non stazionari}
+\addcontentsline{toc}{section}{I. Fondamenti e flussi 1D non stazionari}
+
+\subsection*{1. Richiami fondamentali}
+\addcontentsline{toc}{subsection}{1. Richiami fondamentali}
+
+\paragraph*{Gas perfetto e grandezze energetiche.}
+\[
+p=\rho RT,\qquad R=c_p-c_v,\qquad \gamma=\frac{c_p}{c_v},\qquad
+c_v=\frac{R}{\gamma-1},\qquad c_p=\frac{\gamma R}{\gamma-1},
+\]
+\[
+\delta:=\frac{\gamma-1}{2},\qquad
+a^2=\left(\frac{\partial p}{\partial\rho}\right)_{s_{\rm th}}
+=\gamma\frac p\rho=\gamma RT,\qquad M=\frac{|\boldsymbol V|}{a}.
+\]
+\[
+e_i=c_vT=\frac{p}{(\gamma-1)\rho},\qquad
+h_i=e_i+\frac p\rho=c_pT=\frac{a^2}{\gamma-1},
+\]
+\[
+e=e_i+\frac{|\boldsymbol V|^2}{2},\qquad
+h_0=h_i+\frac{|\boldsymbol V|^2}{2},\qquad
+a_0^2=a^2+\delta |\boldsymbol V|^2.
+\]
+
+\paragraph*{Isentropiche e grandezze totali.}
+Tra due stati della stessa isentropica:
+\[
+\frac{p_2}{p_1}=\left(\frac{\rho_2}{\rho_1}\right)^\gamma
+=\left(\frac{T_2}{T_1}\right)^{\gamma/(\gamma-1)}
+=\left(\frac{a_2}{a_1}\right)^{2\gamma/(\gamma-1)},
+\quad
+\frac{\rho_2}{\rho_1}=\left(\frac{a_2}{a_1}\right)^{2/(\gamma-1)}.
+\]
+\[
+\frac{T_0}{T}=1+\delta M^2,\qquad
+\frac{p_0}{p}=(1+\delta M^2)^{\gamma/(\gamma-1)},\qquad
+\frac{\rho_0}{\rho}=(1+\delta M^2)^{1/(\gamma-1)}.
+\]
+
+\paragraph*{Entropia e derivata materiale.}
+La variabile entropica usata negli appunti è
+\[
+s:=\frac{p}{\rho^\gamma};\qquad s=\text{costante lungo un'isentrope}.
+\]
+L'entropia termodinamica specifica, necessaria nel teorema di Crocco, è distinta con
+\[
+s_{\rm th,2}-s_{\rm th,1}=c_v\ln\frac{s_2}{s_1}
+=c_p\ln\frac{T_2}{T_1}-R\ln\frac{p_2}{p_1}.
+\]
+\[
+\frac{D}{Dt}=\frac{\partial}{\partial t}+\boldsymbol V\cdot\nabla,
+\qquad \text{in 1D:}\quad \frac{D}{Dt}=\partial_t+u\partial_x.
+\]
+
+\subsection*{2. Equazioni di governo}
+\addcontentsline{toc}{subsection}{2. Equazioni di governo}
+
+\paragraph*{Eulero 1D: forme conservative e quasi-lineari.}
+Ipotesi: gas perfetto, inviscido, adiabatico, senza forze di volume né sorgenti.
+\[
+\rho_t+(\rho u)_x=0,
+\qquad
+(\rho u)_t+(\rho u^2+p)_x=0,
+\qquad
+(\rho e)_t+[u(\rho e+p)]_x=0.
+\]
+\[
+\rho_t+u\rho_x+\rho u_x=0,qquad
+u_t+uu_x+\frac1\rho p_x=0,qquad
+\rho\left(e_{i,t}+u e_{i,x}\right)+pu_x=0.
+\]
+Forme equivalenti utili:
+\[
+p_t+up_x+\gamma p u_x=0,qquad
+s_t+us_x=0.
+\]
+\[
+\boldsymbol U=
+\begin{bmatrix}\rho\\ \rho u\\ \rho e\end{bmatrix},\qquad
+\boldsymbol F(\boldsymbol U)=
+\begin{bmatrix}\rho u\\ \rho u^2+p\\ u(\rho e+p)\end{bmatrix},\qquad
+\boldsymbol U_t+\boldsymbol F_x=0.
+\]
+
+\paragraph*{Rankine--Hugoniot generale.}
+Per una discontinuità di velocità $w$:
+\[
+w[\boldsymbol U]=[\boldsymbol F(\boldsymbol U)],
+\qquad [q]:=q_{\rm valle}-q_{\rm monte}.
+\]
+Nel riferimento solidale, $v=u-w$:
+\[
+[\rho v]=0,\qquad [\rho uv+p]=0,\qquad [\rho ev+pu]=0.
+\]
+Se $\rho v=0$: contatto, $w=u_1=u_2$, $p_1=p_2$, mentre $\rho,T,s$ possono saltare.
+
+\subsection*{3. Caratteristiche 1D}
+\addcontentsline{toc}{subsection}{3. Caratteristiche 1D}
+
+\paragraph*{Sistema homentropico.}
+Con $s$ uniforme nello spazio e nel tempo:
+\[
+a_t+ua_x+\delta a u_x=0,
+\qquad
+u_t+uu_x+\frac a\delta a_x=0.
+\]
+\[
+\lambda_1=u-a,\qquad R_1=a-\delta u,qquad
+(R_1)_t+\lambda_1(R_1)_x=0,
+\]
+\[
+\lambda_2=u+a,\qquad R_2=a+\delta u,qquad
+(R_2)_t+\lambda_2(R_2)_x=0.
+\]
+Quindi $R_1$ è costante lungo $dx/dt=u-a$ e $R_2$ lungo $dx/dt=u+a$.
+\[
+a=\frac{R_1+R_2}{2},\qquad u=\frac{R_2-R_1}{2\delta}.
+\]
+All'intersezione $P$ della caratteristica $u+a$ proveniente dallo stato $A$ e della
+caratteristica $u-a$ proveniente dallo stato $B$:
+\[
+a_P=\frac{a_A+\delta u_A+a_B-\delta u_B}{2},\qquad
+u_P=\frac{a_A-a_B+\delta(u_A+u_B)}{2\delta}.
+\]
+La terza famiglia del sistema completo è materiale:
+\[
+\lambda_0=u,\qquad \frac{dx}{dt}=u,\qquad \frac{Ds}{Dt}=0.
+\]
+
+% FIGURA DA INSERIRE: schema delle famiglie 1D u-a, u, u+a nel piano x-t.
+
+\subsection*{4. Onde semplici}
+\addcontentsline{toc}{subsection}{4. Onde semplici}
+
+\paragraph*{Definizione e relazioni operative.}
+In un'onda semplice una sola famiglia varia; l'invariante dell'altra famiglia è uniforme.
+\[
+\begin{array}{c|c|c|c}
+\text{famiglia dell'onda} & \text{invariante uniforme} & \text{relazione finita} & \text{incrementale}\\ \hline
+u+a & R_1=a-\delta u & a-\delta u=\text{cost.} & da=\delta\,du\\
+u-a & R_2=a+\delta u & a+\delta u=\text{cost.} & da=-\delta\,du
+\end{array}
+\]
+Lungo ciascuna caratteristica della famiglia che costituisce l'onda, $a$ e $u$ sono
+costanti: le caratteristiche sono rette $x=x_0+(u\pm a)t$.
+Completamento termodinamico da uno stato noto $i$:
+\[
+\frac p{p_i}=\left(\frac a{a_i}\right)^{2\gamma/(\gamma-1)},\qquad
+\frac\rho{\rho_i}=\left(\frac a{a_i}\right)^{2/(\gamma-1)},\qquad
+\frac T{T_i}=\left(\frac a{a_i}\right)^2.
+\]
+
+\subsection*{5. Espansioni centrate}
+\addcontentsline{toc}{subsection}{5. Espansioni centrate}
+
+\paragraph*{Pistone a sinistra, gas a destra, stato iniziale $(u_0,a_0)$.}
+Il pistone si muove verso sinistra con velocità $u_p=-v_p$ ($v_p>0$); l'espansione è
+della famiglia $u+a$:
+\[
+a_p-\delta u_p=a_0-\delta u_0,qquad
+a_p=a_0-\delta(v_p+u_0)\quad (u_0=0:\ a_p=a_0-\delta v_p).
+\]
+Per $u_0=0$ le velocità dei fronti sono
+\[
+\xi_H=\frac xt=u_0+a_0=a_0,qquad
+\xi_T=u_p+a_p=a_0-(1+\delta)v_p.
+\]
+Dentro il ventaglio, con $\xi=x/t$:
+\[
+u(\xi)=\frac{\xi-(a_0-\delta u_0)}{1+\delta},qquad
+a(\xi)=\frac{a_0-\delta u_0+\delta\xi}{1+\delta}.
+\]
+Per $u_0=0$: coda subsonica se $v_p<a_0/(1+\delta)$, sonica se uguale,
+supersonica se maggiore. Il vuoto compare quando
+\[
+a_p\le0,\qquad v_p\ge\frac{a_0}{\delta}.
+\]
+In ogni stato del ventaglio:
+\[
+p=p_0(a/a_0)^{2\gamma/(\gamma-1)},\quad
+\rho=\rho_0(a/a_0)^{2/(\gamma-1)},\quad T=T_0(a/a_0)^2.
+\]
+Per un'espansione centrata della famiglia $u-a$ si scambiano i segni coerentemente
+con $a+\delta u=\text{cost.}$ e si usano i fronti $u-a$.
+
+% FIGURA DA INSERIRE: ventaglio di espansione centrato nel piano x-t.
+
+\subsection*{6. Compressioni e formazione dell'urto}
+\addcontentsline{toc}{subsection}{6. Compressioni e formazione dell'urto}
+
+\paragraph*{Onda semplice di compressione.}
+Per una compressione $u+a$ generata da un pistone sinistro:
+\[
+a-a_0=\delta(u-u_0),\qquad du>0,\quad da>0,\quad dp>0,
+\qquad v:=u+a.
+\]
+La velocità caratteristica cresce verso valle dell'onda e le caratteristiche coalescono.
+Per entrambe le famiglie, ponendo $v=u\pm a$ nella rispettiva onda semplice:
+\[
+v_t+v v_x=0,qquad \frac{dx}{dt}=v,qquad v(x,t)=v^0(\xi),qquad
+x=\xi+v^0(\xi)t.
+\]
+\[
+v_x(x,t)=\frac{(v^0)'(\xi)}{1+(v^0)'(\xi)t}.
+\]
+Il blow-up richiede $(v^0)'<0$ e avviene per la prima volta in $\xi_*$ tale che
+\[
+t_{BU}=-\frac{1}{\min_\xi (v^0)'(\xi)}
+=\frac{1}{\max_\xi |(v^0)'(\xi)|},\qquad
+x_{BU}=\xi_*+v^0(\xi_*)t_{BU}.
+\]
+Per un profilo lineare su $[x_1,x_2]$:
+\[
+t_{BU}=\frac{|x_2-x_1|}{|v^0(x_2)-v^0(x_1)|}.
+\]
+Pistone inizialmente fermo, accelerazione iniziale non nulla, compressione $u+a$:
+\[
+t_{BU}=\frac{a_0}{(1+\delta)|\ddot x_p(0)|}.
+\]
+Le relazioni isentropiche valgono soltanto fino a $t_{BU}$; dopo nasce un urto.
+
+\subsection*{7. Urti 1D e urti mobili}
+\addcontentsline{toc}{subsection}{7. Urti 1D e urti mobili}
+
+\paragraph*{Relazioni nel riferimento solidale.}
+\[
+v_i=u_i-w,qquad M_{ri}=\frac{v_i}{a_i},qquad
+\rho_1v_1=\rho_2v_2,
+\]
+\[
+p_1+\rho_1v_1^2=p_2+\rho_2v_2^2,qquad
+h_{i1}+\frac{v_1^2}{2}=h_{i2}+\frac{v_2^2}{2}.
+\]
+Con $M_{r1}^2>1$ (usare il modulo se $v_1<0$):
+\[
+\frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}(M_{r1}^2-1)
+=\frac{2\gamma M_{r1}^2-(\gamma-1)}{\gamma+1},
+\]
+\[
+\frac{\rho_2}{\rho_1}=\frac{(\gamma+1)M_{r1}^2}{(\gamma-1)M_{r1}^2+2},
+\qquad
+\frac{T_2}{T_1}=\frac{p_2/p_1}{\rho_2/\rho_1},
+\]
+\[
+M_{r2}^2=\frac{1+\delta M_{r1}^2}{\gamma M_{r1}^2-\delta}
+=\frac{\delta+1/M_{r1}^2}{\gamma-\delta/M_{r1}^2}.
+\]
+Pressione totale e entropia:
+\[
+\frac{p_{02}}{p_{01}}=
+\left[\frac{(\gamma+1)M_{r1}^2}{(\gamma-1)M_{r1}^2+2}\right]^{\gamma/(\gamma-1)}
+\left[\frac{\gamma+1}{2\gamma M_{r1}^2-(\gamma-1)}\right]^{1/(\gamma-1)}<1,
+\]
+\[
+\Delta s_{\rm th}=c_p\ln\frac{T_2}{T_1}-R\ln\frac{p_2}{p_1}ge0,
+\qquad \frac{s_2}{s_1}=\frac{p_2/p_1}{(\rho_2/\rho_1)^\gamma}>1.
+\]
+Relazione di Prandtl, con $a_*^2=2a_0^2/(\gamma+1)$:
+\[
+v_1v_2=a_*^2,qquad M_{r1}^*M_{r2}^*=1,qquad M_r^*=v/a_*.
+\]
+
+\paragraph*{Velocità dell'urto.}
+Se sono noti i due stati:
+\[
+w=\frac{\rho_2u_2-\rho_1u_1}{\rho_2-\rho_1},qquad
+(u_1-w)^2=\frac{p_2-p_1}{\rho_1(1-\rho_1/\rho_2)}.
+\]
+Urto generato da pistone in gas inizialmente fermo, $u_2=v_p$, $a_1=a_0$:
+\[
+w^2-(1+\delta)v_pw-a_0^2=0,qquad
+w=\frac{(1+\delta)v_p+\sqrt{(1+\delta)^2v_p^2+4a_0^2}}{2}.
+\]
+Urto debole: $|M_{r1}|\to1$, rapporti $p_2/p_1,\rho_2/\rho_1,T_2/T_1\to1$.
+Urto forte: $|M_{r1}|\to\infty$,
+\[
+\frac{\rho_2}{\rho_1}\to\frac{\gamma+1}{\gamma-1},\qquad
+M_{r2}^2\to\frac{\gamma-1}{2\gamma},\qquad \frac{p_2}{p_1}\to\infty.
+\]
+
+\subsection*{8. Problema di Riemann e piano $p-u$}
+\addcontentsline{toc}{subsection}{8. Problema di Riemann e piano p-u}
+
+\paragraph*{Stati, onde e compatibilità.}
+All'istante iniziale: stato 1 a sinistra e stato 4 a destra. La soluzione contiene
+un'onda $u-a$ tra 1 e 2, un contatto $u$ tra 2 e 3, e un'onda $u+a$ tra 3 e 4:
+\[
+u_2=u_3=u^*,\qquad p_2=p_3=p^*,\qquad w_C=u^*.
+\]
+Le configurazioni sono RCR, RCS, SCR, SCS (onda sinistra--contatto--onda destra).
+
+\paragraph*{Curve nel piano $p-u$.}
+Definire
+\[
+A_i=\frac{2}{(\gamma+1)\rho_i},\qquad
+B_i=\frac{\gamma-1}{\gamma+1}p_i,qquad q=\frac{\gamma-1}{2\gamma}.
+\]
+Curva sinistra generata dallo stato 1:
+\[
+u_L(p)=
+\begin{cases}
+u_1+\dfrac{a_1}{\delta}\left[1-(p/p_1)^q\right],&p\le p_1\quad(R),\\[4pt]
+u_1-(p-p_1)\sqrt{\dfrac{A_1}{p+B_1}},&p>p_1\quad(S).
+\end{cases}
+\]
+Curva destra generata dallo stato 4:
+\[
+u_R(p)=
+\begin{cases}
+u_4-\dfrac{a_4}{\delta}\left[1-(p/p_4)^q\right],&p\le p_4\quad(R),\\[4pt]
+u_4+(p-p_4)\sqrt{\dfrac{A_4}{p+B_4}},&p>p_4\quad(S).
+\end{cases}
+\]
+L'intersezione $u_L(p^*)=u_R(p^*)$ seleziona lo stato centrale. Lungo la curva
+sinistra l'espansione va verso $p\downarrow,u\uparrow$ e l'urto verso
+$p\uparrow,u\downarrow$; lungo la destra i versi in $u$ sono opposti.
+Il vuoto compare nella doppia espansione se
+\[
+u_4-u_1\ge\frac{a_1+a_4}{\delta}=\frac{2(a_1+a_4)}{\gamma-1}.
+\]
+
+% FIGURA DA INSERIRE: definizione degli stati 1-2-3-4 e piano p-u con curve ammissibili.
+
+\paragraph*{Algoritmo prescritto: iterazione su $u^k$.}
+Porre
+\[
+z=\frac{a_4}{a_1}\left(\frac{p_1}{p_4}\right)^{(\gamma-1)/(2\gamma)},
+\qquad
+u^0=\frac{z(a_1+\delta u_1)-(a_4-\delta u_4)}{\delta(1+z)}.
+\]
+
+\emph{Onda sinistra $u-a$.} Per ogni $u^k$:
+
+Se $u^k<u_1$ (urto), definire
+\[
+M_{\mathrm{rel},1}=\frac{\gamma+1}{4}\frac{u_1-u^k}{a_1}
++\left[1+\left(\frac{\gamma+1}{4}\frac{u_1-u^k}{a_1}\right)^2\right]^{1/2},
+\]
+\[
+p_2^k=p_1\left[1+\frac{2\gamma}{\gamma+1}
+(M_{\mathrm{rel},1}^2-1)\right],
+\]
+\[
+a_2^k=a_1\left[
+\frac{\gamma+1+(\gamma-1)p_2^k/p_1}
+{\gamma+1+(\gamma-1)p_1/p_2^k}
+\right]^{1/2},
+\qquad
+\dot p_2^k:=\frac{dp_2^k}{du^k}
+=-2\gamma\frac{p_1}{a_1}\frac{M_{\mathrm{rel},1}^3}{1+M_{\mathrm{rel},1}^2}.
+\]
+Se $u^k\ge u_1$ (espansione):
+\[
+a_2^k=a_1-\delta(u^k-u_1),\qquad
+p_2^k=p_1\left(\frac{a_2^k}{a_1}\right)^{2\gamma/(\gamma-1)},
+\qquad
+\dot p_2^k=-\gamma\frac{p_2^k}{a_2^k}.
+\]
+
+\emph{Onda destra $u+a$.} Per ogni $u^k$:
+
+Se $u^k>u_4$ (urto), definire
+\[
+M_{\mathrm{rel},4}=\frac{\gamma+1}{4}\frac{u^k-u_4}{a_4}
++\left[1+\left(\frac{\gamma+1}{4}\frac{u^k-u_4}{a_4}\right)^2\right]^{1/2},
+\]
+\[
+p_3^k=p_4\left[1+\frac{2\gamma}{\gamma+1}
+(M_{\mathrm{rel},4}^2-1)\right],
+\]
+\[
+a_3^k=a_4\left[
+\frac{\gamma+1+(\gamma-1)p_3^k/p_4}
+{\gamma+1+(\gamma-1)p_4/p_3^k}
+\right]^{1/2},
+\qquad
+\dot p_3^k:=\frac{dp_3^k}{du^k}
+=+2\gamma\frac{p_4}{a_4}\frac{M_{\mathrm{rel},4}^3}{1+M_{\mathrm{rel},4}^2}.
+\]
+Se $u^k\le u_4$ (espansione):
+\[
+a_3^k=a_4+\delta(u^k-u_4),\qquad
+p_3^k=p_4\left(\frac{a_3^k}{a_4}\right)^{2\gamma/(\gamma-1)},
+\qquad
+\dot p_3^k=+\gamma\frac{p_3^k}{a_3^k}.
+\]
+
+\emph{Newton--Raphson e arresto.}
+\[
+u^{k+1}=u^k-\frac{p_2^k-p_3^k}{\dot p_2^k-\dot p_3^k},
+\qquad
+\left|1-\frac{p_2^k}{p_3^k}\right|<\varepsilon.
+\]
+Controllare sempre $a_2^k>0$, $a_3^k>0$, $p_2^k>0$, $p_3^k>0$; se Newton
+esce dall'intervallo fisico, smorzare il passo.
+
+\paragraph*{Ricostruzione dopo convergenza.}
+Porre $p^*=p_2=p_3$ e $u^*=u_2=u_3$. Per un'espansione usare le relazioni
+isentropiche; per un urto usare Rankine--Hugoniot. In particolare
+\[
+\rho_2=\rho_1
+\begin{cases}(p^*/p_1)^{1/\gamma},&R,\\
+\dfrac{(\gamma+1)p^*+(\gamma-1)p_1}{(\gamma-1)p^*+(\gamma+1)p_1},&S,
+\end{cases}
+\]
+e analogamente sostituendo $(1,2)$ con $(4,3)$ per lo stato destro; quindi
+$T_i=p_i/(\rho_iR)$ e $a_i=\sqrt{\gamma p_i/\rho_i}$.
+Le velocità d'onda sono
+\[
+w_L=u_1-a_1M_{\mathrm{rel},1},\qquad
+w_R=u_4+a_4M_{\mathrm{rel},4}\quad\text{(urti)},
+\]
+\[
+\begin{array}{c|cc}
+&\text{testa nello stato indisturbato}&\text{coda nello stato centrale}\\ \hline
+R_L&u_1-a_1&u^*-a_2\\
+R_R&u_4+a_4&u^*+a_3
+\end{array}
+\]
+e il contatto ha velocità $u^*$. Nel piano $x-t$ tracciare tutte le rette
+$x=x_0+\lambda t$ nell'ordine delle loro velocità.
+
+\subsection*{9. Interazioni, riflessioni e condizioni al contorno 1D}
+\addcontentsline{toc}{subsection}{9. Interazioni, riflessioni e condizioni al contorno 1D}
+
+\paragraph*{Procedura comune.}
+Al primo incontro individuare i due stati esterni noti $L,R$; trascurando il supporto
+finito della zona d'interazione, risolvere il nuovo problema di Riemann $(L,R)$.
+Imporre sempre $p$ e $u$ comuni ai due stati centrali; verificare a posteriori natura,
+direzione e ordine delle onde. Per interazioni distribuite tra ventagli, le
+caratteristiche sono curve e la riduzione a ``pseudo-Riemann'' fornisce solo gli stati
+asintotici, non la struttura interna.
+
+\paragraph*{Catalogo operativo delle interazioni presenti nel materiale.}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.18\textwidth}p{0.76\textwidth}}
+Espansione--parete & Parete ferma: $u_b=0$; l'onda riflessa è un'espansione della famiglia opposta. Con stato incidente $i$, usare l'invariante entrante per trovare $a_b$, poi le isentropiche. Parete mobile: sostituire $u_b=u_p(t)$.\\
+Compressione--parete & Prima del blow-up, $u_b=0$ seleziona una compressione riflessa della famiglia opposta; se le caratteristiche coalescono, sostituirla con un urto ammissibile.\\
+Urto--parete & Stato dietro l'urto incidente noto, stato riflesso con $u_b=0$; risolvere le RH per la velocità dell'urto riflesso e lo stato a parete.\\
+Pressione imposta & Imporre $p_b(t)$ e usare l'unico invariante proveniente dall'interno. Una compressione incidente su $p_b$ costante riflette un'espansione; un'espansione incidente riflette una compressione. Se finita e impulsiva, verificare la formazione di urto.\\
+Onda semplice--contatto & Il contatto trasmette l'informazione senza poter sostenere salti di $p,u$. Usare come stati esterni quello oltre il contatto e quello dietro l'onda incidente; risolvere un pseudo-RP. L'onda trasmessa mantiene la famiglia geometrica ma può cambiare intensità; nasce anche un'onda riflessa.\\
+Urto--contatto & Stati esterni noti immediatamente prima dell'urto sul contatto; nuovo RP. L'esito tipico contiene urto/espansione riflessa, nuovo contatto e onda trasmessa; la natura va dedotta dal piano $p-u$, non assunta.\\
+Onda semplice--urto & L'interazione ha supporto finito e curva l'urto. Per gli stati finali, usare gli stati esterni come pseudo-RP (problemi di Friedrichs); conservare l'aumento entropico attraverso l'urto.\\
+Urto--urto & Al punto d'incontro usare gli stati esterni come nuovo RP; due urti della stessa famiglia possono raggiungersi, quelli di famiglie opposte generano due onde uscenti e un contatto.\\
+Onde continue & Onde della stessa famiglia non si attraversano prima del blow-up; espansioni di famiglie opposte formano una regione d'interazione a due famiglie. Determinare il campo con compatibilità caratteristiche; gli stati lontani possono essere collegati da pseudo-RP.\\
+Variazione d'area & Attraversamento istantaneo locale: se regolare e stazionario usare continuità di $\dot m$, $h_0$ e $s$ con la legge area--Mach; poi l'interazione con urti/contatti è un nuovo RP tra gli stati ai lati. Per un urto in area variabile l'intensità e $w$ variano e nasce uno strato entropico.\\
+\end{longtable}
+
+\paragraph*{Numero di condizioni al contorno.}
+Si impongono tante condizioni quante sono le caratteristiche entranti nel dominio.
+Per il bordo sinistro (verso interno $+x$):
+\[
+\begin{array}{c|c}
+u>a&3\ \text{condizioni}\\
+0<u<a&2\ \text{condizioni}\\
+-a<u<0&1\ \text{condizione}\\
+u<-a&0
+\end{array}
+\]
+Al bordo destro i conteggi sono complementari. Ingresso supersonico: tutte le primitive;
+uscita supersonica: nessuna. Ingresso subsonico: due dati indipendenti (per esempio
+$p_0,T_0$ oppure $p_0,s$); uscita subsonica: una condizione (tipicamente $p_b$).
+Contorno non riflettente: mantenere l'invariante della caratteristica uscente e porre
+l'ampiezza della caratteristica entrante nulla, oppure uguale al valore esterno compatibile.
+Parete/pistone impermeabile:
+\[
+u_n=u_{p,n},\qquad \text{parete ferma: }u_n=0.
+\]
+
+\section*{II. Flussi supersonici bidimensionali}
+\addcontentsline{toc}{section}{II. Flussi supersonici bidimensionali}
+
+\subsection*{10. Caratteristiche 2D}
+\addcontentsline{toc}{subsection}{10. Caratteristiche 2D}
+
+Ipotesi: flusso 2D stazionario, inviscido, supersonico, homentalpico e homentropico,
+senza urti nella regione considerata. Con $u=V\cos\theta$, $v=V\sin\theta$:
+\[
+M=\frac{V}{a}>1,qquad \mu=\sin^{-1}\frac1M,
+\qquad \frac{dy}{dx}=\tan(\theta\pm\mu).
+\]
+Associazione delle famiglie:
+\[
+C^-:\ \frac{dy}{dx}=\tan(\theta-\mu),\quad \theta+\nu=K_+=\text{cost.},
+\]
+\[
+C^+:\ \frac{dy}{dx}=\tan(\theta+\mu),\quad \theta-\nu=K_-=\text{cost.}
+\]
+All'intersezione di una $C^-$ proveniente da $A$ e una $C^+$ proveniente da $B$:
+\[
+\theta_P=\frac{(\theta_A+\nu_A)+(\theta_B-\nu_B)}2,qquad
+\nu_P=\frac{(\theta_A+\nu_A)-(\theta_B-\nu_B)}2,
+\]
+quindi invertire $\nu(M_P)$ e ricostruire $p,T,\rho,V$ dalle grandezze totali.
+Parete impermeabile: $\theta=\theta_w$; parete sagomata non riflettente: la pendenza
+della parete coincide con la direzione della caratteristica che deve chiudersi sulla parete.
+
+\subsection*{11. Espansioni di Prandtl--Meyer}
+\addcontentsline{toc}{subsection}{11. Espansioni di Prandtl--Meyer}
+
+\[
+\nu(M)=\sqrt{\frac{\gamma+1}{\gamma-1}}
+\tan^{-1}\sqrt{\frac{\gamma-1}{\gamma+1}(M^2-1)}
+-\tan^{-1}\sqrt{M^2-1},qquad \nu(1)=0.
+\]
+\[
+\nu_{\max}=\lim_{M\to\infty}\nu(M)
+=\frac\pi2\left(\sqrt{\frac{\gamma+1}{\gamma-1}}-1\right).
+\]
+Per una deviazione espansiva di modulo $|\Delta\theta|$:
+\[
+\nu(M_2)-\nu(M_1)=|\Delta\theta|,qquad M_2>M_1,qquad p_2<p_1.
+\]
+Il segno si determina con l'invariante della famiglia attraversata:
+$\Delta(\theta+\nu)=0$ su $C^-$, $\Delta(\theta-\nu)=0$ su $C^+$.
+\[
+\frac{p_2}{p_1}=\left(\frac{1+\delta M_1^2}{1+\delta M_2^2}\right)^{\gamma/(\gamma-1)},
+\quad
+\frac{T_2}{T_1}=\frac{1+\delta M_1^2}{1+\delta M_2^2},
+\quad
+\frac{\rho_2}{\rho_1}=\left(\frac{1+\delta M_1^2}{1+\delta M_2^2}\right)^{1/(\gamma-1)}.
+\]
+Per un ventaglio centrato generato da un angolo, testa e coda hanno direzioni
+$\theta_1\pm\mu_1$ e $\theta_2\pm\mu_2$ della stessa famiglia.
+
+% FIGURA DA INSERIRE: ventaglio di Prandtl-Meyer e definizione di theta e mu.
+
+\subsection*{12. Urti obliqui}
+\addcontentsline{toc}{subsection}{12. Urti obliqui}
+
+Con $\sigma$ angolo tra velocità a monte e urto, e $\theta$ deviazione del flusso:
+\[
+M_{n1}=M_1\sin\sigma>1,qquad V_{t2}=V_{t1},
+\]
+\[
+\frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}(M_{n1}^2-1),
+\quad
+\frac{\rho_2}{\rho_1}=\frac{(\gamma+1)M_{n1}^2}{(\gamma-1)M_{n1}^2+2},
+\quad
+\frac{T_2}{T_1}=\frac{p_2/p_1}{\rho_2/\rho_1},
+\]
+\[
+M_{n2}^2=\frac{1+\delta M_{n1}^2}{\gamma M_{n1}^2-\delta},
+\qquad M_2=\frac{M_{n2}}{\sin(\sigma-\theta)}.
+\]
+Relazione $\theta$--$\sigma$--$M$:
+\[
+\tan\theta=2\cot\sigma\,
+\frac{M_1^2\sin^2\sigma-1}{M_1^2(\gamma+\cos2\sigma)+2}.
+\]
+\[
+\frac{p_{02}}{p_{01}}=
+\left[\frac{(\gamma+1)M_{n1}^2}{(\gamma-1)M_{n1}^2+2}\right]^{\gamma/(\gamma-1)}
+\left[\frac{\gamma+1}{2\gamma M_{n1}^2-(\gamma-1)}\right]^{1/(\gamma-1)}.
+\]
+Per $0<\theta<\theta_{\max}(M_1)$ vi sono una radice debole
+($\mu<\sigma<\sigma_{\max}$) e una forte ($\sigma_{\max}<\sigma\le\pi/2$).
+Determinare $\theta_{\max}$ imponendo
+\[
+\frac{d\theta(\sigma;M_1,\gamma)}{d\sigma}=0.
+\]
+Se $\theta>\theta_{\max}$ l'urto è distaccato. Il punto sonico della polare si ottiene
+risolvendo simultaneamente la relazione $\theta$--$\sigma$--$M$ e $M_2=1$.
+Limiti: $\sigma=\mu$ dà onda nulla; $\sigma=\pi/2$ dà urto normale e $\theta=0$.
+
+% FIGURA DA INSERIRE: urto obliquo con angoli sigma, theta e componenti normale/tangenziale.
+
+\subsection*{13. Piano $p-\theta$ e polari di Busemann}
+\addcontentsline{toc}{subsection}{13. Piano p-theta e polari di Busemann}
+
+Per stato a monte fissato $(M_1,p_1,\theta_1)$, usare $\sigma\in[\mu_1,\pi/2]$ come
+parametro:
+\[
+\theta_2=\theta_1\pm\theta(\sigma;M_1,\gamma),qquad
+p_2=p_1\left[1+\frac{2\gamma}{\gamma+1}(M_1^2\sin^2\sigma-1)\right].
+\]
+La polare contiene: onda nulla $(\sigma=\mu_1)$, ramo debole, massima deviazione,
+ramo forte, punto sonico $M_2=1$ e urto normale $(\sigma=\pi/2,\theta_2=\theta_1)$.
+I segni $\pm$ rappresentano deviazioni opposte.
+
+Le espansioni sullo stesso piano sono parametrizzate da $M_2\ge M_1$:
+\[
+\theta_2=\theta_1\pm[\nu(M_2)-\nu(M_1)],qquad
+\frac{p_2}{p_1}=\left(\frac{1+\delta M_1^2}{1+\delta M_2^2}\right)^{\gamma/(\gamma-1)}.
+\]
+Attraverso una slip line:
+\[
+p_A=p_B,qquad \theta_A=\theta_B,qquad V_A,\rho_A,T_A,s_A
+\ \text{possono differire dai valori in }B.
+\]
+Per confrontare polari con origini diverse, traslare $\theta\mapsto\theta-\theta_i$ e
+scalare $p\mapsto p/p_{\rm ref}$; ogni polare riflessa deve essere costruita usando il
+Mach del proprio stato a monte, non quello iniziale.
+
+\paragraph*{Odografa con grandezze critiche.}
+Con $a^*$ velocità del suono dello stato critico sulla stessa isoentalpica:
+\[
+M^*:=\frac V{a^*},\qquad
+(M^*)^2=\frac{(\gamma+1)M^2}{2+(\gamma-1)M^2}
+=\frac{\gamma+1}{\gamma-1+2/M^2}.
+\]
+Attraverso un urto obliquo $V_{t1}/a^*=V_{t2}/a^*$ e, sulla componente normale,
+\[
+M_{n1}^*M_{n2}^*=1.
+\]
+Nel piano $(V_n/a^*,V_t/a^*)$ il cerchio $M^*=1$ separa stati subcritici e
+supercritici; la retta che unisce gli stati a monte e a valle, insieme alla sua
+perpendicolare dall'origine, ricostruisce componenti normali, tangenziali e angolo
+d'urto.
+
+% FIGURA DA INSERIRE: polare di Busemann nel piano p-theta con rami debole/forte.
+
+\subsection*{14. Interazioni e riflessioni di urti}
+\addcontentsline{toc}{subsection}{14. Interazioni e riflessioni di urti}
+
+\paragraph*{Riflessione regolare (RR).}
+Calcolare lo stato 2 dietro l'urto incidente; costruire la polare riflessa con $M_2$ e
+cercarne l'intersezione con la condizione di parete $\theta_3=\theta_w$.
+L'intersezione ammissibile fornisce $p_3,sigma_r,M_3$; scegliere normalmente il ramo
+debole in campo aperto.
+
+\paragraph*{Punto triplo e Mach reflection (MR).}
+Al punto triplo arrivano urto incidente, urto riflesso e Mach stem; parte una slip line.
+Se $A,B$ sono i due stati ai lati della slip line:
+\[
+p_A=p_B,qquad \theta_A=\theta_B.
+\]
+Costruire la polare del percorso incidente--riflesso e quella del Mach stem a partire
+dallo stato 1; la loro intersezione compatibile determina gli stati al punto triplo.
+
+\paragraph*{Criteri.}
+\begin{itemize}
+\item Distacco: la polare dell'urto riflesso è tangente alla retta di parete; oltre tale
+angolo non esiste RR.
+\item Von Neumann: la soluzione a valle del percorso incidente--riflesso sulla retta di
+parete ha la stessa pressione della soluzione di urto normale/Mach stem; nel piano
+$p-\theta$ le costruzioni si incontrano sull'asse della deviazione di parete.
+\item Tra gli angoli di von Neumann e di distacco possono coesistere RR e MR (isteresi);
+al di sopra del distacco resta MR. Il diagramma $M_1-\theta$ si costruisce risolvendo i
+due criteri per ogni $M_1$.
+\item Gambetto normale: usare le relazioni di urto normale con $M_1$; se la compatibilità
+di pressione non è soddisfatta, il gambetto è curvo/non esattamente normale.
+\end{itemize}
+
+% FIGURA DA INSERIRE: riflessione regolare, Mach reflection, punto triplo e slip line.
+
+\subsection*{15. Getti supersonici}
+\addcontentsline{toc}{subsection}{15. Getti supersonici}
+
+Alla superficie libera ideale:
+\[
+p=p_a,qquad \boldsymbol V\cdot\boldsymbol n=V_{\rm superficie},
+\]
+e attraverso la slip line $p$ e direzione della velocità sono continue, mentre densità,
+temperatura, modulo della velocità ed entropia possono saltare.
+\[
+\begin{array}{c|c|c}
+\text{getto}&\text{condizione all'uscita}&\text{primo fenomeno al labbro}\\ \hline
+\text{adattato}&p_e=p_a&\text{nessuna onda finita}\\
+\text{sottoespanso}&p_e>p_a&\text{espansione di Prandtl--Meyer}\\
+\text{sovraespanso}&p_e<p_a&\text{compressione/urto obliquo}
+\end{array}
+\]
+Per adattamento isentropico da $(M_e,p_e)$ a $p_a$:
+\[
+M_a=\left\{\frac1\delta\left[
+\left(\frac{p_0}{p_a}\right)^{(\gamma-1)/\gamma}-1\right]\right\}^{1/2},
+\qquad |\Delta\theta|=\nu(M_a)-\nu(M_e).
+\]
+Un getto piano simmetrico ha apertura iniziale totale $2|\Delta\theta|$ nel modello
+dei due ventagli. Le espansioni riflesse a $p=p_a$ diventano compressioni; la loro
+coalescenza forma i barrel shocks. Interazioni forti e simmetriche possono produrre
+un Mach disk e slip lines; verificare tramite polari e compatibilità, non imporlo a priori.
+Per due rette uscenti da punti separati di $\Delta y$ e inclinate di $\alpha_1,\alpha_2$:
+\[
+x_{\rm int}=\frac{\Delta y}{\tan\alpha_1-\tan\alpha_2};
+\qquad \text{caso parete orizzontale: }x=H\cot\sigma.
+\]
+Nel sovraespanso, calcolare l'urto al labbro imponendo $p_2=p_a$ se compatibile; se la
+deviazione richiesta supera $\theta_{\max}$, attendersi urto distaccato/separazione.
+
+\section*{III. Flussi stazionari e sistemi}
+\addcontentsline{toc}{section}{III. Flussi stazionari e sistemi}
+
+\subsection*{16. Flusso quasi-1D e ugelli}
+\addcontentsline{toc}{subsection}{16. Flusso quasi-1D e ugelli}
+
+Ipotesi: proprietà uniformi in ogni sezione, flusso stazionario, inviscido e adiabatico;
+le relazioni isentropiche valgono nei tratti senza urti.
+\[
+\dot m=\rho uA=\text{cost.},\qquad
+h_i+\frac{u^2}{2}=h_0=\text{cost.},\qquad
+\frac{dA}{A}=(M^2-1)\frac{du}{u}.
+\]
+\[
+\frac{T}{T_0}=\frac1{1+\delta M^2},\quad
+\frac p{p_0}=(1+\delta M^2)^{-\gamma/(\gamma-1)},\quad
+\frac\rho{\rho_0}=(1+\delta M^2)^{-1/(\gamma-1)}.
+\]
+Alla sezione critica $M=1$:
+\[
+\frac{T^*}{T_0}=\frac{2}{\gamma+1},\qquad
+\frac{p^*}{p_0}=\left(\frac{2}{\gamma+1}\right)^{\gamma/(\gamma-1)},\qquad
+\frac{\rho^*}{\rho_0}=\left(\frac{2}{\gamma+1}\right)^{1/(\gamma-1)}.
+\]
+Legge area--Mach, indicando con $\mathcal{A}(M)$ il rapporto geometrico:
+\[
+\mathcal{A}(M):=\frac A{A^*}=\frac1M
+\left[\frac{2}{\gamma+1}(1+\delta M^2)\right]^{(\gamma+1)/[2(\gamma-1)]}.
+\]
+Per $A/A^*>1$ esistono un ramo subsonico e uno supersonico.
+\[
+\dot m=A\frac{p_0}{\sqrt{T_0}}\sqrt{\frac\gamma R}\,
+M(1+\delta M^2)^{-(\gamma+1)/[2(\gamma-1)]},
+\]
+\[
+\dot m_{\max}=A^*\frac{p_0}{\sqrt{T_0}}\sqrt{\frac\gamma R}
+\left(\frac{2}{\gamma+1}\right)^{(\gamma+1)/[2(\gamma-1)]}.
+\]
+Choking quando la sezione minima raggiunge $M=1$; per un convergente che scarica in
+$p_b$, ciò richiede
+\[
+\frac{p_b}{p_0}\le\left(\frac{2}{\gamma+1}\right)^{\gamma/(\gamma-1)}.
+\]
+Nel convergente: il ramo subsonico accelera; al massimo $M_e=1$. Nel convergente--
+divergente strozzato: nel divergente il ramo supersonico accelera; per pressioni di valle
+intermedie può comparire un urto normale.
+
+\paragraph*{Urto normale nel divergente: procedura.}
+Scelta una posizione $A_s$: (i) ricavare $M_1>1$ da $A_s/A_1^*$; (ii) applicare l'urto
+normale e trovare $M_2,p_{02}/p_{01}$; (iii) determinare la nuova area critica
+\[
+A_2^*=\frac{A_s}{\mathcal{A}(M_2)};
+\]
+(iv) ricavare il ramo subsonico all'uscita da $A_e/A_2^*$ e la corrispondente $p_e$;
+variare $A_s$ finché $p_e=p_b$. Nell'avviamento, il fronte d'urto che attraversa una
+variazione d'area genera onde di adattamento; se il flusso alla gola diventa supersonico,
+l'informazione a valle non può risalire il tratto supersonico.
+
+\subsection*{17. Bilanci integrali, serbatoi e spinta}
+\addcontentsline{toc}{subsection}{17. Bilanci integrali, serbatoi e spinta}
+
+Per un volume di controllo fisso, con normale uscente:
+\[
+\frac d{dt}\int_{CV}\rho\,dV+\int_{CS}\rho\boldsymbol V\cdot\boldsymbol n\,dA=0,
+\]
+\[
+\sum\boldsymbol F_{\rm ext}=\frac d{dt}\int_{CV}\rho\boldsymbol V\,dV
++\int_{CS}\rho\boldsymbol V(\boldsymbol V\cdot\boldsymbol n)\,dA,
+\]
+\[
+\dot Q-\dot W_s=\frac d{dt}\int_{CV}\rho e\,dV
++\int_{CS}\rho h_0(\boldsymbol V\cdot\boldsymbol n)\,dA.
+\]
+Forme stazionarie 1D:
+\[
+\sum\dot m_{in}=\sum\dot m_{out},
+\]
+\[
+\sum F_x=\sum_{out}\dot m u_x-\sum_{in}\dot m u_x,
+\qquad
+\dot Q-\dot W_s=\sum_{out}\dot m h_0-\sum_{in}\dot m h_0,
+\]
+dove nelle forze esterne vanno incluse le pressioni sulle sezioni.
+
+\paragraph*{Serbatoio rigido ben miscelato.}
+\[
+m=\frac{pV}{RT}.
+\]
+Svuotamento adiabatico, uscita con entalpia $h_i=c_pT$ del contenuto:
+\[
+\frac d{dt}(mc_vT)=-\dot m_{out}c_pT,qquad \frac{dm}{dt}=-\dot m_{out},
+\]
+\[
+\frac T{T_i}=\left(\frac m{m_i}\right)^{\gamma-1},\qquad
+\frac p{p_i}=\left(\frac m{m_i}\right)^\gamma,qquad
+\frac m{m_i}=\left(\frac p{p_i}\right)^{1/\gamma}.
+\]
+Finché l'orifizio è critico:
+\[
+\dot m_{out}=A\frac p{\sqrt T}\sqrt{\frac\gamma R}
+\left(\frac{2}{\gamma+1}\right)^{(\gamma+1)/[2(\gamma-1)]}.
+\]
+Posto
+\[
+C_*=\left(\frac{2}{\gamma+1}\right)^{(\gamma+1)/[2(\gamma-1)]},
+\qquad K=\frac{Aa_i}{V}C_*,
+\]
+la legge durante lo svuotamento strozzato è
+\[
+\frac m{m_i}=\left[1+\frac{\gamma-1}{2}Kt\right]^{-2/(\gamma-1)},
+\quad
+\frac T{T_i}=\left[1+\frac{\gamma-1}{2}Kt\right]^{-2},
+\quad
+\frac p{p_i}=\left[1+\frac{\gamma-1}{2}Kt\right]^{-2\gamma/(\gamma-1)}.
+\]
+La fase strozzata termina quando $p_a/p$ supera
+$(2/(\gamma+1))^{\gamma/(\gamma-1)}$.
+
+Riempimento adiabatico da una linea con entalpia totale costante $h_{0,in}$:
+\[
+\frac d{dt}(mc_vT)=\dot m_{in}h_{0,in},\qquad \frac{dm}{dt}=\dot m_{in},
+\]
+\[
+mc_vT-m_ic_vT_i=(m-m_i)h_{0,in}.
+\]
+
+\paragraph*{Spinta.}
+Convenzione positiva nel verso del getto propulsivo:
+\[
+F=\dot m u_e+(p_e-p_a)A_e
+\]
+per un propulsore senza termine d'ingresso. Con sezioni di ingresso e uscita,
+assumendo tutte le velocità positive lungo l'asse del motore:
+\[
+F=\sum_{out}\bigl[\dot m u_x+(p-p_a)A\bigr]
+-\sum_{in}\bigl[\dot m u_x+(p-p_a)A\bigr].
+\]
+Per ugello adattato $p_e=p_a$ e $F=\dot m u_e$ (senza ingresso); l'adattamento elimina
+la spinta di pressione, non necessariamente massimizza $u_e$ a geometria arbitraria.
+
+\section*{IV. Regimi e fenomeni avanzati}
+\addcontentsline{toc}{section}{IV. Regimi e fenomeni avanzati}
+
+\subsection*{18. Bow shock, linea sonica e vorticità}
+\addcontentsline{toc}{subsection}{18. Bow shock, linea sonica e vorticità}
+
+Lungo un bow shock applicare localmente le relazioni d'urto obliquo con
+\[
+M_{n1}(s)=M_1(s)\sin\sigma(s).
+\]
+Sul punto di ristagno $\sigma=\pi/2$ (urto normale); lontano dal corpo
+$\sigma\to\mu$ e l'intensità tende a zero. La linea sonica dietro l'urto è il luogo
+$M=1$ e separa la regione subsonica prossima al naso da quella supersonica esterna.
+
+Teorema di Crocco, flusso stazionario inviscido:
+\[
+\nabla h_0=T\nabla s_{\rm th}+\boldsymbol V\times\boldsymbol\omega
+=T\nabla s_{\rm th}-\boldsymbol\omega\times\boldsymbol V,
+\qquad \boldsymbol\omega=\nabla\times\boldsymbol V.
+\]
+Se $h_0$ è uniforme:
+\[
+T\nabla s_{\rm th}=\boldsymbol\omega\times\boldsymbol V.
+\]
+Quindi la variazione di intensità del bow shock produce un gradiente entropico e
+vorticità a valle. La regola di Busemann del corso approssima la linea sonica con il
+bordo di una rampa equivalente che realizza la stessa variazione di Mach; si applica
+come costruzione geometrica locale, non come relazione di salto aggiuntiva.
+
+% FIGURA DA INSERIRE: bow shock, punto di ristagno, limite Mach e linea sonica.
+
+\subsection*{19. Teoria transonica}
+\addcontentsline{toc}{subsection}{19. Teoria transonica}
+
+Per flusso 2D, stazionario, irrotazionale, homentropico e homentalpico,
+$\boldsymbol V=\nabla\Phi$, $u=\Phi_x$, $v=\Phi_y$:
+\[
+(a^2-u^2)\Phi_{xx}-2uv\Phi_{xy}+(a^2-v^2)\Phi_{yy}=0.
+\]
+L'equazione è ellittica per $M<1$, parabolica/degenera a $M=1$, iperbolica per $M>1$.
+Nella teoria delle piccole perturbazioni, $\Phi=V_\infty[x+\varepsilon\phi]$ e, con
+coordinate scalate $(\xi,\eta)$, la forma transonica ridotta degli appunti è
+\[
+[k-(\gamma+1)\phi_\xi]\phi_{\xi\xi}+\phi_{\eta\eta}=0.
+\]
+Al riferimento sonico $k=0$. Ponendo $u=\phi_\xi$, $v=\phi_\eta$:
+\[
+(\gamma+1)u u_\xi-v_\eta=0,qquad v_\xi-u_\eta=0,
+\]
+con $u<0$ subsonico, $u=0$ sonico, $u>0$ supersonico nella scalatura adottata.
+
+\paragraph*{Sauer--Meyer in gola.}
+Per gola simmetrica di grande raggio adimensionale $R$ e sviluppo locale quartico:
+\[
+d=\frac1{\sqrt{(\gamma+1)R}},
+\]
+\[
+u(\xi,\eta)=d\xi+\frac{(\gamma+1)d^2}{2}\eta^2,qquad
+v(\xi,\eta)=(\gamma+1)d^2\xi\eta+\frac{(\gamma+1)d^3}{6}\eta^3.
+\]
+\[
+\xi_{\rm gola}=-\frac d6\eta^2,qquad
+\xi_{\rm sonica}=-\frac{(\gamma+1)d}{2}\eta^2,qquad
+M\simeq\sqrt{(1+u)^2+v^2}.
+\]
+Queste formule valgono soltanto nella scalatura locale e per $R\gg1$.
+
+\end{document}

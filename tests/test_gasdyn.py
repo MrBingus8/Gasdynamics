@@ -485,3 +485,120 @@ class TestArea5:
         r = gd.urto_isotermo(3.0)
         assert r["rho2_rho1"] == 9 and r["v2_v1"] * 9 == pytest.approx(1)
         assert r["M2"] * 3 == pytest.approx(1)  # Prandtl v1 v2 = a²
+
+
+# =============================================================================
+# Area 6 — problema di Riemann
+# =============================================================================
+def _st(rho, u, p, gas=ARIA_ADIM):
+    return gd.State(gas, rho, u, p)
+
+
+class TestArea6:
+    def test_sod(self):
+        s = gd.riemann(_st(1.0, 0.0, 1.0), _st(0.125, 0.0, 0.1))
+        assert s.p_star == pytest.approx(0.30313, abs=1e-5)
+        assert s.u_star == pytest.approx(0.92745, abs=1e-5)
+        assert s.stati["2"].rho == pytest.approx(0.42632, abs=1e-5)
+        assert s.stati["3"].rho == pytest.approx(0.26557, abs=1e-5)
+        assert s.onda_dx.w == pytest.approx(1.75216, abs=1e-5)
+        assert s.configurazione == "RCS" and s.metodo == "newton"
+        assert len(s.iterazioni) < 10
+
+    def test_toro(self):
+        # E. F. Toro, Riemann Solvers…, tab. 4.2 (test 2, 3, 5)
+        s = gd.riemann(_st(1.0, -2.0, 0.4), _st(1.0, 2.0, 0.4))
+        assert s.p_star == pytest.approx(0.00189, abs=1e-5) and s.u_star == pytest.approx(0.0, abs=1e-10)
+        assert s.configurazione == "RNR"
+        s = gd.riemann(_st(1.0, 0.0, 1000.0), _st(1.0, 0.0, 0.01))
+        assert s.p_star == pytest.approx(460.894, abs=1e-3) and s.u_star == pytest.approx(19.5975, abs=1e-4)
+        s = gd.riemann(_st(5.99924, 19.5975, 460.894), _st(5.99242, -6.19633, 46.0950))
+        # dati d'ingresso arrotondati a 6 cifre: confronto a 1e-5 relativo
+        assert s.p_star == pytest.approx(1691.64, rel=1e-5) and s.u_star == pytest.approx(8.68975, rel=1e-5)
+        assert s.configurazione == "SCS"
+
+    def test_vuoto(self):
+        s = gd.riemann(_st(1.0, -7.0, 1.0), _st(1.0, 7.0, 1.0))
+        assert s.vuoto and s.configurazione == "RVR"
+        a = math.sqrt(1.4)
+        assert s.onda_sx.xi_coda == pytest.approx(-7 + a / 0.2)
+        assert s.stato_xi(0.0).p == 0.0
+
+    def test_coerenza_curve(self):
+        # p* e u* stanno su entrambe le curve del piano p–u (F §8)
+        casi = [(_st(1, 0, 1), _st(0.125, 0, 0.1)), (_st(1, 1, 1), _st(1, -1, 1)),
+                (_st(2, 0.3, 5), _st(0.5, -0.2, 0.7)), (_st(1, -1, 1), _st(1, 0.5, 2))]
+        for L, R in casi:
+            s = gd.riemann(L, R)
+            assert gd.curva_onda(L, "u-a", s.p_star) == pytest.approx(s.u_star, abs=1e-10)
+            assert gd.curva_onda(R, "u+a", s.p_star) == pytest.approx(s.u_star, abs=1e-10)
+            for o in (s.onda_sx, s.onda_dx):
+                if isinstance(o, gd.Urto):
+                    assert max(o.residui_rh().values()) < 1e-11
+
+    def test_specchio(self):
+        L, R = _st(2, 0.3, 5), _st(0.5, -0.2, 0.7)
+        a = gd.riemann(L, R)
+        b = gd.riemann(R.con(u=-R.u), L.con(u=-L.u))
+        assert b.p_star == pytest.approx(a.p_star) and b.u_star == pytest.approx(-a.u_star)
+        assert b.configurazione == a.configurazione[::-1]
+
+    def test_gas_diversi(self):
+        aria, elio = gd.Gas(1.4), gd.Gas(5 / 3)
+        L, R = gd.State(aria, 1.0, 0.0, 10.0), gd.State(elio, 0.2, 0.0, 1.0)
+        s = gd.riemann(L, R)
+        assert s.stati["2"].gas == aria and s.stati["3"].gas == elio
+        assert gd.curva_onda(L, "u-a", s.p_star) == pytest.approx(s.u_star, abs=1e-10)
+        assert gd.curva_onda(R, "u+a", s.p_star) == pytest.approx(s.u_star, abs=1e-10)
+
+    def test_isentropico(self):
+        L, R = _st(1, 0, 1), _st(1, 0, 0.5)
+        s = gd.riemann(L, R, modello="isentropico")
+        # forma chiusa F §8: u⁰
+        g, d = 1.4, 0.2
+        aL, aR = math.sqrt(1.4), math.sqrt(0.7)
+        z = aR / aL * (1 / 0.5) ** ((g - 1) / (2 * g))
+        u0 = (z * aL - aR) / (d * (1 + z))
+        assert s.u_star == pytest.approx(u0)
+        e = gd.riemann(L, R)
+        assert s.p_star == pytest.approx(e.p_star, rel=2e-3)  # urto debole ≈ isentropico
+
+    def test_conservazione_integrale(self):
+        L, R = _st(1, 0.2, 1), _st(0.3, -0.5, 0.2)
+        s = gd.riemann(L, R)
+        t, X = 0.4, 3.0
+        x = np.linspace(-X, X, 400001)
+        c = s.campiona(x, t)
+        U = np.array([c["rho"], c["rho"] * c["u"], c["p"] / 0.4 + 0.5 * c["rho"] * c["u"] ** 2])
+        I = np.trapezoid(U, x, axis=1)
+        I0 = X * (L.U() + R.U())
+        atteso = I0 + t * (L.F() - R.F())
+        assert np.allclose(I, atteso, rtol=2e-5)
+
+    def test_parete_e_pressione(self):
+        st = _st(1, 0.5, 1)
+        o = gd.contorno_parete(st, "destra")
+        assert isinstance(o, gd.Urto) and o.valle.u == pytest.approx(0, abs=1e-12) and o.w < 0
+        o = gd.contorno_parete(st, "sinistra")
+        assert isinstance(o, gd.Ventaglio) and o.valle.u == pytest.approx(0, abs=1e-12)
+        o = gd.contorno_pressione(st, "destra", 0.5)
+        assert o.valle.p == pytest.approx(0.5)
+
+    def test_serbatoio(self):
+        gas = ARIA_ADIM
+        interno = _st(1.0, 0.0, 0.5)
+        r = gd.contorno_serbatoio(interno, "sinistra", 1.0, a0=math.sqrt(1.4))
+        b = r["stato"]
+        assert r["regime"] == "ingresso" and b.u > 0
+        assert b.a**2 + 0.2 * b.u**2 == pytest.approx(1.4)
+        assert b.R1 == pytest.approx(interno.R1)
+        assert b.p0 == pytest.approx(1.0)
+        r = gd.contorno_serbatoio(_st(1.0, 0.0, 2.0), "sinistra", 1.0, a0=1.0)
+        assert r["regime"] == "uscita" and r["stato"].p == pytest.approx(1.0)
+
+    def test_riemann_area_aree_uguali(self):
+        L, R = _st(1.0, 0.3, 1.0), _st(1.0, 0.3, 0.4)
+        r = gd.riemann_area(L, R, 1.0, 1.0)
+        s = gd.riemann(L, R)
+        assert r["stato_5"].p == pytest.approx(s.p_star, rel=1e-9)
+        assert r["stato_5"].u == pytest.approx(s.u_star, rel=1e-9)

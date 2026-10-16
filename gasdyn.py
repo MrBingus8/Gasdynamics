@@ -1412,3 +1412,345 @@ def formazione_urto_ci(u0, a0, gas: Gas, intervallo=None, x=None, n: int = 20001
                     "dv_min": dvm, "onda_semplice": semplice}
     out["prima"] = min(("u+a", "u-a"), key=lambda f: out[f]["t_bu"])
     return out
+
+
+# =============================================================================
+# 6. Problema di Riemann 1D (F §8–9)
+# =============================================================================
+def _lato_sinistro(uk: float, st1: State):
+    """Onda u−a in funzione di u^k (F §8): (p2, a2, dp2/du, M_rel,1 o None)."""
+    g, d = st1.gas.gamma, st1.gas.delta
+    a1, p1 = st1.a, st1.p
+    if uk < st1.u:  # urto
+        k = 0.25 * (g + 1.0) * (st1.u - uk) / a1
+        M = k + math.sqrt(1.0 + k * k)
+        p2 = p1 * (1.0 + 2.0 * g / (g + 1.0) * (M * M - 1.0))
+        a2 = a1 * math.sqrt((g + 1.0 + (g - 1.0) * p2 / p1) / (g + 1.0 + (g - 1.0) * p1 / p2))
+        dp = -2.0 * g * p1 / a1 * M**3 / (1.0 + M * M)
+        return p2, a2, dp, M
+    a2 = a1 - d * (uk - st1.u)  # espansione
+    if a2 <= 0:
+        return 0.0, 0.0, 0.0, None
+    p2 = p1 * (a2 / a1) ** (2.0 * g / (g - 1.0))
+    return p2, a2, -g * p2 / a2, None
+
+
+def _lato_destro(uk: float, st4: State):
+    """Onda u+a in funzione di u^k (F §8): (p3, a3, dp3/du, M_rel,4 o None)."""
+    g, d = st4.gas.gamma, st4.gas.delta
+    a4, p4 = st4.a, st4.p
+    if uk > st4.u:  # urto
+        k = 0.25 * (g + 1.0) * (uk - st4.u) / a4
+        M = k + math.sqrt(1.0 + k * k)
+        p3 = p4 * (1.0 + 2.0 * g / (g + 1.0) * (M * M - 1.0))
+        a3 = a4 * math.sqrt((g + 1.0 + (g - 1.0) * p3 / p4) / (g + 1.0 + (g - 1.0) * p4 / p3))
+        dp = 2.0 * g * p4 / a4 * M**3 / (1.0 + M * M)
+        return p3, a3, dp, M
+    a3 = a4 + d * (uk - st4.u)  # espansione
+    if a3 <= 0:
+        return 0.0, 0.0, 0.0, None
+    p3 = p4 * (a3 / a4) ** (2.0 * g / (g - 1.0))
+    return p3, a3, g * p3 / a3, None
+
+
+@dataclass
+class SoluzioneRiemann:
+    """Soluzione del problema di Riemann 1D (F §8).
+
+    ``stati``: dict {'1','2','3','4'} (in caso di vuoto 2 e 3 sono gli stati di
+    vuoto al bordo dei ventagli). ``onda_sx`` (famiglia u−a) e ``onda_dx`` (u+a):
+    :class:`Urto` o :class:`Ventaglio`. ``configurazione``: sigla del corso
+    (es. 'RCS', 'SCR', 'NCS', 'RNS', 'RVR'). ``iterazioni``: lista di tuple
+    (k, u^k, p2^k, p3^k) di Newton (F §8). ``metodo``: 'newton', 'brentq'
+    (rete di sicurezza), 'chiuso' (modello isentropico, gas uguali) o 'vuoto'.
+    ``x0``, ``t0``: origine della discontinuità iniziale.
+    """
+
+    stati: dict
+    p_star: float
+    u_star: float
+    onda_sx: object
+    onda_dx: object
+    configurazione: str
+    vuoto: bool = False
+    modello: str = "esatto"
+    metodo: str = "newton"
+    iterazioni: list = field(default_factory=list)
+    x0: float = 0.0
+    t0: float = 0.0
+
+    @property
+    def contatto(self):
+        return self.configurazione[1] == "C"
+
+    def velocita(self) -> dict:
+        """Pendenze dx/dt di tutte le linee della soluzione (F §8, tabella testa/coda)."""
+        v = {}
+        for lato, onda in (("sx", self.onda_sx), ("dx", self.onda_dx)):
+            if isinstance(onda, Urto):
+                v[f"urto_{lato}"] = onda.w
+            else:
+                v[f"testa_{lato}"] = onda.xi_testa
+                v[f"coda_{lato}"] = onda.xi_coda
+        if not self.vuoto:
+            v["contatto"] = self.u_star
+        return v
+
+    def stato_xi(self, xi: float) -> State:
+        """Stato in ξ = (x − x0)/(t − t0)."""
+        if self.vuoto:
+            if xi <= self.onda_sx.xi_coda:
+                return self.onda_sx.stato_xi(xi)
+            if xi >= self.onda_dx.xi_coda:
+                return self.onda_dx.stato_xi(xi)
+            return State(self.stati["1"].gas, 0.0, xi, 0.0, 0.0, "vuoto")
+        onda = self.onda_sx if xi < self.u_star else self.onda_dx
+        if isinstance(onda, Urto):
+            if onda is self.onda_sx:
+                return onda.monte if xi < onda.w else onda.valle
+            return onda.monte if xi > onda.w else onda.valle
+        return onda.stato_xi(xi)
+
+    def campiona(self, x, t) -> dict:
+        """Campiona ρ, u, p, a, M, s, p0 in x (array) all'istante t > t0."""
+        if t <= self.t0:
+            raise GasdynError("campiona: serve t > t0")
+        x = np.atleast_1d(np.asarray(x, float))
+        sts = [self.stato_xi((xx - self.x0) / (t - self.t0)) for xx in x]
+        out = {k: np.array([getattr(s, k) for s in sts]) for k in ("rho", "u", "p")}
+        out["a"] = np.array([s.a for s in sts])
+        with np.errstate(invalid="ignore", divide="ignore"):
+            out["M"] = np.where(out["a"] > 0, out["u"] / np.where(out["a"] > 0, out["a"], 1), np.nan)
+            out["s"] = np.array([s.s if s.rho > 0 else np.nan for s in sts])
+            out["p0"] = np.array([s.p0 if s.rho > 0 else np.nan for s in sts])
+        out["x"] = x
+        return out
+
+    def __repr__(self):
+        r = [f"Riemann {self.configurazione} (modello {self.modello}, metodo {self.metodo}, "
+             f"{len(self.iterazioni)} iterazioni): p* = {_fmt(self.p_star, 7)}, u* = {_fmt(self.u_star, 7)}"]
+        for k in ("1", "2", "3", "4"):
+            r.append(f"  {k}: {self.stati[k]}")
+        for nome, o in (("sinistra", self.onda_sx), ("destra", self.onda_dx)):
+            if isinstance(o, Urto):
+                r.append(f"  onda {nome} ({o.famiglia}): urto w = {_fmt(o.w, 7)}, Ms = {_fmt(o.Ms, 7)}")
+            else:
+                r.append(f"  onda {nome} ({o.famiglia}): {o.tipo}, testa {_fmt(o.xi_testa, 7)}, "
+                         f"coda {_fmt(o.xi_coda, 7)}")
+        if not self.vuoto:
+            r.append(f"  contatto: w = {_fmt(self.u_star, 7)}")
+        return "\n".join(r)
+
+
+def _innesco_riemann(st1: State, st4: State) -> float:
+    """u⁰ della doppia espansione (F §8). Gas uguali: forma chiusa con z; gas diversi:
+    doppia espansione risolta con brentq (estensione: serve solo come punto di partenza)."""
+    g1, g4 = st1.gas, st4.gas
+    if g1.gamma == g4.gamma:
+        d = g1.delta
+        z = (st4.a / st1.a) * (st1.p / st4.p) ** ((g1.gamma - 1.0) / (2.0 * g1.gamma))
+        return (z * (st1.a + d * st1.u) - (st4.a - d * st4.u)) / (d * (1.0 + z))
+    lo = st4.u - st4.a / g4.delta
+    hi = st1.u + st1.a / g1.delta
+    f = lambda u: (st1.p * max(1.0 - g1.delta * (u - st1.u) / st1.a, 0.0) ** (1.0 / g1.q)
+                   - st4.p * max(1.0 + g4.delta * (u - st4.u) / st4.a, 0.0) ** (1.0 / g4.q))
+    return brentq(f, lo, hi, xtol=1e-14)
+
+
+def riemann(sinistra: State, destra: State, *, modello: str = "esatto", tol: float = TOL,
+            maxit: int = 50, x0: float = 0.0, t0: float = 0.0) -> SoluzioneRiemann:
+    """Problema di Riemann 1D esatto con l'algoritmo del formulario (F §8).
+
+    Stato 1 = ``sinistra``, stato 4 = ``destra`` (anche con gas diversi).
+    Algoritmo: innesco u⁰ (doppia espansione, formula con z); per ogni u^k si
+    calcolano p2^k, ṗ2^k (onda u−a: urto se u^k < u1, espansione altrimenti) e
+    p3^k, ṗ3^k (onda u+a: urto se u^k > u4); Newton
+    u^(k+1) = u^k − (p2−p3)/(ṗ2−ṗ3) fino a |1 − p2/p3| < ``tol``.
+    Smorzamento: se u^(k+1) esce dall'intervallo fisico (a2, a3 > 0) il passo
+    viene dimezzato. Rete di sicurezza (non nel formulario): se Newton non
+    converge in ``maxit`` iterazioni si usa ``brentq`` su p2(u) − p3(u), che è
+    strettamente decrescente; la soluzione è marcata ``metodo='brentq'``.
+    Vuoto se u4 − u1 ≥ a1/δ1 + a4/δ4 (F §8 con gas uguali: (a1+a4)/δ) ⇒ 'RVR'.
+    ``modello='isentropico'``: entrambe le onde isentropiche (compressioni
+    comprese); con gas uguali è la soluzione chiusa u⁰ del primo passo.
+    """
+    st1, st4 = sinistra.con(nome="1"), destra.con(nome="4")
+    g1, g4 = st1.gas, st4.gas
+    lo = st4.u - st4.a / g4.delta
+    hi = st1.u + st1.a / g1.delta
+    if lo >= hi:  # vuoto
+        V1 = onda_verso(st1, "u-a", u=hi, consenti_vuoto=True, nome="2")
+        V4 = onda_verso(st4, "u+a", u=lo, consenti_vuoto=True, nome="3")
+        V1 = replace(V1, vuoto=True)
+        V4 = replace(V4, vuoto=True)
+        return SoluzioneRiemann({"1": st1, "2": V1.valle, "3": V4.valle, "4": st4}, 0.0, math.nan,
+                                V1, V4, "RVR", vuoto=True, modello=modello, metodo="vuoto",
+                                x0=x0, t0=t0)
+    iterazioni = []
+    if modello == "isentropico":
+        u = _innesco_riemann(st1, st4)
+        p = st1.p * (1.0 - g1.delta * (u - st1.u) / st1.a) ** (1.0 / g1.q)
+        metodo = "chiuso" if g1.gamma == g4.gamma else "brentq"
+    elif modello == "esatto":
+        u = _innesco_riemann(st1, st4)
+        metodo = "newton"
+        conv = False
+        for k in range(maxit):
+            p2, a2, dp2, _ = _lato_sinistro(u, st1)
+            p3, a3, dp3, _ = _lato_destro(u, st4)
+            iterazioni.append((k, u, p2, p3))
+            if p3 > 0 and abs(1.0 - p2 / p3) < tol:
+                conv = True
+                break
+            du = -(p2 - p3) / (dp2 - dp3)
+            un = u + du
+            while not (lo < un < hi):
+                du *= 0.5
+                un = u + du
+            u = un
+        if not conv:
+            f = lambda uu: _lato_sinistro(uu, st1)[0] - _lato_destro(uu, st4)[0]
+            span = hi - lo
+            u = brentq(f, lo + 1e-15 * span, hi - 1e-15 * span, xtol=1e-15, rtol=1e-15)
+            metodo = "brentq"
+        p = _lato_sinistro(u, st1)[0]
+    else:
+        raise GasdynError("modello: 'esatto' o 'isentropico'")
+    onda_sx = onda_verso(st1, "u-a", u=u, modello=modello, nome="2")
+    onda_dx = onda_verso(st4, "u+a", u=u, modello=modello, nome="3")
+    st2, st3 = onda_sx.valle, onda_dx.valle
+    sigla_c = "C"
+    if g1 == g4 and abs(st2.rho / st3.rho - 1.0) < TOL_NULLA * 10:
+        sigla_c = "N"
+    conf = onda_sx.sigla + sigla_c + onda_dx.sigla
+    return SoluzioneRiemann({"1": st1, "2": st2, "3": st3, "4": st4}, p, u, onda_sx, onda_dx, conf,
+                            modello=modello, metodo=metodo, iterazioni=iterazioni, x0=x0, t0=t0)
+
+
+def interazione(stato_sx: State, stato_dx: State, **kw) -> SoluzioneRiemann:
+    """Interazione d'onde come pseudo-problema di Riemann fra i due stati esterni (F §9).
+
+    Al primo incontro (urto–contatto, urto–urto, onda–contatto, ...) si
+    trascura il supporto della zona d'interazione e si risolve il Riemann fra
+    gli stati esterni noti. Per interazioni distribuite fra ventagli il
+    risultato dà solo gli stati asintotici (F §9). Argomenti come :func:`riemann`.
+    """
+    return riemann(stato_sx, stato_dx, **kw)
+
+
+def contorno_parete(stato: State, lato_parete: str, u_parete: float = 0.0, nome: str = ""):
+    """Onda generata da una parete (ferma o in moto con ``u_parete``) sullo stato adiacente (F §9).
+
+    ``lato_parete``: 'destra' (gas a sinistra, onda u−a) o 'sinistra' (onda u+a).
+    Restituisce :class:`Urto` (compressione) o :class:`Ventaglio` (espansione).
+    """
+    fam = "u-a" if lato_parete.startswith("d") else "u+a"
+    return onda_verso(stato, fam, u=u_parete, nome=nome)
+
+
+def contorno_pressione(stato: State, lato: str, p_b: float, modello: str = "esatto", nome: str = ""):
+    """Estremo aperto con pressione imposta p_b (F §9 "Pressione imposta").
+
+    ``lato``: estremo del condotto ('destra' ⇒ onda riflessa u−a, 'sinistra' ⇒ u+a).
+    Una compressione incidente su p costante riflette un'espansione e viceversa.
+    """
+    fam = "u-a" if lato.startswith("d") else "u+a"
+    return onda_verso(stato, fam, p=p_b, modello=modello, nome=nome)
+
+
+def contorno_pistone(stato: State, lato: str, u_p: float, nome: str = ""):
+    """Pistone all'estremo ``lato`` ('sinistra' o 'destra') con velocità u_p (F §9)."""
+    return contorno_parete(stato, lato, u_parete=u_p, nome=nome)
+
+
+def contorno_serbatoio(stato: State, lato: str, p0: float, *, a0: float = None, T0: float = None,
+                       nome: str = "") -> dict:
+    """Estremo collegato a un grande serbatoio (p0, T0, u = 0) (S p.44–45).
+
+    Ingresso dal serbatoio (gas che entra nel condotto): stato al contorno con
+    s = s_serbatoio, a_b² + δu_b² = a0² (h0 e s del serbatoio) e l'invariante
+    proveniente dall'interno (R1 = a − δu se il serbatoio è a sinistra,
+    R2 = a + δu se è a destra); il modello è isentropico come in S p.45.
+    Uscita verso il serbatoio: p_b = p0 e onda dall'interno (:func:`onda_verso`).
+    Restituisce dict con 'regime' ('ingresso'/'uscita'), 'stato' al contorno,
+    'onda' emessa nel condotto (per l'uscita) e 'nota'.
+    """
+    gas = stato.gas
+    if (a0 is None) == (T0 is None):
+        raise GasdynError("specificare esattamente uno fra a0 e T0 del serbatoio")
+    if T0 is not None:
+        gas._serve_R("contorno_serbatoio con T0")
+        a0 = math.sqrt(gas.gamma * gas.R * T0)
+    d = gas.delta
+    sin = lato.startswith("s")
+    sgn_in = 1.0 if sin else -1.0  # verso dell'ingresso
+    K = stato.R1 if sin else stato.R2  # a − sgn_in δ u = K
+    # (K + sgn_in δ u)² + δu² = a0²
+    A_, B_, C_ = d * d + d, 2.0 * K * d * sgn_in, K * K - a0 * a0
+    disc = B_ * B_ - 4 * A_ * C_
+    if disc >= 0:
+        u_b = (-B_ + sgn_in * math.sqrt(disc)) / (2 * A_)
+        if sgn_in * u_b >= 0:
+            a_b = K + sgn_in * d * u_b
+            s0 = p0 / (gas.gamma * p0 / a0**2) ** gas.gamma
+            stb = _stato_da_a_s(gas, a_b, s0, u_b, nome)
+            nota = "ingresso subsonico" if abs(u_b) < a_b else "ingresso supersonico: rivedere le condizioni"
+            compr = stb.p > stato.p
+            if compr:
+                nota += "; l'onda emessa comprime: trattata come isentropica (S p.45)"
+            return {"regime": "ingresso", "stato": stb, "nota": nota}
+    fam = "u+a" if sin else "u-a"
+    onda = onda_verso(stato, fam, p=p0, nome=nome)
+    return {"regime": "uscita", "stato": onda.valle, "onda": onda, "nota": "p = p0 al contorno"}
+
+
+def riemann_area(sinistra: State, destra: State, A_sx: float, A_dx: float, tol: float = 1e-12) -> dict:
+    """Interazione con una brusca variazione d'area in x0 (urto/flusso che attraversa la sezione).
+
+    Modello del corso (F §9 "Variazione d'area", S p.49, B72-E02): il gas che
+    attraversa la sezione segue il collegamento stazionario isentropico
+    (:func:`variazione_area`); il resto è un problema di Riemann.
+    Il flusso deve andare da sinistra a destra (u_sx > 0).
+
+    * Flusso a monte supersonico (M_sx ≥ 1): nessuna onda può risalire;
+      lo stato 5 = variazione_area(sinistra) e si risolve riemann(5, destra).
+      Si verifica che l'onda sinistra di questo Riemann si muova verso destra
+      (altrimenti l'ipotesi non regge e si solleva GasdynError).
+    * Flusso subsonico: si cerca p' dello stato 2' dietro un'onda u−a riflessa
+      a sinistra della sezione, tale che lo stato 5 (stazionario a destra)
+      sia collegato a ``destra`` da contatto + onda u+a (brentq su p').
+      **Estensione** del procedimento del corso (dichiarata).
+
+    Restituisce dict con gli stati, le onde e la soluzione di Riemann a valle.
+    """
+    if sinistra.u <= 0:
+        raise GasdynError("riemann_area: richiede flusso verso destra a sinistra della sezione (u_sx > 0)")
+    if sinistra.M >= 1.0:
+        st5 = variazione_area(sinistra, A_sx, A_dx, "stesso", nome="5")
+        sol = riemann(st5, destra)
+        o = sol.onda_sx
+        v_min = o.w if isinstance(o, Urto) else min(o.xi_testa, o.xi_coda)
+        if v_min < 0:
+            raise GasdynError("l'onda sinistra del Riemann a valle risalirebbe la sezione: "
+                              "il modello supersonico semplice non vale")
+        return {"regime": "supersonico", "stato_5": st5, "riemann_valle": sol, "onda_riflessa": None}
+
+    def stato5(pp):
+        o = onda_verso(sinistra, "u-a", p=pp)  # onda riflessa che risale verso sinistra
+        st2p = o.valle
+        if not 0 < st2p.u < st2p.a:  # 2' deve essere subsonico ed entrante nella sezione
+            raise GasdynError("stato 2' non subsonico")
+        return o, st2p, variazione_area(st2p, A_sx, A_dx, "stesso", nome="5")
+
+    def f(pp):
+        _, _, st5 = stato5(pp)
+        return st5.u - curva_onda(destra, "u+a", st5.p)
+
+    lo, hi = sinistra.p * 1e-6, sinistra.p * 1e3
+    rad = _radici(f, lo, hi, n=600, scala="log")
+    if len(rad) != 1:
+        raise GasdynError(f"riemann_area subsonico: {len(rad)} soluzioni trovate")
+    o, st2p, st5 = stato5(rad[0])
+    trasmessa = onda_verso(destra, "u+a", p=st5.p, nome="6")
+    return {"regime": "subsonico", "onda_riflessa": o, "stato_2p": st2p, "stato_5": st5,
+            "onda_trasmessa": trasmessa}

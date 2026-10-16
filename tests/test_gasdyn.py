@@ -602,3 +602,173 @@ class TestArea6:
         s = gd.riemann(L, R)
         assert r["stato_5"].p == pytest.approx(s.p_star, rel=1e-9)
         assert r["stato_5"].u == pytest.approx(s.u_star, rel=1e-9)
+
+
+# =============================================================================
+# Area 7 — supersonico 2D
+# =============================================================================
+class TestArea7:
+    def test_prandtl_meyer(self):
+        assert gd.prandtl_meyer(2.0, ARIA) == pytest.approx(26.3798, abs=1e-4)
+        assert gd.nu_max(ARIA) == pytest.approx(130.4541, abs=1e-4)
+        for M in [1.0, 1.5, 3.0, 10.0]:
+            assert gd.mach_da_pm(gd.prandtl_meyer(M, ARIA), ARIA) == pytest.approx(M, rel=1e-10)
+        with pytest.raises(gd.Vuoto):
+            gd.mach_da_pm(131.0, ARIA)
+
+    def test_theta_sigma_M(self):
+        assert gd.sigma_da_theta(2.0, 10.0, ARIA, "debole") == pytest.approx(39.3139, abs=1e-4)
+        assert gd.sigma_da_theta(2.0, 10.0, ARIA, "forte") == pytest.approx(83.70, abs=1e-2)
+        tm, sm = gd.theta_max(2.0, ARIA)
+        assert tm == pytest.approx(22.9735, abs=1e-4)
+        # forma chiusa di σ a θmax (fuori formulario) come controllo
+        g, M = 1.4, 2.0
+        s2 = ((g + 1) * M**2 - 4 + math.sqrt((g + 1) * ((g + 1) * M**4 + 8 * (g - 1) * M**2 + 16))) / (4 * g * M**2)
+        assert sm == pytest.approx(math.degrees(math.asin(math.sqrt(s2))), abs=1e-6)
+        with pytest.raises(gd.UrtoStaccato):
+            gd.sigma_da_theta(2.0, 23.0, ARIA)
+        for th in [0.0, 5.0, 20.0]:
+            for ramo in ["debole", "forte"]:
+                s = gd.sigma_da_theta(3.0, th, ARIA, ramo)
+                assert gd.theta_da_sigma(3.0, s, ARIA) == pytest.approx(th, abs=1e-10)
+
+    def test_limiti_polare(self):
+        mu = gd.angolo_mach(2.0)
+        assert gd.theta_da_sigma(2.0, mu, ARIA) == pytest.approx(0.0, abs=1e-12)
+        assert gd.theta_da_sigma(2.0, 90.0, ARIA) == pytest.approx(0.0, abs=1e-12)
+        ts, ss = gd.sonico(2.0, ARIA)
+        tm, sm = gd.theta_max(2.0, ARIA)
+        assert ts < tm and ss < sm  # il punto sonico precede θmax sul ramo debole
+        st = gd.State.da_M(ARIA_ADIM, 2.0, p=1.0, a=1.0)
+        assert gd.urto_obliquo(st, sigma=ss).valle.M == pytest.approx(1.0, abs=1e-9)
+
+    def test_urto_obliquo_conservazione(self):
+        st = gd.State.da_M(ARIA_ADIM, 3.0, 7.0, p=2.0, a=1.3)
+        for fam in ["C+", "C-"]:
+            o = gd.urto_obliquo(st, theta=12.0, famiglia=fam)
+            s = 1 if fam == "C+" else -1
+            assert o.deflessione == pytest.approx(s * 12.0)
+            n = np.array([-math.sin(math.radians(o.angolo_fronte)), math.cos(math.radians(o.angolo_fronte))])
+            t = np.array([math.cos(math.radians(o.angolo_fronte)), math.sin(math.radians(o.angolo_fronte))])
+            V1, V2 = np.array([st.u, st.v]), np.array([o.valle.u, o.valle.v])
+            assert V1 @ t == pytest.approx(V2 @ t)
+            assert st.rho * (V1 @ n) == pytest.approx(o.valle.rho * (V2 @ n))
+            assert st.p + st.rho * (V1 @ n) ** 2 == pytest.approx(o.valle.p + o.valle.rho * (V2 @ n) ** 2)
+            assert o.valle.h0 == pytest.approx(st.h0)
+            assert o.ramo == "debole"
+
+    def test_rotazione(self):
+        a = gd.urto_obliquo(gd.State.da_M(ARIA_ADIM, 2.5, 0.0, p=1, a=1), theta=8.0)
+        b = gd.urto_obliquo(gd.State.da_M(ARIA_ADIM, 2.5, 25.0, p=1, a=1), theta=8.0)
+        assert b.valle.p == pytest.approx(a.valle.p) and b.valle.theta == pytest.approx(a.valle.theta + 25)
+
+    def test_pm_invarianti(self):
+        st = gd.State.da_M(ARIA_ADIM, 2.0, 5.0, p=1, a=1)
+        o = gd.espansione_pm(st, 10.0, "C+")
+        assert o.valle.theta == pytest.approx(-5.0)
+        assert o.valle.theta + gd.prandtl_meyer(o.valle.M, ARIA_ADIM) == pytest.approx(
+            st.theta + gd.prandtl_meyer(2.0, ARIA_ADIM))
+        assert o.valle.p0 == pytest.approx(st.p0)
+        o = gd.espansione_pm(st, 10.0, "C-")
+        assert o.valle.theta == pytest.approx(15.0)
+
+    def test_onda_verso_p(self):
+        st = gd.State.da_M(ARIA_ADIM, 2.5, p=1, a=1)
+        for p2 in [0.3, 1.0, 2.0, 6.0]:
+            for fam in ["C+", "C-"]:
+                assert gd.onda_verso_p_2d(st, p2, fam).valle.p == pytest.approx(p2)
+        with pytest.raises(gd.NessunaSoluzione):
+            gd.onda_verso_p_2d(st, 8.0, "C+")  # oltre l'urto normale (7.125)
+
+    def test_riemann_stazionario(self):
+        sopra = gd.State.da_M(ARIA_ADIM, 4.0, p=0.5, a=1.0)
+        sotto = gd.State.da_M(ARIA_ADIM, 6.0, p=0.01, a=0.8)
+        r = gd.riemann_stazionario(sopra, sotto)
+        assert r.onda_sopra.valle.p == pytest.approx(r.onda_sotto.valle.p)
+        assert r.onda_sopra.valle.theta == pytest.approx(r.onda_sotto.valle.theta)
+        assert r.onda_sopra.tipo == "espansione" and r.onda_sotto.tipo == "urto"
+        assert r.theta < 0
+        ri = gd.riemann_stazionario(sopra, sotto, modello="isentropico")
+        assert ri.onda_sotto.tipo == "compressione isentropica"
+        assert ri.p != pytest.approx(r.p, rel=1e-3)
+
+    def test_riflessione_regolare(self):
+        st = gd.State.da_M(ARIA_ADIM, 2.8, p=1, a=1)
+        r = gd.riflessione_regolare(st, 10.0)
+        assert r["3"].theta == pytest.approx(0.0, abs=1e-10)
+        assert gd.theta_da_sigma(2.8, r["incidente"].sigma, ARIA) == pytest.approx(10.0)
+        assert gd.theta_da_sigma(r["2"].M, r["riflesso"].sigma, ARIA) == pytest.approx(10.0)
+        assert r["angolo_riflesso_parete"] == pytest.approx(r["riflesso"].sigma - 10.0)
+        with pytest.raises(gd.UrtoStaccato):
+            gd.riflessione_regolare(gd.State.da_M(ARIA_ADIM, 2.0, p=1, a=1), 14.0)
+
+    def test_criteri_rr_mr(self):
+        M = 4.0
+        tD = gd.theta_distacco(M, ARIA)
+        st = gd.State.da_M(ARIA_ADIM, M, p=1, a=1)
+        M2 = gd.urto_obliquo(st, theta=tD, famiglia="C-").valle.M
+        assert gd.theta_max(M2, ARIA)[0] == pytest.approx(tD, abs=1e-8)
+        tN = gd.theta_von_neumann(M, ARIA)
+        assert tN < tD
+        pn = 1.0 * gd.urto_normale(M, ARIA)["p2_p1"]
+        assert gd.riflessione_regolare(st, tN)["3"].p == pytest.approx(pn, rel=1e-9)
+        mr = gd.riflessione_mach(st, tN)["principale"]
+        assert mr["theta"] == pytest.approx(0.0, abs=1e-5) and mr["p"] == pytest.approx(pn, rel=1e-6)
+        mr = gd.riflessione_mach(st, 0.5 * (tN + tD))["principale"]
+        assert mr["3"].p == pytest.approx(mr["4"].p) and mr["4"].M < 1
+        with pytest.raises(gd.NessunaSoluzione):
+            gd.theta_von_neumann(2.0, ARIA)  # esiste solo per M1 > 2.2 circa (γ = 1.4)
+
+    def test_shock_expansion_lastra(self):
+        M, al = 3.0, 2.0
+        r = gd.shock_expansion([(0, 0), (1, 0)], [(0, 0), (1, 0)], M, al, ARIA)
+        lin = 4 * math.radians(al) / math.sqrt(M**2 - 1)
+        assert r["CL"] == pytest.approx(lin, rel=0.03)
+        assert r["CD"] == pytest.approx(r["CL"] * math.tan(math.radians(al)), rel=1e-10)
+        # profilo a diamante simmetrico a incidenza nulla: CL = 0, CD > 0
+        r = gd.shock_expansion([(0, 0), (0.5, 0.05), (1, 0)], [(0, 0), (0.5, -0.05), (1, 0)], M, 0.0, ARIA)
+        assert r["CL"] == pytest.approx(0.0, abs=1e-12) and r["CD"] > 0
+
+    def test_pitot(self):
+        assert gd.pitot_supersonico(2.0, ARIA) == pytest.approx(5.6404, abs=1e-4)
+        for M in [0.5, 1.0, 1.5, 4.0]:
+            assert gd.mach_da_pitot(gd.pitot_supersonico(M, ARIA), ARIA) == pytest.approx(M, rel=1e-9)
+        r = gd.urto_normale(3.0, ARIA)
+        assert gd.pitot_supersonico(3.0, ARIA) == pytest.approx(r["p02_p1"])
+
+    def test_caratteristiche_2d(self):
+        st = gd.State.da_M(ARIA_ADIM, 2.0, p=1, a=1)
+        r = gd.punto_caratteristiche_2d(st, st, (0, 1), (0, -1))
+        assert r["M"] == pytest.approx(2.0) and r["theta"] == pytest.approx(0.0)
+        assert r["x"] == pytest.approx(1 / math.tan(math.radians(30.0))) and r["y"] == pytest.approx(0, abs=1e-12)
+
+    def test_getto(self):
+        r = gd.getto_adattamento(2.0, 2.0, 1.0, ARIA)
+        st = gd.State.da_M(ARIA, 2.0, p=2.0, a=1.0)
+        assert r["regime"] == "sottoespanso"
+        assert r["deflessione"] == pytest.approx(abs(gd.onda_verso_p_2d(st, 1.0, "C+").deflessione))
+        r = gd.getto_adattamento(2.0, 0.8, 1.0, ARIA)
+        assert r["regime"] == "sovraespanso" and r["onda"].valle.p == pytest.approx(1.0)
+
+    def test_sauer_meyer(self):
+        s = gd.sauer_meyer(50.0, ARIA)
+        assert s["u"](0.0, 0.0) == 0
+        for eta in [0.3, 1.0]:
+            assert s["u"](s["xi_sonica"](eta), eta) == pytest.approx(0.0, abs=1e-15)
+            assert s["v"](s["xi_gola"](eta), eta) == pytest.approx(0.0, abs=1e-15)
+
+    def test_ugello_minima_lunghezza(self):
+        r = gd.ugello_minima_lunghezza(2.5, ARIA, n=40)
+        assert r["theta_w_max"] == pytest.approx(gd.prandtl_meyer(2.5, ARIA) / 2)
+        assert r["h_uscita_su_h_gola"] == pytest.approx(gd.area_su_area_critica(2.5, ARIA), rel=0.01)
+
+    def test_odografo(self):
+        st = gd.State.da_M(ARIA_ADIM, 2.0, 10.0, p=1, a=1)
+        o = gd.polare_odografo(st, "C+", n=50)
+        us, vs = o["urto"]["us"], o["urto"]["vs"]
+        assert us[0] == pytest.approx(o["stato"][0]) and vs[0] == pytest.approx(o["stato"][1])
+        # punto d'urto normale: M2* = 1/M1* (Prandtl)
+        assert math.hypot(us[-1], vs[-1]) == pytest.approx(1 / st.M_star)
+        p = gd.polare_p_theta(st, "C+", n=50)
+        assert p["urto"]["p"][-1] == pytest.approx(4.5)
+        assert p["punti"]["theta_max"][0] == pytest.approx(10.0 + gd.theta_max(2.0, ARIA)[0])

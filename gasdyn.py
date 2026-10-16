@@ -1,4 +1,4 @@
-"""gasdyn — calcoli di Gasdinamica nella lingua del corso (Favini).
+﻿"""gasdyn — calcoli di Gasdinamica nella lingua del corso (Favini).
 
 Fonte primaria delle formule: ``fonti/formulario.tex`` (citato come "F §n");
 fonte secondaria: ``fonti/summary_lectures.tex`` (citato come "S p.n").
@@ -1754,3 +1754,729 @@ def riemann_area(sinistra: State, destra: State, A_sx: float, A_dx: float, tol: 
     trasmessa = onda_verso(destra, "u+a", p=st5.p, nome="6")
     return {"regime": "subsonico", "onda_riflessa": o, "stato_2p": st2p, "stato_5": st5,
             "onda_trasmessa": trasmessa}
+
+
+# =============================================================================
+# 7. Supersonico stazionario 2D (F §10–15, S p.50–61)
+# =============================================================================
+def _segno_C(famiglia: str) -> int:
+    f = str(famiglia).replace("−", "-").replace(" ", "").upper()
+    if f in ("C+", "+"):
+        return +1
+    if f in ("C-", "-"):
+        return -1
+    raise GasdynError(f"famiglia 2D '{famiglia}' non riconosciuta: usare 'C+' o 'C-'")
+
+
+def angolo_mach(M: float) -> float:
+    """Angolo di Mach μ = asin(1/M) [gradi] (F §10). Solleva NessunaSoluzione per M < 1."""
+    if M < 1.0 - 1e-12:
+        raise NessunaSoluzione(f"angolo di Mach non definito per M = {M} < 1")
+    return math.degrees(math.asin(min(1.0, 1.0 / M)))
+
+
+def prandtl_meyer(M, gas: Gas):
+    """Funzione di Prandtl–Meyer ν(M) [gradi] (F §11), ν(1) = 0. Accetta array."""
+    M = np.asarray(M, dtype=float)
+    if np.any(M < 1.0 - 1e-12):
+        raise NessunaSoluzione("ν(M) definita solo per M ≥ 1")
+    g = gas.gamma
+    k = math.sqrt((g + 1.0) / (g - 1.0))
+    x = np.sqrt(np.maximum(M * M - 1.0, 0.0))
+    nu = np.degrees(k * np.arctan(x / k) - np.arctan(x))
+    return float(nu) if np.ndim(nu) == 0 else nu
+
+
+def nu_max(gas: Gas) -> float:
+    """ν_max = (π/2)(√((γ+1)/(γ−1)) − 1) [gradi] (F §11)."""
+    return math.degrees(0.5 * math.pi * (math.sqrt((gas.gamma + 1.0) / (gas.gamma - 1.0)) - 1.0))
+
+
+def mach_da_pm(nu: float, gas: Gas) -> float:
+    """Inversa di Prandtl–Meyer: M da ν [gradi] (brentq su M ∈ [1, 1e8]).
+
+    Solleva NessunaSoluzione per ν < 0 e :class:`Vuoto` per ν ≥ ν_max.
+    """
+    if nu < -1e-12:
+        raise NessunaSoluzione(f"ν = {nu} < 0: la compressione porterebbe a M < 1")
+    if nu <= 0:
+        return 1.0
+    if nu >= nu_max(gas):
+        raise Vuoto(f"ν = {nu}° ≥ ν_max = {nu_max(gas):.4f}°: espansione nel vuoto")
+    return brentq(lambda M: prandtl_meyer(M, gas) - nu, 1.0, 1e8, xtol=1e-14, rtol=1e-14)
+
+
+def theta_da_sigma(M: float, sigma, gas: Gas):
+    """Relazione θ–σ–M (F §12): tanθ = 2cotσ (M²sin²σ − 1)/(M²(γ + cos2σ) + 2). Angoli in gradi."""
+    s = np.radians(np.asarray(sigma, dtype=float))
+    num = 2.0 / np.tan(s) * (M * M * np.sin(s) ** 2 - 1.0)
+    den = M * M * (gas.gamma + np.cos(2.0 * s)) + 2.0
+    th = np.degrees(np.arctan(num / den))
+    return float(th) if np.ndim(th) == 0 else th
+
+
+def _M2_obliquo(M: float, sigma: float, gas: Gas) -> float:
+    """Mach a valle M2 = M_n2/sin(σ − θ) (F §12)."""
+    Mn1 = M * _sind(sigma)
+    Mn2 = urto_normale(Mn1, gas)["M2"]
+    return Mn2 / _sind(sigma - theta_da_sigma(M, sigma, gas))
+
+
+def theta_max(M: float, gas: Gas) -> tuple:
+    """Deviazione massima (θmax, σ a θmax) [gradi], da dθ/dσ = 0 (F §12), con minimize_scalar (xatol 1e-12°)."""
+    mu = angolo_mach(M)
+    r = minimize_scalar(lambda s: -theta_da_sigma(M, s, gas), bounds=(mu, 90.0), method="bounded",
+                        options={"xatol": 1e-12})
+    return -r.fun, r.x
+
+
+def sonico(M: float, gas: Gas) -> tuple:
+    """Punto sonico della polare (θ_s, σ_s): M2 = 1 (F §12), brentq su σ."""
+    mu = angolo_mach(M)
+    if M <= 1.0:
+        return 0.0, 90.0
+    s = brentq(lambda s: _M2_obliquo(M, s, gas) - 1.0, mu + 1e-12, 90.0, xtol=1e-13)
+    return theta_da_sigma(M, s, gas), s
+
+
+def sigma_da_theta(M: float, theta: float, gas: Gas, ramo: str = "debole") -> float:
+    """Angolo d'urto σ [gradi] per deviazione |θ| [gradi] (F §12).
+
+    ``ramo``: 'debole' (μ < σ < σ_max) o 'forte' (σ_max < σ ≤ 90°).
+    Solleva :class:`UrtoStaccato` se |θ| > θmax(M).
+    """
+    th = abs(theta)
+    tm, sm = theta_max(M, gas)
+    if th > tm * (1 + 1e-12) + 1e-13:
+        raise UrtoStaccato(f"θ = {th:.6g}° > θmax(M = {M:.6g}) = {tm:.6g}°: urto staccato")
+    mu = angolo_mach(M)
+    if th >= tm:
+        return sm
+    f = lambda s: theta_da_sigma(M, s, gas) - th
+    if ramo == "debole":
+        return mu if th == 0 else brentq(f, mu, sm, xtol=1e-13, rtol=1e-15)
+    if ramo == "forte":
+        return 90.0 if th == 0 else brentq(f, sm, 90.0, xtol=1e-13, rtol=1e-15)
+    raise GasdynError("ramo: 'debole' o 'forte'")
+
+
+@dataclass(frozen=True)
+class Onda2D:
+    """Onda stazionaria 2D: urto obliquo o ventaglio di Prandtl–Meyer (F §11–12).
+
+    ``famiglia`` 'C+' (fronte θ+μ / θ+σ) o 'C-'. ``deflessione`` = θ2 − θ1
+    [gradi, con segno]. Per gli urti: ``sigma`` (angolo rispetto alla velocità
+    a monte) e ``ramo`` ('debole'/'forte'); ``angolo_fronte`` = θ1 ± σ
+    (direzione assoluta della linea d'urto). Per i ventagli: ``angolo_testa``,
+    ``angolo_coda`` = θ ± μ di monte e di valle.
+    """
+
+    tipo: str
+    famiglia: str
+    monte: State
+    valle: State
+    sigma: float = math.nan
+    ramo: str = ""
+
+    @property
+    def deflessione(self):
+        return self.valle.theta - self.monte.theta
+
+    @property
+    def _s(self):
+        return _segno_C(self.famiglia)
+
+    @property
+    def angolo_fronte(self):
+        return self.monte.theta + self._s * self.sigma
+
+    @property
+    def angolo_testa(self):
+        return self.monte.theta + self._s * angolo_mach(self.monte.M)
+
+    @property
+    def angolo_coda(self):
+        return self.valle.theta + self._s * angolo_mach(self.valle.M)
+
+    @property
+    def Mn1(self):
+        return self.monte.M * _sind(self.sigma)
+
+    @property
+    def p2_p1(self):
+        return self.valle.p / self.monte.p
+
+    @property
+    def p02_p01(self):
+        return self.valle.p0 / self.monte.p0
+
+    def __repr__(self):
+        if self.tipo == "urto":
+            info = f"σ={_fmt(self.sigma, 7)}° ({self.ramo}), Mn1={_fmt(self.Mn1)}, fronte {_fmt(self.angolo_fronte, 7)}°"
+        else:
+            info = f"testa {_fmt(self.angolo_testa, 7)}°, coda {_fmt(self.angolo_coda, 7)}°"
+        return (f"Onda2D {self.tipo} {self.famiglia}: Δθ={_fmt(self.deflessione, 7)}°, {info}, "
+                f"p2/p1={_fmt(self.p2_p1, 7)}, M {_fmt(self.monte.M)}→{_fmt(self.valle.M)}\n"
+                f"  monte: {self.monte}\n  valle: {self.valle}")
+
+
+def urto_obliquo(stato: State, *, theta: float = None, sigma: float = None, famiglia: str = "C+",
+                 ramo: str = "debole", nome: str = "") -> Onda2D:
+    """Urto obliquo su uno stato a direzione qualsiasi (F §12).
+
+    Dati: ``theta`` = modulo della deviazione [gradi] (con ``ramo``) oppure
+    ``sigma`` = angolo d'urto rispetto alla velocità a monte [gradi].
+    Famiglia C+: θ2 = θ1 + θ; C−: θ2 = θ1 − θ (convenzione confermata in Fase 0).
+    Stato a valle: componente tangenziale conservata, normale da Rankine–Hugoniot
+    con M_n1 = M1 sinσ. Solleva :class:`UrtoStaccato` se θ > θmax.
+    """
+    s = _segno_C(famiglia)
+    M1 = stato.M
+    if M1 < 1.0:
+        raise NessunaSoluzione(f"urto obliquo in corrente subsonica (M = {M1})")
+    if (theta is None) == (sigma is None):
+        raise GasdynError("urto_obliquo: specificare esattamente uno fra theta e sigma")
+    if sigma is None:
+        sigma = sigma_da_theta(M1, theta, stato.gas, ramo)
+    mu = angolo_mach(M1)
+    if not mu - 1e-9 <= sigma <= 90.0 + 1e-9:
+        raise NessunaSoluzione(f"σ = {sigma}° fuori da [μ, 90°] = [{mu:.6g}, 90]")
+    sigma = min(max(sigma, mu), 90.0)
+    r = urto_normale(M1 * _sind(sigma), stato.gas)
+    V1 = stato.V
+    Vn1, Vt = V1 * _sind(sigma), V1 * _cosd(sigma)
+    Vn2 = Vn1 / r["rho2_rho1"]
+    dth = sigma - math.degrees(math.atan2(Vn2, Vt))
+    th2 = stato.theta + s * dth
+    V2 = math.hypot(Vn2, Vt)
+    valle = State(stato.gas, stato.rho * r["rho2_rho1"], V2 * _cosd(th2), stato.p * r["p2_p1"],
+                  V2 * _sind(th2), nome)
+    sm = theta_max(M1, stato.gas)[1]
+    return Onda2D("urto", "C+" if s > 0 else "C-", stato, valle, sigma,
+                  "debole" if sigma <= sm else "forte")
+
+
+def onda_isentropica_2d(stato: State, famiglia: str, *, theta2: float = None, M2: float = None,
+                        p2: float = None, nome: str = "") -> Onda2D:
+    """Onda semplice di Prandtl–Meyer (espansione o compressione isentropica) (F §11, §13).
+
+    Attraverso un'onda C+ vale Δ(θ+ν) = 0, attraverso un'onda C− Δ(θ−ν) = 0:
+    θ2 = θ1 ∓ (ν2 − ν1). Si assegna la direzione finale ``theta2`` [gradi]
+    oppure ``M2`` o ``p2``. Grandezze totali conservate.
+    """
+    s = _segno_C(famiglia)
+    gas = stato.gas
+    M1 = stato.M
+    nu1 = prandtl_meyer(M1, gas)
+    if sum(x is not None for x in (theta2, M2, p2)) != 1:
+        raise GasdynError("specificare esattamente uno fra theta2, M2, p2")
+    if theta2 is not None:
+        nu2 = nu1 - s * (theta2 - stato.theta)
+        M2 = mach_da_pm(nu2, gas)
+    else:
+        if p2 is not None:
+            M2 = mach_da_rapporto(stato.p0 / p2, gas, "p0/p")
+        if M2 < 1:
+            raise NessunaSoluzione("compressione isentropica oltre M = 1")
+        nu2 = prandtl_meyer(M2, gas)
+        theta2 = stato.theta - s * (nu2 - nu1)
+    valle = State.da_totali(gas, M2, p0=stato.p0, a0=stato.a0, theta=theta2, nome=nome)
+    tipo = "espansione" if nu2 >= nu1 else "compressione isentropica"
+    return Onda2D(tipo, "C+" if s > 0 else "C-", stato, valle)
+
+
+def espansione_pm(stato: State, dtheta: float, famiglia: str, nome: str = "") -> Onda2D:
+    """Espansione di Prandtl–Meyer di modulo |Δθ| [gradi]: ν(M2) − ν(M1) = |Δθ| (F §11).
+
+    C+: la corrente ruota in senso orario (θ2 = θ1 − |Δθ|); C−: antiorario.
+    """
+    s = _segno_C(famiglia)
+    return onda_isentropica_2d(stato, famiglia, theta2=stato.theta - s * abs(dtheta), nome=nome)
+
+
+def onda_verso_theta_2d(stato: State, theta2: float, famiglia: str, ramo: str = "debole",
+                        modello: str = "esatto", nome: str = "") -> Onda2D:
+    """Onda della famiglia data che porta la corrente alla direzione assoluta ``theta2`` [gradi].
+
+    Condizione di parete (θ = θ_w, F §10). Compressione (s(θ2−θ1) > 0) ⇒ urto
+    obliquo (ramo scelto) nel modello 'esatto', compressione isentropica nel
+    modello 'isentropico'; espansione ⇒ Prandtl–Meyer.
+    """
+    s = _segno_C(famiglia)
+    dth = theta2 - stato.theta
+    if s * dth > 0 and modello == "esatto":
+        return urto_obliquo(stato, theta=abs(dth), famiglia=famiglia, ramo=ramo, nome=nome)
+    return onda_isentropica_2d(stato, famiglia, theta2=theta2, nome=nome)
+
+
+def onda_verso_p_2d(stato: State, p2: float, famiglia: str, modello: str = "esatto",
+                    nome: str = "") -> Onda2D:
+    """Onda della famiglia data che porta la corrente alla pressione ``p2`` (F §13, §15).
+
+    È la condizione di contorno a pressione assegnata (getto, slip line).
+    p2 > p1 nel modello esatto: urto con M_n1² = 1 + (γ+1)/(2γ)(p2/p1 − 1)
+    (σ unico; il ramo debole/forte segue). Altrimenti onda isentropica.
+    Solleva NessunaSoluzione se p2 supera la pressione dell'urto normale.
+    """
+    if p2 > stato.p and modello == "esatto":
+        g = stato.gamma
+        Mn1 = math.sqrt(1.0 + (g + 1.0) / (2.0 * g) * (p2 / stato.p - 1.0))
+        if Mn1 > stato.M * (1 + 1e-14):
+            raise NessunaSoluzione(f"p2/p1 = {p2 / stato.p:.6g} oltre l'urto normale (M = {stato.M:.6g})")
+        sigma = math.degrees(math.asin(min(1.0, Mn1 / stato.M)))
+        return urto_obliquo(stato, sigma=sigma, famiglia=famiglia, nome=nome)
+    return onda_isentropica_2d(stato, famiglia, p2=p2, nome=nome)
+
+
+def _p_normale(stato: State) -> float:
+    return stato.p * urto_normale(stato.M, stato.gas)["p2_p1"]
+
+
+def _p_sonica_isentropica(stato: State) -> float:
+    return stato.p0 * critiche(stato.gas)["p*_p0"]
+
+
+def polare_p_theta(stato: State, famiglia: str = "entrambe", n: int = 400, espansione: bool = True,
+                   p_min_rel: float = 0.05, modello: str = "esatto") -> dict:
+    """Polare d'urto di Busemann nel piano p–θ con il ramo d'espansione (F §13).
+
+    σ ∈ [μ1, 90°]: θ2 = θ1 ± θ(σ) (C+: +, C−: −), p2 = p1[1 + 2γ/(γ+1)(M1²sin²σ − 1)].
+    Espansione parametrizzata da M2 ≥ M1 fino a p2 = ``p_min_rel``·p1.
+    Restituisce per ogni famiglia un dict con 'urto' (theta, p, sigma, M2,
+    ramo), 'espansione' (theta, p, M) e 'punti' notevoli (θmax, sonico,
+    normale) come (θ, p). ``modello='isentropico'``: ramo di compressione
+    isentropica (fino a M = 1) al posto dell'urto.
+    """
+    fams = ["C+", "C-"] if famiglia == "entrambe" else [famiglia]
+    out = {}
+    M1, g = stato.M, stato.gamma
+    for fam in fams:
+        s = _segno_C(fam)
+        d = {}
+        if modello == "esatto":
+            mu = angolo_mach(M1)
+            sig = np.linspace(mu, 90.0, n)
+            th = theta_da_sigma(M1, sig, stato.gas)
+            p = stato.p * (1.0 + 2.0 * g / (g + 1.0) * (M1**2 * np.sin(np.radians(sig)) ** 2 - 1.0))
+            M2 = np.array([_M2_obliquo(M1, x, stato.gas) for x in sig])
+            tm, sm = theta_max(M1, stato.gas)
+            d["urto"] = {"theta": stato.theta + s * th, "p": p, "sigma": sig, "M2": M2,
+                         "ramo": np.where(sig <= sm, "debole", "forte")}
+            ts, ss = sonico(M1, stato.gas)
+            pf = lambda sg: stato.p * (1.0 + 2.0 * g / (g + 1.0) * (M1**2 * _sind(sg) ** 2 - 1.0))
+            d["punti"] = {"theta_max": (stato.theta + s * tm, pf(sm)), "sonico": (stato.theta + s * ts, pf(ss)),
+                          "normale": (stato.theta, _p_normale(stato)), "origine": (stato.theta, stato.p)}
+        else:
+            Ms = np.linspace(M1, 1.0, n)
+            nu1 = prandtl_meyer(M1, stato.gas)
+            nus = prandtl_meyer(Ms, stato.gas)
+            d["compressione"] = {"theta": stato.theta - s * (nus - nu1),
+                                 "p": stato.p0 / isentropiche(Ms, stato.gas)["p0_p"], "M": Ms}
+            d["punti"] = {"origine": (stato.theta, stato.p)}
+        if espansione:
+            p_lo = stato.p * p_min_rel
+            M_hi = mach_da_rapporto(stato.p0 / p_lo, stato.gas, "p0/p")
+            Ms = np.linspace(M1, M_hi, n)
+            nu1 = prandtl_meyer(M1, stato.gas)
+            d["espansione"] = {"theta": stato.theta - s * (prandtl_meyer(Ms, stato.gas) - nu1),
+                               "p": stato.p0 / isentropiche(Ms, stato.gas)["p0_p"], "M": Ms}
+        out[fam] = d
+    return out if famiglia == "entrambe" else out[famiglia]
+
+
+def polare_odografo(stato: State, famiglia: str = "entrambe", n: int = 400, espansione: bool = True,
+                    riferimento: str = "assoluto", p_min_rel: float = 0.05) -> dict:
+    """Polare d'urto nel piano odografo (u*, v*) = (V/a*)(cosθ, sinθ) (F §13, S p.56).
+
+    ``riferimento='assoluto'``: componenti nel riferimento x–y (come chiesto
+    nelle tracce, es. B51-E01); ``'monte'``: assi ruotati sulla velocità a
+    monte (piano (V_n/a*, V_t/a*) di F §13 e S p.57, stato a monte sull'asse).
+    a* è quello della corrente (si conserva attraverso urti ed espansioni).
+    Restituisce per famiglia i rami 'urto' ed 'espansione' con chiavi
+    'us', 'vs', più 'stato' = (u*, v*) del monte e i raggi dei cerchi
+    'cerchio_sonico' = 1 e 'cerchio_limite' = √((γ+1)/(γ−1)).
+    """
+    pol = polare_p_theta(stato, famiglia, n, espansione, p_min_rel)
+    if famiglia != "entrambe":
+        pol = {famiglia: pol}
+    ast = stato.a_star
+    rot = stato.theta if riferimento == "monte" else 0.0
+    out = {}
+    for fam, d in pol.items():
+        o = {}
+        if "urto" in d:
+            u = d["urto"]
+            V2 = []
+            for sg in u["sigma"]:
+                Vn1, Vt = stato.V * _sind(sg), stato.V * _cosd(sg)
+                Vn2 = Vn1 / urto_normale(stato.M * _sind(sg), stato.gas)["rho2_rho1"]
+                V2.append(math.hypot(Vn2, Vt))
+            V2 = np.array(V2) / ast
+            th = np.radians(u["theta"] - rot)
+            o["urto"] = {"us": V2 * np.cos(th), "vs": V2 * np.sin(th), "ramo": u["ramo"]}
+        if "espansione" in d:
+            e = d["espansione"]
+            Ms = e["M"]
+            Mst = np.sqrt((stato.gamma + 1.0) * Ms**2 / (2.0 + (stato.gamma - 1.0) * Ms**2))
+            th = np.radians(e["theta"] - rot)
+            o["espansione"] = {"us": Mst * np.cos(th), "vs": Mst * np.sin(th)}
+        out[fam] = o
+    th0 = math.radians(stato.theta - rot)
+    res = out if famiglia == "entrambe" else out[famiglia]
+    meta = {"stato": (stato.M_star * math.cos(th0), stato.M_star * math.sin(th0)), "cerchio_sonico": 1.0,
+            "cerchio_limite": math.sqrt((stato.gamma + 1.0) / (stato.gamma - 1.0))}
+    res = dict(res)
+    res.update(meta)
+    return res
+
+
+def _theta_di_p(stato: State, fam: str, p: float, modello: str) -> float:
+    return onda_verso_p_2d(stato, p, fam, modello).valle.theta
+
+
+def intersezioni_polari(A: State, famA: str, B: State, famB: str, modello: str = "esatto",
+                        n: int = 800) -> list:
+    """Tutte le intersezioni delle polari p–θ di A (famiglia famA) e B (famB) (F §13).
+
+    Su ogni polare di una famiglia θ è funzione a un sol valore di p (espansione
+    per p < p_i, urto per p_i < p ≤ p_normale), quindi le intersezioni sono le
+    radici di θ_A(p) − θ_B(p), cercate per cambio di segno su n punti in scala
+    logaritmica e raffinate con brentq. ``famA``/``famB`` possono essere
+    'entrambe'. Restituisce una lista di dict con p, theta, onda_A, onda_B
+    (oggetti :class:`Onda2D`, con ramo dell'urto) ordinata per p.
+    """
+    fA = ["C+", "C-"] if famA == "entrambe" else [famA]
+    fB = ["C+", "C-"] if famB == "entrambe" else [famB]
+    lim = _p_normale if modello == "esatto" else _p_sonica_isentropica
+    p_lim = min(lim(A), lim(B))
+    p_hi = p_lim * (1 - 1e-12)
+    p_lo = 1e-6 * min(A.p, B.p)
+    out = []
+    for fa in fA:
+        for fb in fB:
+            f = lambda p: _theta_di_p(A, fa, p, modello) - _theta_di_p(B, fb, p, modello)
+            radici = _radici(f, p_lo, p_hi, n=n, scala="log")
+            # estremo superiore (urto normale di una delle due polari): intersezione nel punto
+            # d'urto normale (es. criterio di von Neumann), tolleranza 1e-6°
+            if abs(f(p_lim)) < 1e-6 and not any(abs(r / p_lim - 1) < 1e-6 for r in radici):
+                radici.append(p_lim)
+            for p in radici:
+                oA = onda_verso_p_2d(A, p, fa, modello)
+                oB = onda_verso_p_2d(B, p, fb, modello)
+                out.append({"p": p, "theta": oA.valle.theta, "fam_A": fa, "fam_B": fb,
+                            "onda_A": oA, "onda_B": oB})
+    out.sort(key=lambda r: r["p"])
+    return out
+
+
+@dataclass
+class SoluzioneRiemann2D:
+    """Incontro di due correnti supersoniche separate da una slip line (F §13, B51-E01).
+
+    ``onda_sopra`` (famiglia C+, nella corrente superiore) e ``onda_sotto`` (C−).
+    A valle: p e θ comuni (``p``, ``theta``), slip line inclinata di θ.
+    """
+
+    sopra: State
+    sotto: State
+    onda_sopra: Onda2D
+    onda_sotto: Onda2D
+    p: float
+    theta: float
+    modello: str
+
+    def __repr__(self):
+        return (f"Riemann stazionario ({self.modello}): p = {_fmt(self.p, 7)}, θ slip = {_fmt(self.theta, 7)}°\n"
+                f"  sopra: {self.onda_sopra}\n  sotto: {self.onda_sotto}")
+
+
+def riemann_stazionario(sopra: State, sotto: State, modello: str = "esatto",
+                        ramo: str = "debole") -> SoluzioneRiemann2D:
+    """Problema di Riemann stazionario 2D: due correnti supersoniche che si incontrano (F §13).
+
+    La corrente superiore emette un'onda C+, l'inferiore un'onda C−; si impone
+    p e θ uguali (slip line). Sui rami deboli (ed espansioni) θ_sopra(p) cresce
+    e θ_sotto(p) decresce, quindi la soluzione debole è unica; altre
+    intersezioni possono esistere sui rami forti. ``ramo='debole'`` (default,
+    come in campo aperto, F §14) scarta le intersezioni con urti forti;
+    ``ramo='tutti'`` solleva :class:`RamiMultipli` se ce n'è più d'una (tutte in
+    ``.soluzioni``; vedi anche :func:`intersezioni_polari`).
+    ``modello='isentropico'``: compressioni isentropiche invece degli urti
+    (confronto richiesto in B51-E01).
+    """
+    r = intersezioni_polari(sopra, "C+", sotto, "C-", modello)
+    if ramo == "debole":
+        r = [x for x in r if x["onda_A"].ramo != "forte" and x["onda_B"].ramo != "forte"]
+    if not r:
+        raise NessunaSoluzione("le polari non si intersecano: nessuna configurazione regolare "
+                               "(possibile disco di Mach / urto staccato)")
+    if len(r) > 1:
+        raise RamiMultipli(f"{len(r)} intersezioni", r)
+    x = r[0]
+    return SoluzioneRiemann2D(sopra, sotto, x["onda_A"], x["onda_B"], x["p"], x["theta"], modello)
+
+
+def riflessione_regolare(stato1: State, theta_w: float, ramo_riflesso: str = "debole") -> dict:
+    """Riflessione regolare di un urto incidente su una parete orizzontale (F §14).
+
+    Corrente 1 parallela alla parete (θ1 = 0), parete sotto; urto incidente C−
+    (ramo debole) che devia di −θ_w; urto riflesso C+ che riporta θ3 = 0.
+    Restituisce gli stati 1, 2, 3, i due urti e l'angolo fra urto riflesso e
+    parete. Solleva :class:`UrtoStaccato` se θ_w > θmax(M2) (niente RR: MR).
+    """
+    st1 = stato1.con(nome="1")
+    inc = urto_obliquo(st1, theta=theta_w, famiglia="C-", ramo="debole", nome="2")
+    try:
+        rif = onda_verso_theta_2d(inc.valle, st1.theta, "C+", ramo=ramo_riflesso, nome="3")
+    except UrtoStaccato as e:
+        raise UrtoStaccato(f"riflessione regolare impossibile (M2 = {inc.valle.M:.5g}): {e}") from None
+    return {"1": st1, "2": inc.valle, "3": rif.valle, "incidente": inc, "riflesso": rif,
+            "angolo_riflesso_parete": rif.angolo_fronte - st1.theta}
+
+
+def riflessione_mach(stato1: State, theta_w: float) -> dict:
+    """Teoria dei tre urti al punto triplo (F §14).
+
+    Stato 2 dietro l'urto incidente (C−, debole); stato 3 sulla polare riflessa
+    di 2 (C+); stato 4 dietro lo stelo, sul ramo forte della polare di 1;
+    slip line: p3 = p4, θ3 = θ4. Si cercano tutte le intersezioni della polare
+    riflessa con la polare di 1 (entrambe le famiglie) escludendo l'origine
+    della polare riflessa; restano quelle sul ramo forte della polare di 1.
+    'soluzioni' contiene tutte quelle trovate, 'principale' quella con |θ| minima.
+    """
+    st1 = stato1.con(nome="1")
+    inc = urto_obliquo(st1, theta=theta_w, famiglia="C-", ramo="debole", nome="2")
+    st2 = inc.valle
+    sols = []
+    for r in intersezioni_polari(st2, "C+", st1, "entrambe"):
+        if r["onda_A"].tipo != "urto" or abs(r["p"] / st2.p - 1) < 1e-8:
+            continue
+        stem = r["onda_B"]
+        if stem.tipo == "urto" and stem.ramo == "forte":
+            sols.append({"p": r["p"], "theta": r["theta"], "riflesso": r["onda_A"], "stelo": stem,
+                         "3": r["onda_A"].valle.con(nome="3"), "4": stem.valle.con(nome="4")})
+    if not sols:
+        raise NessunaSoluzione("nessuna soluzione a tre urti con stelo sul ramo forte")
+    princ = min(sols, key=lambda s: abs(s["theta"]))
+    return {"1": st1, "2": st2, "incidente": inc, "soluzioni": sols, "principale": princ}
+
+
+def theta_von_neumann(M1: float, gas: Gas) -> float:
+    """Angolo θ_N del criterio di von Neumann [gradi] (F §14).
+
+    θ_w per cui la riflessione regolare (riflesso debole) dà p3 uguale alla
+    pressione dell'urto normale di 1 (le polari si incontrano sull'asse θ = 0).
+    Solleva NessunaSoluzione se non esiste (M1 bassi, polare riflessa che non
+    raggiunge l'asse). Risolto con brentq su θ_w ∈ (0, θ_D).
+    """
+    st1 = State.da_M(gas, M1, p=1.0, a=1.0)
+    pn = _p_normale(st1)
+    tD = theta_distacco(M1, gas)
+    f = lambda tw: riflessione_regolare(st1, tw)["3"].p - pn
+    a, b = 1e-6, tD * (1 - 1e-9)
+    if f(a) * f(b) > 0:
+        raise NessunaSoluzione(f"criterio di von Neumann assente per M1 = {M1} (θ_N > θ_D)")
+    return brentq(f, a, b, xtol=1e-12)
+
+
+def theta_distacco(M1: float, gas: Gas) -> float:
+    """Angolo θ_D del criterio di distacco [gradi] (F §14): la polare riflessa è
+    tangente alla retta di parete, θmax(M2(θ_w)) = θ_w. brentq su θ_w."""
+    st1 = State.da_M(gas, M1, p=1.0, a=1.0)
+    tm1 = theta_max(M1, gas)[0]
+
+    def f(tw):
+        M2 = urto_obliquo(st1, theta=tw, famiglia="C-").valle.M
+        if M2 <= 1.0:
+            return -tw
+        return theta_max(M2, gas)[0] - tw
+
+    xs = np.linspace(1e-6, tm1 * (1 - 1e-9), 400)
+    fs = [f(x) for x in xs]
+    for i in range(len(xs) - 1):
+        if fs[i] > 0 >= fs[i + 1]:
+            return brentq(f, xs[i], xs[i + 1], xtol=1e-12)
+    raise NessunaSoluzione(f"criterio di distacco non trovato per M1 = {M1}")
+
+
+def diagramma_rr_mr(M_valori, gas: Gas) -> dict:
+    """Curve θ_N(M1) e θ_D(M1) del diagramma θ–M1 (F §14); NaN dove il criterio non esiste."""
+    tn, td = [], []
+    for M in M_valori:
+        try:
+            td.append(theta_distacco(M, gas))
+        except NessunaSoluzione:
+            td.append(math.nan)
+        try:
+            tn.append(theta_von_neumann(M, gas))
+        except (NessunaSoluzione, GasdynError):
+            tn.append(math.nan)
+    return {"M": np.asarray(M_valori, float), "theta_N": np.array(tn), "theta_D": np.array(td)}
+
+
+def shock_expansion(superiore: Sequence, inferiore: Sequence, M: float, alpha: float, gas: Gas,
+                    p_inf: float = 1.0) -> dict:
+    """Teoria urto–espansione per lastre e profili a spigoli (F §11–12; teoria standard).
+
+    ``superiore``, ``inferiore``: liste di punti (x, y) del profilo nel suo
+    riferimento, dal bordo d'attacco al bordo d'uscita (stessi estremi).
+    ``alpha``: incidenza [gradi] (positiva a cabrare: nel riferimento del corpo
+    la corrente ha direzione θ∞ = +α). Dorso: onde C+; ventre: onde C−.
+    Ogni spigolo: urto obliquo se la parete comprime, Prandtl–Meyer se espande.
+    Coefficienti riferiti a q∞ = ½γp∞M² e alla corda c = |TE − LE|;
+    portanza ⟂ e resistenza ∥ alla corrente asintotica.
+    """
+    a_inf = 1.0
+    st_inf = State.da_M(gas, M, alpha, p=p_inf, a=a_inf, nome="∞")
+    q = 0.5 * gas.gamma * p_inf * M * M
+    pannelli = []
+    F = np.zeros(2)
+    for nome, pts, fam, sgn_n in (("dorso", superiore, "C+", 1.0), ("ventre", inferiore, "C-", -1.0)):
+        st = st_inf
+        for i in range(len(pts) - 1):
+            (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+            L = math.hypot(x1 - x0, y1 - y0)
+            phi = math.degrees(math.atan2(y1 - y0, x1 - x0))
+            onda = onda_verso_theta_2d(st, phi, fam)
+            st = onda.valle
+            n = sgn_n * np.array([-(y1 - y0), x1 - x0]) / L  # normale uscente
+            F += -(st.p - p_inf) * n * L
+            pannelli.append({"superficie": nome, "i": i, "phi": phi, "onda": onda.tipo, "M": st.M,
+                             "p_pinf": st.p / p_inf, "Cp": (st.p - p_inf) / q})
+    c = math.hypot(superiore[-1][0] - superiore[0][0], superiore[-1][1] - superiore[0][1])
+    ca, sa = _cosd(alpha), _sind(alpha)
+    D = F[0] * ca + F[1] * sa
+    Lf = -F[0] * sa + F[1] * ca
+    return {"pannelli": pannelli, "CL": Lf / (q * c), "CD": D / (q * c), "CN": F[1] / (q * c),
+            "CA": F[0] / (q * c), "F": F}
+
+
+def pitot_supersonico(M1: float, gas: Gas) -> float:
+    """Rapporto p02/p1 letto da un Pitot (formula di Rayleigh, **fuori formulario**).
+
+    M1 > 1: urto normale davanti alla presa e compressione isentropica,
+    p02/p1 = [(γ+1)M1²/2]^(γ/(γ−1)) / [(2γM1² − (γ−1))/(γ+1)]^(1/(γ−1)).
+    M1 ≤ 1: p0/p isentropico.
+    """
+    g = gas.gamma
+    if M1 <= 1.0:
+        return isentropiche(M1, gas)["p0_p"]
+    return (0.5 * (g + 1.0) * M1**2) ** (g / (g - 1.0)) / (
+        (2.0 * g * M1**2 - (g - 1.0)) / (g + 1.0)) ** (1.0 / (g - 1.0))
+
+
+def mach_da_pitot(p02_p1: float, gas: Gas) -> float:
+    """Inversa di :func:`pitot_supersonico` (ramo subsonico in forma chiusa, supersonico con brentq)."""
+    soglia = isentropiche(1.0, gas)["p0_p"]
+    if p02_p1 <= soglia:
+        return mach_da_rapporto(p02_p1, gas, "p0/p")
+    return brentq(lambda M: pitot_supersonico(M, gas) - p02_p1, 1.0, _MACH_SUP_MAX, xtol=1e-14)
+
+
+def punto_caratteristiche_2d(A: State, B: State, posA: tuple = None, posB: tuple = None,
+                             nome: str = "P") -> dict:
+    """Punto P all'incontro della C− uscente da A e della C+ uscente da B (F §10).
+
+    θ_P = [(θ_A+ν_A) + (θ_B−ν_B)]/2, ν_P = [(θ_A+ν_A) − (θ_B−ν_B)]/2; M_P da ν_P,
+    stato dai totali di A (flusso omoentropico e omoentalpico). Se si danno le
+    posizioni, P è l'intersezione delle rette con pendenze medie
+    tan((θ−μ)_A,P) e tan((θ+μ)_B,P) (metodo delle caratteristiche standard).
+    """
+    gas = A.gas
+    Kp = A.theta + prandtl_meyer(A.M, gas)
+    Km = B.theta - prandtl_meyer(B.M, gas)
+    thP, nuP = 0.5 * (Kp + Km), 0.5 * (Kp - Km)
+    MP = mach_da_pm(nuP, gas)
+    P = State.da_totali(gas, MP, p0=A.p0, a0=A.a0, theta=thP, nome=nome)
+    out = {"theta": thP, "nu": nuP, "M": MP, "mu": angolo_mach(MP), "stato": P}
+    if posA is not None and posB is not None:
+        mA = _tand(0.5 * ((A.theta - angolo_mach(A.M)) + (thP - angolo_mach(MP))))
+        mB = _tand(0.5 * ((B.theta + angolo_mach(B.M)) + (thP + angolo_mach(MP))))
+        (xa, ya), (xb, yb) = posA, posB
+        x = (yb - ya + mA * xa - mB * xb) / (mA - mB)
+        out["x"], out["y"] = x, ya + mA * (x - xa)
+    return out
+
+
+def ugello_minima_lunghezza(Me: float, gas: Gas, n: int = 60, h_gola: float = 1.0) -> dict:
+    """Ugello piano di lunghezza minima con il metodo delle caratteristiche (F §10; schema standard).
+
+    Semi-ugello sopra l'asse di simmetria (y = 0), semialtezza di gola
+    ``h_gola``, espansione centrata nello spigolo di gola con n caratteristiche
+    C− di direzione θ_j ∈ (0, θ_w,max], θ_w,max = ν(Me)/2. Nel ventaglio θ = ν
+    (K+ = θ+ν = 2θ_j lungo la C− j); la C+ k nasce sull'asse con K− = −2θ_k,
+    quindi nel punto (k, j): θ = θ_j − θ_k, ν = θ_j + θ_k. Rette fra i nodi
+    con pendenze medie; parete non riflettente: ogni tratto di parete ha la
+    pendenza media fra le direzioni del flusso ai suoi estremi.
+    Restituisce θ_w,max, il profilo (x, y), L/h_gola e h_uscita/h_gola (→ A/A*(Me)
+    per n → ∞). **Discretizzazione**: L converge come O(1/n).
+    """
+    twmax = 0.5 * prandtl_meyer(Me, gas)
+    th = np.linspace(twmax / n, twmax, n)
+    mu = lambda nu: angolo_mach(mach_da_pm(nu, gas)) if nu > 0 else 90.0
+    xc, yc = 0.0, h_gola
+    P = {}
+    wx, wy, wth = [xc], [yc], [twmax]
+    for k in range(n):
+        for j in range(k, n):
+            t_, nu_ = th[j] - th[k], th[j] + th[k]
+            if k == 0:
+                xa, ya, ta, na = xc, yc, th[j], th[j]
+            else:
+                xa, ya, ta, na = P[(k - 1, j)]
+            mA = _tand(0.5 * ((ta - mu(na)) + (t_ - mu(nu_))))
+            if j == k:  # punto sull'asse
+                x = xa - ya / mA
+                P[(k, j)] = (x, 0.0, t_, nu_)
+            else:
+                xb, yb, tb, nb = P[(k, j - 1)]
+                mB = _tand(0.5 * ((tb + mu(nb)) + (t_ + mu(nu_))))
+                x = (yb - ya + mA * xa - mB * xb) / (mA - mB)
+                P[(k, j)] = (x, ya + mA * (x - xa), t_, nu_)
+        xb, yb, tb, nb = P[(k, n - 1)]
+        mC = _tand(tb + mu(nb))
+        mW = _tand(0.5 * (wth[-1] + tb))
+        x = (yb - wy[-1] + mW * wx[-1] - mC * xb) / (mW - mC)
+        y = wy[-1] + mW * (x - wx[-1])
+        wx.append(x)
+        wy.append(y)
+        wth.append(tb)
+    return {"theta_w_max": twmax, "x_parete": np.array(wx), "y_parete": np.array(wy),
+            "L_su_h_gola": wx[-1] / h_gola, "h_uscita_su_h_gola": wy[-1] / h_gola,
+            "A_su_Astar_teorico": area_su_area_critica(Me, gas), "nodi": P}
+
+def getto_adattamento(Me: float, pe: float, pa: float, gas: Gas) -> dict:
+    """Primo fenomeno al labbro di un getto piano che esce a (Me, pe) in ambiente pa (F §15).
+
+    Sottoespanso (pe > pa): espansione di Prandtl–Meyer fino a pa,
+    M_a = {[(p0/pa)^((γ−1)/γ) − 1]/δ}^½, |Δθ| = ν(M_a) − ν(Me); apertura
+    iniziale totale 2|Δθ| per un getto piano simmetrico.
+    Sovraespanso (pe < pa): urto obliquo al labbro con p2 = pa (se compatibile).
+    """
+    st = State.da_M(gas, Me, p=pe, a=1.0)
+    if abs(pe - pa) <= 1e-12 * pa:
+        return {"regime": "adattato", "Ma": Me, "deflessione": 0.0}
+    if pe > pa:
+        Ma = mach_da_rapporto(st.p0 / pa, gas, "p0/p")
+        dth = prandtl_meyer(Ma, gas) - prandtl_meyer(Me, gas)
+        return {"regime": "sottoespanso", "Ma": Ma, "deflessione": dth, "apertura_totale": 2 * dth}
+    o = onda_verso_p_2d(st, pa, "C-")
+    return {"regime": "sovraespanso", "Ma": o.valle.M, "deflessione": abs(o.deflessione),
+            "sigma": o.sigma, "onda": o}
+
+
+def sauer_meyer(R: float, gas: Gas) -> dict:
+    """Soluzione di Sauer–Meyer nella gola di raggio adimensionale R ≫ 1 (F §19, versione con (γ+1)).
+
+    d = 1/√((γ+1)R); u = dξ + (γ+1)d²η²/2; v = (γ+1)d²ξη + (γ+1)d³η³/6;
+    linea di gola ξ_g = −dη²/6; linea sonica ξ_s = −(γ+1)dη²/2;
+    M ≈ √((1+u)² + v²). Nota: S p.65 riporta anche una versione senza (γ+1)
+    (discrepanza 10 del report di Fase 0): qui si segue il formulario.
+    Restituisce d e funzioni u(ξ,η), v(ξ,η), M(ξ,η), xi_gola(η), xi_sonica(η).
+    """
+    g = gas.gamma
+    d = 1.0 / math.sqrt((g + 1.0) * R)
+    u = lambda xi, eta: d * xi + 0.5 * (g + 1.0) * d * d * eta**2
+    v = lambda xi, eta: (g + 1.0) * d * d * xi * eta + (g + 1.0) * d**3 * eta**3 / 6.0
+    return {"d": d, "u": u, "v": v, "M": lambda xi, eta: np.sqrt((1 + u(xi, eta)) ** 2 + v(xi, eta) ** 2),
+            "xi_gola": lambda eta: -d * eta**2 / 6.0, "xi_sonica": lambda eta: -0.5 * (g + 1.0) * d * eta**2}

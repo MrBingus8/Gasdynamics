@@ -517,3 +517,514 @@ def critiche(gas: Gas) -> dict:
 def velocita_max(a0: float, gas: Gas) -> float:
     """Velocità massima stazionaria V_max = a0·√(2/(γ−1)) = a0/√δ (da a0² = a² + δV² con a = 0)."""
     return a0 / math.sqrt(gas.delta)
+
+
+# =============================================================================
+# 2. Isentropico e quasi-1D (F §16–17)
+# =============================================================================
+_MACH_SUP_MAX = 1e4  # limite superiore del ramo supersonico nelle inversioni
+
+
+def area_su_area_critica(M, gas: Gas):
+    """Legge area–Mach 𝒜(M) = A/A* = (1/M)[2/(γ+1)(1+δM²)]^((γ+1)/(2(γ−1))) (F §16).
+
+    Accetta scalari o array.
+    """
+    M = np.asarray(M, dtype=float)
+    g = gas.gamma
+    r = (1.0 / M) * ((2.0 / (g + 1.0)) * (1.0 + gas.delta * M**2)) ** ((g + 1.0) / (2.0 * (g - 1.0)))
+    return float(r) if np.ndim(r) == 0 else r
+
+
+def mach_da_area(A_su_Astar: float, gas: Gas, ramo: str) -> float:
+    """Inversa della legge area–Mach (F §16).
+
+    ``ramo`` = ``'subsonico'`` o ``'supersonico'`` (obbligatorio: per A/A* > 1
+    esistono sempre due soluzioni). Solleva :class:`Strozzamento` se A/A* < 1.
+    Risolto con ``brentq`` su M ∈ (1e-12, 1) o (1, 1e4), tolleranza 1e-14.
+    """
+    if A_su_Astar < 1.0 - 1e-14:
+        raise Strozzamento(f"A/A* = {A_su_Astar} < 1: la sezione è più piccola di quella critica")
+    if A_su_Astar <= 1.0 + 1e-14:
+        return 1.0
+    f = lambda M: area_su_area_critica(M, gas) - A_su_Astar
+    if ramo in ("subsonico", "sub"):
+        return brentq(f, 1e-12, 1.0, xtol=1e-15, rtol=1e-14)
+    if ramo in ("supersonico", "super"):
+        return brentq(f, 1.0, _MACH_SUP_MAX, xtol=1e-14, rtol=1e-14)
+    raise GasdynError("ramo deve essere 'subsonico' o 'supersonico'")
+
+
+def mach_da_area_tra_sezioni(M1: float, A1: float, A2: float, gas: Gas, ramo: str = "stesso") -> float:
+    """Mach nella sezione A2 noto M1 in A1, flusso isentropico (S p.48, F §16).
+
+    ``ramo``: ``'stesso'`` (mantiene il regime di M1), ``'subsonico'``, ``'supersonico'``.
+    """
+    A2s = area_su_area_critica(M1, gas) * A2 / A1
+    if ramo == "stesso":
+        if abs(M1 - 1.0) < 1e-12:
+            raise RamiMultipli("M1 = 1: il ramo a valle è ambiguo, specificare ramo", [])
+        ramo = "subsonico" if M1 < 1 else "supersonico"
+    return mach_da_area(A2s, gas, ramo)
+
+
+def portata(A: float, p0: float, T0: float, M: float, gas: Gas) -> float:
+    """Portata ṁ = A p0/√T0 √(γ/R) M (1+δM²)^(−(γ+1)/(2(γ−1))) (F §16). Richiede R."""
+    gas._serve_R("portata")
+    g = gas.gamma
+    return A * p0 / math.sqrt(T0) * math.sqrt(g / gas.R) * M * (1.0 + gas.delta * M**2) ** (
+        -(g + 1.0) / (2.0 * (g - 1.0)))
+
+
+def portata_max(A_star: float, p0: float, T0: float, gas: Gas) -> float:
+    """Portata critica ṁ_max = A* p0/√T0 √(γ/R) (2/(γ+1))^((γ+1)/(2(γ−1))) (F §16)."""
+    return portata(A_star, p0, T0, 1.0, gas)
+
+
+def portata_per_area(stato: State) -> float:
+    """Flusso di massa per unità d'area ρ|V| di uno stato."""
+    return stato.rho * stato.V
+
+
+def ugello_convergente(p0: float, pb: float, gas: Gas) -> dict:
+    """Convergente alimentato da serbatoio p0 che scarica in pb (F §16).
+
+    Restituisce ``regime`` ('subsonico' o 'strozzato'), ``Me``, ``pe``.
+    Strozzato se pb/p0 ≤ (2/(γ+1))^(γ/(γ−1)); allora Me = 1 e pe = p*.
+    """
+    pc = critiche(gas)["p*_p0"]
+    if pb >= p0:
+        return {"regime": "fermo", "Me": 0.0, "pe": p0}
+    if pb / p0 <= pc:
+        return {"regime": "strozzato", "Me": 1.0, "pe": pc * p0}
+    return {"regime": "subsonico", "Me": mach_da_rapporto(p0 / pb, gas, "p0/p"), "pe": pb}
+
+
+def urto_in_ugello(As_At: float, Ae_At: float, gas: Gas) -> dict:
+    """Ugello convergente–divergente strozzato con urto normale in A_s (procedura F §16).
+
+    (i) M1 supersonico da A_s/A_t; (ii) urto normale → M2, p02/p01;
+    (iii) A2* = A_s/𝒜(M2); (iv) Me subsonico da A_e/A2*, pe/p01 = (p02/p01)(pe/p02).
+    """
+    M1 = mach_da_area(As_At, gas, "supersonico")
+    un = urto_normale(M1, gas)
+    A2s_At = As_At / area_su_area_critica(un["M2"], gas)
+    Me = mach_da_area(Ae_At / A2s_At, gas, "subsonico")
+    pe_p01 = un["p02_p01"] / isentropiche(Me, gas)["p0_p"]
+    return {"As_At": As_At, "M1": M1, "M2": un["M2"], "p02_p01": un["p02_p01"],
+            "A2*_At": A2s_At, "Me": Me, "pe_p01": pe_p01}
+
+
+def ugello_cd(p0: float, pb: float, Ae_At: float, gas: Gas) -> dict:
+    """Regime di un ugello convergente–divergente con A_e/A_t assegnato (F §16).
+
+    Pressioni caratteristiche: p_e1 (subsonico con gola sonica), p_e2 (urto
+    normale nella sezione d'uscita), p_e3 (progetto supersonico). Regimi:
+    'subsonico' (pb > p_e1, gola non sonica), 'urto nel divergente'
+    (p_e2 < pb < p_e1, posizione A_s/A_t trovata con brentq), 'sovraespanso'
+    (p_e3 < pb < p_e2, urti obliqui esterni), 'adattato' (pb = p_e3),
+    'sottoespanso' (pb < p_e3). Tutte le pressioni sono riferite a p0.
+    """
+    Me_sub = mach_da_area(Ae_At, gas, "subsonico")
+    Me_sup = mach_da_area(Ae_At, gas, "supersonico")
+    pe1 = p0 / isentropiche(Me_sub, gas)["p0_p"]
+    pe3 = p0 / isentropiche(Me_sup, gas)["p0_p"]
+    pe2 = pe3 * urto_normale(Me_sup, gas)["p2_p1"]
+    out = {"pe1": pe1, "pe2": pe2, "pe3": pe3}
+    rtol = 1e-10
+    if pb >= p0:
+        out.update(regime="fermo", Me=0.0, pe=p0)
+    elif pb > pe1 * (1 + rtol):
+        Me = mach_da_rapporto(p0 / pb, gas, "p0/p")
+        Mt = mach_da_area(area_su_area_critica(Me, gas) / Ae_At, gas, "subsonico")
+        out.update(regime="subsonico", Me=Me, pe=pb, Mt=Mt)
+    elif pb > pe2 * (1 + rtol):
+        f = lambda As: urto_in_ugello(As, Ae_At, gas)["pe_p01"] * p0 - pb
+        if abs(pb - pe1) <= rtol * pe1:
+            As = 1.0
+        else:
+            As = brentq(f, 1.0 + 1e-12, Ae_At, xtol=1e-14, rtol=1e-13)
+        r = urto_in_ugello(As, Ae_At, gas)
+        out.update(regime="urto nel divergente", pe=pb, **r)
+    elif abs(pb - pe2) <= rtol * pe2:
+        r = urto_in_ugello(Ae_At, Ae_At, gas)
+        out.update(regime="urto nella sezione d'uscita", pe=pb, **r)
+    elif pb > pe3 * (1 + rtol):
+        out.update(regime="sovraespanso", Me=Me_sup, pe=pe3)
+    elif pb >= pe3 * (1 - rtol):
+        out.update(regime="adattato", Me=Me_sup, pe=pe3)
+    else:
+        out.update(regime="sottoespanso", Me=Me_sup, pe=pe3)
+    return out
+
+
+def spinta(mdot: float, ue: float, pe: float, pa: float, Ae: float, ingresso: dict = None) -> float:
+    """Spinta positiva nel verso del getto (F §17).
+
+    F = ṁ ue + (pe − pa) Ae  [− (ṁ_in u_in + (p_in − pa) A_in) se ``ingresso`` =
+    dict(mdot=..., u=..., p=..., A=...) è dato, con velocità positive lungo l'asse].
+    """
+    F = mdot * ue + (pe - pa) * Ae
+    if ingresso is not None:
+        F -= ingresso["mdot"] * ingresso["u"] + (ingresso["p"] - pa) * ingresso["A"]
+    return F
+
+
+def variazione_area(stato: State, A1: float, A2: float, ramo: str = "stesso", nome="") -> State:
+    """Collegamento stazionario attraverso una variazione d'area (F §9 "Variazione d'area", §16).
+
+    Lo stato ``stato`` attraversa la sezione A1 → A2 conservando ṁ, h0 ed s
+    (isentropico, quasi stazionario rispetto al condotto fermo). La direzione
+    di u si conserva. ``ramo``: 'stesso' (regime invariato, come negli
+    svolgimenti del corso: B72-E02, S p.49), 'subsonico', 'supersonico'.
+    Solleva :class:`Strozzamento` se A2 è minore dell'area critica di ``stato``
+    (non tutta la portata passa: servono onde riflesse).
+    """
+    M1 = abs(stato.u) / stato.a
+    M2 = mach_da_area_tra_sezioni(M1, A1, A2, stato.gas, ramo)
+    g = stato.gas.gamma
+    f = 1.0 + stato.gas.delta * M2**2
+    a2 = stato.a0 / math.sqrt(f)
+    p2 = stato.p0 * f ** (-g / (g - 1.0))
+    rho2 = (p2 / stato.s) ** (1.0 / g)
+    return State(stato.gas, rho2, math.copysign(M2 * a2, stato.u if stato.u != 0 else 1.0), p2,
+                 0.0, nome)
+
+
+def serbatoio_svuotamento(t, p_i: float, a_i: float, V: float, A: float, gas: Gas,
+                          p_a: float = None) -> dict:
+    """Svuotamento adiabatico di un serbatoio rigido da un orifizio critico (F §17).
+
+    Con C* = (2/(γ+1))^((γ+1)/(2(γ−1))) e K = A a_i C*/V, finché l'orifizio è
+    strozzato: m/m_i = [1+δKt]^(−2/(γ−1)), T/T_i = [1+δKt]^(−2),
+    p/p_i = [1+δKt]^(−2γ/(γ−1)). Se ``p_a`` è dato restituisce anche
+    ``t_fine_strozzamento``, istante in cui p_a/p = (2/(γ+1))^(γ/(γ−1)).
+    Le formule non valgono oltre quell'istante (il dict lo segnala).
+    """
+    g = gas.gamma
+    Cs = (2.0 / (g + 1.0)) ** ((g + 1.0) / (2.0 * (g - 1.0)))
+    K = A * a_i * Cs / V
+    t = np.asarray(t, dtype=float)
+    b = 1.0 + gas.delta * K * t
+    out = {"K": K, "m_mi": b ** (-2.0 / (g - 1.0)), "T_Ti": b ** (-2.0),
+           "p_pi": b ** (-2.0 * g / (g - 1.0))}
+    if p_a is not None:
+        p_fine = p_a / critiche(gas)["p*_p0"]
+        if p_fine >= p_i:
+            out["t_fine_strozzamento"] = 0.0
+        else:
+            out["t_fine_strozzamento"] = ((p_fine / p_i) ** (-(g - 1.0) / (2.0 * g)) - 1.0) / (
+                gas.delta * K)
+        out["valido"] = t <= out["t_fine_strozzamento"]
+    return {k: (float(v) if np.ndim(v) == 0 and not isinstance(v, bool) else v)
+            for k, v in out.items()}
+
+
+def serbatoio_riempimento(V: float, p_i: float, T_i: float, T0_in: float, gas: Gas, *,
+                          m: float = None, p: float = None) -> dict:
+    """Riempimento adiabatico da una linea a entalpia totale costante h0,in = cp T0,in (F §17).
+
+    Bilancio m cv T − m_i cv T_i = (m − m_i) h0,in ⇒ m T = m_i T_i + (m − m_i) γ T0,in.
+    Dato lo stato finale per massa ``m`` oppure pressione ``p``, restituisce m, T, p.
+    """
+    gas._serve_R("serbatoio_riempimento")
+    g, R = gas.gamma, gas.R
+    m_i = p_i * V / (R * T_i)
+    if (m is None) == (p is None):
+        raise GasdynError("specificare esattamente uno fra m e p")
+    if p is not None:
+        m = (p * V / R - m_i * T_i) / (g * T0_in) + m_i
+    T = (m_i * T_i + (m - m_i) * g * T0_in) / m
+    return {"m_i": m_i, "m": m, "T": T, "p": m * R * T / V}
+
+
+# =============================================================================
+# 3. Urto normale stazionario (F §7, §12)
+# =============================================================================
+def urto_normale(M1: float, gas: Gas) -> dict:
+    """Rapporti attraverso un urto normale con Mach normale a monte M1 ≥ 1 (F §7).
+
+    Chiavi: ``p2_p1``, ``rho2_rho1`` (= u1/u2), ``T2_T1``, ``a2_a1``, ``M2``,
+    ``p02_p01`` (perdita di pressione totale), ``s2_s1`` (p/ρ^γ), ``ds_R``
+    (Δs_th/R), ``p02_p1`` (pressione di ristagno a valle su statica a monte,
+    utile per il Pitot), ``u2_u1``.
+    Solleva :class:`NessunaSoluzione` per M1 < 1 (urto d'espansione, S p.19).
+    """
+    if M1 < 1.0 - 1e-12:
+        raise NessunaSoluzione(f"M1 = {M1} < 1: l'urto d'espansione viola il secondo principio (S p.19)")
+    M1 = max(M1, 1.0)
+    g, d = gas.gamma, gas.delta
+    m2 = M1 * M1
+    p21 = 1.0 + 2.0 * g / (g + 1.0) * (m2 - 1.0)
+    r21 = (g + 1.0) * m2 / ((g - 1.0) * m2 + 2.0)
+    T21 = p21 / r21
+    M2 = math.sqrt((1.0 + d * m2) / (g * m2 - d))
+    p0r = r21 ** (g / (g - 1.0)) * ((g + 1.0) / (2.0 * g * m2 - (g - 1.0))) ** (1.0 / (g - 1.0))
+    s21 = p21 / r21**g
+    return {"M1": M1, "p2_p1": p21, "rho2_rho1": r21, "T2_T1": T21, "a2_a1": math.sqrt(T21),
+            "M2": M2, "p02_p01": p0r, "s2_s1": s21, "ds_R": math.log(s21) / (g - 1.0),
+            "p02_p1": p21 * (1.0 + d * M2**2) ** (g / (g - 1.0)), "u2_u1": 1.0 / r21}
+
+
+def urto_normale_stato(stato: State, nome="") -> State:
+    """Stato a valle di un urto normale stazionario (urto perpendicolare alla velocità di ``stato``)."""
+    r = urto_normale(stato.M, stato.gas)
+    k = 1.0 / r["rho2_rho1"]
+    return State(stato.gas, stato.rho * r["rho2_rho1"], stato.u * k, stato.p * r["p2_p1"],
+                 stato.v * k, nome)
+
+
+def mach_da_urto(valore: float, gas: Gas, tipo: str = "p2/p1") -> float:
+    """M1 dell'urto normale da un rapporto noto (inversa di :func:`urto_normale`).
+
+    ``tipo``: 'p2/p1', 'rho2/rho1', 'T2/T1', 'M2', 'p02/p01'. Le prime tre e M2
+    hanno forma chiusa o monotona; p02/p01 è risolto con brentq.
+    """
+    g, d = gas.gamma, gas.delta
+    if tipo == "p2/p1":
+        if valore < 1:
+            raise NessunaSoluzione("p2/p1 < 1")
+        return math.sqrt(1.0 + (g + 1.0) / (2.0 * g) * (valore - 1.0))
+    if tipo == "rho2/rho1":
+        lim = (g + 1.0) / (g - 1.0)
+        if not 1 <= valore < lim:
+            raise NessunaSoluzione(f"ρ2/ρ1 deve stare in [1, {lim})")
+        return math.sqrt(2.0 * valore / ((g + 1.0) - (g - 1.0) * valore))
+    if tipo == "M2":
+        lim = math.sqrt((g - 1.0) / (2.0 * g))
+        if not lim < valore <= 1:
+            raise NessunaSoluzione(f"M2 deve stare in ({lim}, 1]")
+        return math.sqrt((1.0 + d * valore**2) / (g * valore**2 - d))
+    chiave = {"T2/T1": "T2_T1", "p02/p01": "p02_p01"}.get(tipo)
+    if chiave is None:
+        raise GasdynError("tipo non riconosciuto")
+    f = lambda M: urto_normale(M, gas)[chiave] - valore
+    return brentq(f, 1.0, _MACH_SUP_MAX, xtol=1e-14, rtol=1e-14)
+
+
+# =============================================================================
+# 4. Urti mobili 1D (F §7, S p.17–23)
+# =============================================================================
+def _segno_famiglia(famiglia: str) -> int:
+    f = str(famiglia).replace("−", "-").replace(" ", "").lower()
+    if f in ("u+a", "+", "2", "destra", "dx"):
+        return +1
+    if f in ("u-a", "-", "1", "sinistra", "sx"):
+        return -1
+    raise GasdynError(f"famiglia '{famiglia}' non riconosciuta: usare 'u+a' o 'u-a'")
+
+
+def _nome_famiglia(sgn: int) -> str:
+    return "u+a" if sgn > 0 else "u-a"
+
+
+@dataclass(frozen=True)
+class Urto:
+    """Urto mobile 1D (F §7).
+
+    ``monte`` è lo stato davanti all'urto (in cui l'urto entra), ``valle`` quello
+    dietro. ``w`` velocità dell'urto nel riferimento del laboratorio.
+    Urto della famiglia u+a: si muove verso destra rispetto al gas, monte a
+    destra, M_r1 = (u1−w)/a1 < 0. Famiglia u−a: speculare, M_r1 > 0.
+    Proprietà: ``Ms`` = |M_r1| (Mach dell'urto), ``Mr_monte``, ``Mr_valle``
+    (con segno), ``p2_p1``, ``rho2_rho1``. Posizione: ``x(t) = x0 + w (t − t0)``.
+    """
+
+    famiglia: str
+    monte: State
+    valle: State
+    w: float
+    tipo: str = "urto"
+
+    @property
+    def Mr_monte(self):
+        return (self.monte.u - self.w) / self.monte.a
+
+    @property
+    def Mr_valle(self):
+        return (self.valle.u - self.w) / self.valle.a
+
+    @property
+    def Ms(self):
+        return abs(self.Mr_monte)
+
+    @property
+    def p2_p1(self):
+        return self.valle.p / self.monte.p
+
+    @property
+    def rho2_rho1(self):
+        return self.valle.rho / self.monte.rho
+
+    @property
+    def sigla(self):
+        return "S"
+
+    @property
+    def xi(self):
+        """Velocità della discontinuità nel piano x–t (pendenza dx/dt)."""
+        return self.w
+
+    def residui_rh(self) -> dict:
+        """Residui relativi di massa, quantità di moto ed energia (F §2): [ρv], [ρuv+p], [ρev+pu]."""
+        a, b, w = self.monte, self.valle, self.w
+        va, vb = a.u - w, b.u - w
+        m = (a.rho * va, b.rho * vb)
+        q = (a.rho * a.u * va + a.p, b.rho * b.u * vb + b.p)
+        e = (a.E * va + a.p * a.u, b.E * vb + b.p * b.u)
+        sc = lambda x: abs(x[0] - x[1]) / max(abs(x[0]), abs(x[1]), 1e-300)
+        return {"massa": sc(m), "qdm": sc(q), "energia": sc(e)}
+
+    def __repr__(self):
+        return (f"Urto {self.famiglia}: w={_fmt(self.w)}, Ms={_fmt(self.Ms)}, "
+                f"Mr_monte={_fmt(self.Mr_monte)}, Mr_valle={_fmt(self.Mr_valle)}, "
+                f"p2/p1={_fmt(self.p2_p1)}, ρ2/ρ1={_fmt(self.rho2_rho1)}\n"
+                f"  monte: {self.monte}\n  valle: {self.valle}")
+
+
+def _urto_da_Ms(monte: State, sgn: int, Ms: float, nome_valle="") -> Urto:
+    """Urto della famiglia di segno ``sgn`` con Mach |M_r1| = Ms (F §7)."""
+    if Ms < 1.0 - 1e-12:
+        raise NessunaSoluzione(f"|M_r1| = {Ms} < 1: urto d'espansione non ammissibile (S p.19)")
+    Ms = max(Ms, 1.0)
+    g = monte.gas.gamma
+    a1 = monte.a
+    w = monte.u + sgn * a1 * Ms
+    m2 = Ms * Ms
+    r21 = (g + 1.0) * m2 / ((g - 1.0) * m2 + 2.0)
+    p21 = 1.0 + 2.0 * g / (g + 1.0) * (m2 - 1.0)
+    v1 = monte.u - w
+    v2 = v1 / r21
+    valle = State(monte.gas, monte.rho * r21, w + v2, monte.p * p21, monte.v, nome_valle)
+    return Urto(_nome_famiglia(sgn), monte, valle, w)
+
+
+def M_valle_limite(gas: Gas) -> float:
+    """Limite del Mach assoluto a valle di un urto in gas in quiete per Ms → ∞.
+
+    u2/a2 → √(2/(γ(γ−1))) (= 1.8898 per γ = 1.4). Ricavato dalle relazioni di
+    F §7 nel limite d'urto forte (**fuori formulario** come formula esplicita).
+    """
+    g = gas.gamma
+    return math.sqrt(2.0 / (g * (g - 1.0)))
+
+
+def urto_mobile(monte: State, famiglia: str = None, *, w: float = None, Ms: float = None,
+                p_valle: float = None, u_valle: float = None, M_valle: float = None,
+                nome_valle: str = "") -> Urto:
+    """Urto mobile che entra nello stato ``monte`` (F §7), dato UNO fra:
+
+    * ``w``: velocità dell'urto (la famiglia, se omessa, è dedotta dal segno di w−u1);
+    * ``Ms``: Mach dell'urto |M_r1| = |u1−w|/a1;
+    * ``p_valle``: pressione a valle, Ms² = 1 + (γ+1)/(2γ)(p2/p1 − 1);
+    * ``u_valle``: velocità a valle, Ms = k + √(1+k²), k = (γ+1)/4·|u2−u1|/a1
+      (formula di M_rel del formulario, F §8);
+    * ``M_valle``: Mach assoluto a valle u2/a2 **con segno**; risolto per
+      ricerca di tutte le radici in Ms ∈ [1, 1e4] (brentq). Se le radici sono
+      più d'una solleva :class:`RamiMultipli`; se nessuna,
+      :class:`NessunaSoluzione` (in gas in quiete |u2/a2| < :func:`M_valle_limite`).
+
+    Lo stato a monte può essere in moto (u1 ≠ 0).
+    """
+    dati = {"w": w, "Ms": Ms, "p_valle": p_valle, "u_valle": u_valle, "M_valle": M_valle}
+    dati = {k: v for k, v in dati.items() if v is not None}
+    if len(dati) != 1:
+        raise GasdynError("urto_mobile: specificare esattamente uno fra w, Ms, p_valle, u_valle, M_valle")
+    g = monte.gas.gamma
+    a1 = monte.a
+    if w is not None:
+        sgn = 1 if w > monte.u else -1
+        if famiglia is not None and _segno_famiglia(famiglia) != sgn:
+            raise NessunaSoluzione(
+                f"w = {w} incompatibile con la famiglia {famiglia} (u1 = {monte.u}): "
+                "un urto u+a ha w > u1, un urto u−a ha w < u1")
+        return _urto_da_Ms(monte, sgn, abs(monte.u - w) / a1, nome_valle)
+    if famiglia is None:
+        raise GasdynError("urto_mobile: specificare la famiglia ('u+a' o 'u-a')")
+    sgn = _segno_famiglia(famiglia)
+    if Ms is not None:
+        return _urto_da_Ms(monte, sgn, Ms, nome_valle)
+    if p_valle is not None:
+        if p_valle < monte.p * (1 - 1e-14):
+            raise NessunaSoluzione("p_valle < p_monte: un urto deve comprimere")
+        return _urto_da_Ms(monte, sgn, math.sqrt(1.0 + (g + 1.0) / (2.0 * g) * (p_valle / monte.p - 1.0)),
+                           nome_valle)
+    if u_valle is not None:
+        du = sgn * (u_valle - monte.u)
+        if du < -1e-14 * max(1.0, abs(monte.u)):
+            raise NessunaSoluzione(
+                f"u_valle = {u_valle}: un urto {famiglia} richiede "
+                f"{'u2 > u1' if sgn > 0 else 'u2 < u1'} (u1 = {monte.u})")
+        k = 0.25 * (g + 1.0) * max(du, 0.0) / a1
+        return _urto_da_Ms(monte, sgn, k + math.sqrt(1.0 + k * k), nome_valle)
+    # M_valle
+    f = lambda m: (lambda st: st.u / st.a)(_urto_da_Ms(monte, sgn, m).valle) - M_valle
+    radici = _radici(f, 1.0, _MACH_SUP_MAX, n=2000, scala="log")
+    if not radici:
+        lim = M_valle_limite(monte.gas)
+        raise NessunaSoluzione(
+            f"nessun urto {famiglia} dà u2/a2 = {M_valle} a valle di {monte}. "
+            f"Per Ms→∞ u2/a2 → {sgn * lim:.5f} (limite d'urto forte); con gas in quiete "
+            f"|u2/a2| < {lim:.5f}")
+    sol = [_urto_da_Ms(monte, sgn, m, nome_valle) for m in radici]
+    if len(sol) > 1:
+        raise RamiMultipli(f"{len(sol)} urti danno u2/a2 = {M_valle}: Ms = "
+                           + ", ".join(_fmt(s.Ms) for s in sol), sol)
+    return sol[0]
+
+
+def urto_riflesso_parete(stato: State, famiglia_riflesso: str, u_parete: float = 0.0,
+                         nome_valle: str = "") -> Urto:
+    """Urto riflesso da una parete (F §9 "Urto–parete").
+
+    ``stato`` è lo stato dietro l'urto incidente (gas che si muove verso la parete),
+    che diventa il monte dell'urto riflesso; a valle u = ``u_parete``.
+    Parete a destra ⇒ urto riflesso della famiglia 'u-a'; a sinistra ⇒ 'u+a'.
+    Se la condizione di parete richiede un'espansione solleva :class:`GasdynError`
+    (usare :func:`onda_verso`).
+    """
+    sgn = _segno_famiglia(famiglia_riflesso)
+    if sgn * (u_parete - stato.u) < 0:
+        raise GasdynError("la parete genera un'espansione, non un urto: usare onda_verso")
+    return urto_mobile(stato, famiglia_riflesso, u_valle=u_parete, nome_valle=nome_valle)
+
+
+def natura_salto(A: State, B: State, tol: float = 1e-4) -> dict:
+    """Identifica quale onda singola può collegare due stati uniformi (B48-E02).
+
+    Prova in ordine: assenza di salto, contatto (u e p uguali), urto
+    (Rankine–Hugoniot con w = [ρu]/[ρ], F §7; monte = stato a entropia minore),
+    onda semplice isentropica (stessa s e stesso R1 → onda u+a, stesso R2 → u−a).
+    ``tol`` è la tolleranza relativa sui residui (i dati delle tracce sono arrotondati).
+    Restituisce un dict con ``tipo`` e, per un urto, l'oggetto :class:`Urto`
+    ricostruito e i residui.
+    """
+    if A.gas != B.gas:
+        uguali_pu = abs(A.u - B.u) <= tol * max(1.0, abs(A.u)) and abs(A.p - B.p) <= tol * A.p
+        return {"tipo": "contatto (gas diversi)" if uguali_pu else "incompatibile"}
+    sc = lambda x, y: abs(x - y) / max(abs(x), abs(y), 1e-300)
+    ref_u = max(A.a, B.a)
+    du = abs(A.u - B.u) / ref_u
+    if du <= tol and sc(A.p, B.p) <= tol:
+        if sc(A.rho, B.rho) <= tol:
+            return {"tipo": "nessun salto"}
+        return {"tipo": "contatto", "w": 0.5 * (A.u + B.u)}
+    out = {}
+    if sc(A.rho, B.rho) > tol:
+        w = (B.rho * B.u - A.rho * A.u) / (B.rho - A.rho)
+        monte, valle = (A, B) if A.s < B.s else (B, A)
+        Ms = abs(monte.u - w) / monte.a
+        if Ms >= 1.0 - tol:
+            urto = _urto_da_Ms(monte, 1 if w > monte.u else -1, max(Ms, 1.0))
+            res = {"p": sc(urto.valle.p, valle.p), "u": abs(urto.valle.u - valle.u) / ref_u,
+                   "rho": sc(urto.valle.rho, valle.rho)}
+            out = {"urto_candidato": urto, "residui_urto": res}
+            if max(res.values()) <= tol:
+                return {"tipo": f"urto {urto.famiglia}", "w": w, "urto": urto,
+                        "monte": monte.nome or ("A" if monte is A else "B"), "residui": res}
+    if sc(A.s, B.s) <= tol:
+        if abs(A.R1 - B.R1) / ref_u <= tol:
+            return {"tipo": "onda semplice u+a (isentropica)", **out}
+        if abs(A.R2 - B.R2) / ref_u <= tol:
+            return {"tipo": "onda semplice u-a (isentropica)", **out}
+    return {"tipo": "incompatibile: nessuna onda singola collega i due stati", **out}

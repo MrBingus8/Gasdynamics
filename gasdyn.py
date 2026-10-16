@@ -2480,3 +2480,284 @@ def sauer_meyer(R: float, gas: Gas) -> dict:
     v = lambda xi, eta: (g + 1.0) * d * d * xi * eta + (g + 1.0) * d**3 * eta**3 / 6.0
     return {"d": d, "u": u, "v": v, "M": lambda xi, eta: np.sqrt((1 + u(xi, eta)) ** 2 + v(xi, eta) ** 2),
             "xi_gola": lambda eta: -d * eta**2 / 6.0, "xi_sonica": lambda eta: -0.5 * (g + 1.0) * d * eta**2}
+
+
+# =============================================================================
+# 8. Grafici (matplotlib, importato solo quando serve)
+# =============================================================================
+def _plt():
+    import matplotlib.pyplot as plt
+    return plt
+
+
+_STILE = {"urto": dict(color="k", lw=2.0), "contatto": dict(color="k", lw=1.2, ls="--"),
+          "ventaglio": dict(color="0.35", lw=0.8), "pistone": dict(color="tab:blue", lw=2.0),
+          "parete": dict(color="0.2", lw=3.0)}
+
+
+def grafico_xt(soluzioni, t_max: float, x_range: tuple = None, ax=None, n_ventaglio: int = 7,
+               etichette: bool = True, linee: Sequence = (), pistone: Callable = None,
+               titolo: str = ""):
+    """Diagramma x–t di una o più soluzioni di Riemann (F §8: rette x = x0 + λt).
+
+    ``soluzioni``: una :class:`SoluzioneRiemann` o una lista di elementi
+    ``SoluzioneRiemann`` oppure ``(SoluzioneRiemann, t_fine)`` (ognuna parte
+    dai propri x0, t0 e si disegna fino a t_fine o t_max). Urti: linea spessa;
+    contatto: tratteggio; ventagli: ``n_ventaglio`` caratteristiche.
+    ``linee``: segmenti aggiuntivi ((x0, t0), (x1, t1), stile, etichetta) con
+    stile in {'urto', 'contatto', 'ventaglio', 'pistone', 'parete'} o dict.
+    ``pistone``: funzione x_p(t) da tracciare. Etichette degli stati nelle regioni.
+    """
+    plt = _plt()
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 4.5))
+    if isinstance(soluzioni, SoluzioneRiemann):
+        soluzioni = [soluzioni]
+    xs_all = []
+    for el in soluzioni:
+        sol, tf = (el if isinstance(el, tuple) else (el, t_max))
+        x0, t0 = sol.x0, sol.t0
+        dt = tf - t0
+        if dt <= 0:
+            continue
+        v = sol.velocita()
+        for nome, lam in v.items():
+            stile = "urto" if nome.startswith("urto") else "contatto" if nome == "contatto" else "ventaglio"
+            ax.plot([x0, x0 + lam * dt], [t0, tf], **_STILE[stile])
+            xs_all += [x0, x0 + lam * dt]
+        for lato in ("sx", "dx"):
+            if f"testa_{lato}" in v:
+                for lam in np.linspace(v[f"testa_{lato}"], v[f"coda_{lato}"], n_ventaglio)[1:-1]:
+                    ax.plot([x0, x0 + lam * dt], [t0, tf], **_STILE["ventaglio"])
+        if etichette:
+            tl = t0 + 0.8 * dt
+            confini = sorted(v.values())
+            xi_reg = ([confini[0] - 0.3 * max(1.0, abs(confini[0]))]
+                      + [0.5 * (a + b) for a, b in zip(confini[:-1], confini[1:])]
+                      + [confini[-1] + 0.3 * max(1.0, abs(confini[-1]))])
+            nomi = []
+            for xi in xi_reg:
+                st = sol.stato_xi(xi)
+                nomi.append(st.nome)
+            for xi, nm in zip(xi_reg, nomi):
+                if nm and not nm.startswith("vuoto"):
+                    xl = x0 + xi * (tl - t0)
+                    if x_range is not None:  # etichetta dentro la finestra
+                        m = 0.04 * (x_range[1] - x_range[0])
+                        xl = min(max(xl, x_range[0] + m), x_range[1] - m)
+                    ax.text(xl, tl, nm, ha="center", va="center", fontsize=10,
+                            bbox=dict(fc="w", ec="none", alpha=0.8, pad=1))
+    for seg in linee:
+        (xa, ta), (xb, tb), st = seg[0], seg[1], seg[2]
+        st = _STILE.get(st, st) if isinstance(st, str) else st
+        ax.plot([xa, xb], [ta, tb], label=seg[3] if len(seg) > 3 else None, **st)
+        xs_all += [xa, xb]
+    if pistone is not None:
+        tt = np.linspace(0, t_max, 200)
+        ax.plot([pistone(t) for t in tt], tt, **_STILE["pistone"], label="pistone")
+    if x_range is None and xs_all:
+        x_range = (min(xs_all), max(xs_all))
+    if x_range:
+        ax.set_xlim(*x_range)
+    ax.set_ylim(0, t_max)
+    ax.set_xlabel("x")
+    ax.set_ylabel("t")
+    if titolo:
+        ax.set_title(titolo)
+    ax.grid(alpha=0.25)
+    return ax
+
+
+def grafico_pu(sol: SoluzioneRiemann = None, stati: Sequence = (), curve: Sequence = (), ax=None,
+               p_max: float = None, titolo: str = ""):
+    """Piano p–u (u in ascissa, p in ordinata) con curve d'onda e stati etichettati (F §8).
+
+    ``sol``: disegna la curva u−a dallo stato 1 e la u+a dallo stato 4 e gli
+    stati 1, 2(=3), 4. ``curve``: coppie (stato, famiglia) aggiuntive.
+    ``stati``: stati da segnare (etichetta = ``stato.nome``). Ramo d'urto
+    continuo, ramo d'espansione tratteggiato.
+    """
+    plt = _plt()
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 4.5))
+    cc, ss = list(curve), list(stati)
+    if sol is not None:
+        cc = [(sol.stati["1"], "u-a"), (sol.stati["4"], "u+a")] + cc
+        ss = [sol.stati["1"], sol.stati["4"]] + ([] if sol.vuoto else [sol.stati["2"].con(nome="2=3")]) + ss
+    pm = p_max or 1.6 * max([s.p for s in ss] + [c[0].p for c in cc])
+    for st, fam in cc:
+        pe = np.linspace(1e-6 * st.p, st.p, 200)
+        ps = np.linspace(st.p, pm, 200)
+        col = "tab:red" if _segno_famiglia(fam) < 0 else "tab:blue"
+        ax.plot(curva_onda(st, fam, pe), pe, color=col, ls="--", lw=1.2)
+        ax.plot(curva_onda(st, fam, ps), ps, color=col, lw=1.6,
+                label=f"{fam} da {st.nome}" if st.nome else fam)
+    for st in ss:
+        ax.plot(st.u, st.p, "ko", ms=4)
+        ax.annotate(st.nome, (st.u, st.p), textcoords="offset points", xytext=(5, 5))
+    ax.set_xlabel("u")
+    ax.set_ylabel("p")
+    ax.set_ylim(0, pm)
+    ax.legend(fontsize=8)
+    ax.grid(alpha=0.25)
+    if titolo:
+        ax.set_title(titolo)
+    return ax
+
+
+def grafico_p_theta(polari: Sequence = (), stati: Sequence = (), ax=None, p_min_rel: float = 0.05,
+                    titolo: str = "", log: bool = False):
+    """Piano p–θ (θ in ascissa, gradi) con polari d'urto e d'espansione (F §13).
+
+    ``polari``: coppie (stato, famiglia) con famiglia 'C+', 'C-' o 'entrambe'.
+    Ramo debole continuo, forte a tratti fini, espansione tratteggiata;
+    il punto di θmax è segnato. ``stati``: stati da segnare in (θ, p).
+    """
+    plt = _plt()
+    if ax is None:
+        _, ax = plt.subplots(figsize=(6, 4.5))
+    colori = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    for k, (st, fam) in enumerate(polari):
+        pol = polare_p_theta(st, fam, p_min_rel=p_min_rel)
+        pol = pol if fam == "entrambe" else {fam: pol}
+        c = colori[k % len(colori)]
+        for f, d in pol.items():
+            u = d["urto"]
+            deb = u["ramo"] == "debole"
+            ax.plot(u["theta"][deb], u["p"][deb], color=c, lw=1.6,
+                    label=f"polare di {st.nome}" if f == list(pol)[0] else None)
+            ax.plot(u["theta"][~deb], u["p"][~deb], color=c, lw=1.0, ls=":")
+            if "espansione" in d:
+                ax.plot(d["espansione"]["theta"], d["espansione"]["p"], color=c, lw=1.2, ls="--")
+            tm = d["punti"]["theta_max"]
+            ax.plot(*tm, marker="|", color=c, ms=8)
+    for st in stati:
+        ax.plot(st.theta, st.p, "ko", ms=4)
+        ax.annotate(st.nome, (st.theta, st.p), textcoords="offset points", xytext=(5, 5))
+    ax.set_xlabel("θ [°]")
+    ax.set_ylabel("p")
+    if log:
+        ax.set_yscale("log")
+    ax.legend(fontsize=8)
+    ax.grid(alpha=0.25)
+    if titolo:
+        ax.set_title(titolo)
+    return ax
+
+
+def grafico_odografo(polari: Sequence = (), stati: Sequence = (), ax=None, riferimento: str = "assoluto",
+                     p_min_rel: float = 0.05, titolo: str = ""):
+    """Piano odografo (u*, v*) con polari, cerchio sonico M* = 1 e stati numerati (F §13).
+
+    ``polari``: coppie (stato, famiglia). ``stati``: stati da segnare
+    (coordinate V/a* del proprio a*).
+    """
+    plt = _plt()
+    if ax is None:
+        _, ax = plt.subplots(figsize=(5.5, 5))
+    colori = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    for k, (st, fam) in enumerate(polari):
+        o = polare_odografo(st, fam, riferimento=riferimento, p_min_rel=p_min_rel)
+        fams = ["C+", "C-"] if fam == "entrambe" else [None]
+        c = colori[k % len(colori)]
+        for f in fams:
+            d = o[f] if f else o
+            ax.plot(d["urto"]["us"], d["urto"]["vs"], color=c, lw=1.4,
+                    label=f"polare di {st.nome}" if f in (None, "C+") else None)
+            if "espansione" in d:
+                ax.plot(d["espansione"]["us"], d["espansione"]["vs"], color=c, lw=1.0, ls="--")
+    t = np.linspace(0, 2 * np.pi, 300)
+    ax.plot(np.cos(t), np.sin(t), color="0.5", lw=0.8, ls="-.", label="M* = 1")
+    for st in stati:
+        th = math.radians(st.theta - (0 if riferimento == "assoluto" else stati[0].theta))
+        x, y = st.M_star * math.cos(th), st.M_star * math.sin(th)
+        ax.plot(x, y, "ko", ms=4)
+        ax.annotate(st.nome, (x, y), textcoords="offset points", xytext=(5, 5))
+    ax.set_xlabel("u*")
+    ax.set_ylabel("v*")
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.legend(fontsize=8)
+    ax.grid(alpha=0.25)
+    if titolo:
+        ax.set_title(titolo)
+    return ax
+
+
+def grafico_profili(sol: SoluzioneRiemann, t: float, x_range: tuple, grandezze=("p", "rho", "u", "M", "p0"),
+                    n: int = 1000, fig=None, titolo: str = ""):
+    """Profili spaziali a un istante t delle grandezze scelte ('p', 'rho', 'u', 'a', 'M', 's', 'p0')."""
+    plt = _plt()
+    x = np.linspace(x_range[0], x_range[1], n)
+    c = sol.campiona(x, t)
+    if fig is None:
+        fig, axs = plt.subplots(len(grandezze), 1, figsize=(6, 1.6 * len(grandezze)), sharex=True)
+    else:
+        axs = fig.axes
+    axs = np.atleast_1d(axs)
+    nomi = {"rho": "ρ", "p0": "p0", "M": "M = u/a"}
+    for ax, g in zip(axs, grandezze):
+        ax.plot(x, c[g], "k", lw=1.3)
+        ax.set_ylabel(nomi.get(g, g))
+        ax.grid(alpha=0.25)
+    axs[-1].set_xlabel("x")
+    axs[0].set_title(titolo or f"t = {t:g}")
+    fig.tight_layout()
+    return fig
+
+
+# =============================================================================
+# 9. Numerica: schema di Godunov con il solutore esatto (S p.41–47)
+# =============================================================================
+def flusso_godunov(sinistra: State, destra: State) -> np.ndarray:
+    """Flusso numerico di Godunov: F(U) dello stato del problema di Riemann esatto in ξ = 0 (S p.42)."""
+    st = riemann(sinistra, destra).stato_xi(0.0)
+    if st.rho == 0:
+        return np.zeros(3)
+    return st.F()
+
+
+def godunov_passo(rho, u, p, gas: Gas, dx: float, cfl: float = 0.9, bc=("trasmissivo", "trasmissivo"),
+                  dt: float = None):
+    """Un passo dello schema di Godunov 1D (S p.42): Ū_j^(n+1) = Ū_j^n − Δt/Δx (F_(j+1/2) − F_(j−1/2)).
+
+    Δt = cfl·Δx/max(|u|+a) se ``dt`` non è dato (S p.37, p.42). Condizioni al
+    contorno con celle fantasma (S p.46–47): 'parete' (ρ, p uguali, u
+    ribaltata: u_g = −u_0) o 'trasmissivo' (copia). Restituisce
+    (rho, u, p, dt) aggiornati.
+    """
+    rho, u, p = (np.asarray(x, float) for x in (rho, u, p))
+    sts = [State(gas, r, v, q) for r, v, q in zip(rho, u, p)]
+
+    def fantasma(st, tipo):
+        if tipo == "parete":
+            return st.con(u=-st.u)
+        if tipo == "trasmissivo":
+            return st
+        raise GasdynError("bc: 'parete' o 'trasmissivo'")
+
+    tutti = [fantasma(sts[0], bc[0])] + sts + [fantasma(sts[-1], bc[1])]
+    if dt is None:
+        dt = cfl * dx / max(abs(s.u) + s.a for s in sts)
+    Fi = [flusso_godunov(tutti[i], tutti[i + 1]) for i in range(len(tutti) - 1)]
+    U = np.array([s.U() for s in sts])
+    Un = U - dt / dx * (np.array(Fi[1:]) - np.array(Fi[:-1]))
+    new = [stato_da_U(gas, x) for x in Un]
+    return (np.array([s.rho for s in new]), np.array([s.u for s in new]),
+            np.array([s.p for s in new]), dt)
+
+
+def godunov(rho, u, p, gas: Gas, dx: float, t_fine: float, cfl: float = 0.9,
+            bc=("trasmissivo", "trasmissivo")):
+    """Integra con :func:`godunov_passo` fino a ``t_fine`` (ultimo passo accorciato)."""
+    t = 0.0
+    while t < t_fine * (1 - 1e-14):
+        sts = [State(gas, r, v, q) for r, v, q in zip(rho, u, p)]
+        dtc = cfl * dx / max(abs(s.u) + s.a for s in sts)
+        rho, u, p, dt = godunov_passo(rho, u, p, gas, dx, bc=bc, dt=min(dtc, t_fine - t))
+        t += dt
+    return rho, u, p
+
+
+__all__ = [n for n in list(globals()) if not n.startswith("_") and n not in (
+    "annotations", "math", "np", "brentq", "minimize_scalar", "dataclass", "field", "replace",
+    "Callable", "Optional", "Sequence")]

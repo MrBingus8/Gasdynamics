@@ -772,3 +772,46 @@ class TestArea7:
         p = gd.polare_p_theta(st, "C+", n=50)
         assert p["urto"]["p"][-1] == pytest.approx(4.5)
         assert p["punti"]["theta_max"][0] == pytest.approx(10.0 + gd.theta_max(2.0, ARIA)[0])
+
+
+# =============================================================================
+# Aree 8–9 — grafici e Godunov
+# =============================================================================
+class TestArea89:
+    def test_godunov_uniforme(self):
+        r, u, p, dt = gd.godunov_passo(np.ones(5), 0.3 * np.ones(5), np.ones(5), ARIA_ADIM, 0.1)
+        assert np.allclose(r, 1) and np.allclose(u, 0.3) and np.allclose(p, 1)
+
+    def test_godunov_sod(self):
+        N = 400
+        x = (np.arange(N) + 0.5) / N - 0.5
+        r = np.where(x < 0, 1.0, 0.125)
+        u = np.zeros(N)
+        p = np.where(x < 0, 1.0, 0.1)
+        r, u, p = gd.godunov(r, u, p, ARIA_ADIM, 1.0 / N, 0.2)
+        es = gd.riemann(gd.State(ARIA_ADIM, 1, 0, 1), gd.State(ARIA_ADIM, 0.125, 0, 0.1)).campiona(x, 0.2)
+        assert np.mean(np.abs(r - es["rho"])) < 0.01
+        assert np.mean(np.abs(p - es["p"])) < 0.01
+
+    def test_godunov_parete_conserva_massa(self):
+        N = 50
+        r = np.linspace(1, 2, N)
+        u = np.linspace(-0.3, 0.4, N)
+        p = np.linspace(1, 1.5, N)
+        r2, u2, p2, _ = gd.godunov_passo(r, u, p, ARIA_ADIM, 0.02, bc=("parete", "parete"))
+        assert np.sum(r2) == pytest.approx(np.sum(r), rel=1e-13)
+        E = lambda r, u, p: np.sum(p / 0.4 + 0.5 * r * u**2)
+        assert E(r2, u2, p2) == pytest.approx(E(r, u, p), rel=1e-13)
+
+    def test_grafici_non_falliscono(self, tmp_path):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        s = gd.riemann(gd.State(ARIA_ADIM, 1, 0, 1), gd.State(ARIA_ADIM, 0.125, 0, 0.1))
+        gd.grafico_xt(s, 0.2, (-0.5, 0.5))
+        gd.grafico_pu(s)
+        gd.grafico_profili(s, 0.2, (-0.5, 0.5))
+        st = gd.State.da_M(ARIA_ADIM, 2.0, p=1, a=1, nome="1")
+        gd.grafico_p_theta([(st, "entrambe")], [st])
+        gd.grafico_odografo([(st, "entrambe")], [st])
+        plt.close("all")

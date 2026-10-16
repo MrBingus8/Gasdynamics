@@ -39,9 +39,8 @@ Regole fissate dall'utente:
 
 - [x] Fase 0 — lettura fonti, convenzioni, algoritmo di Riemann, discrepanze, struttura proposta.
       **In attesa di conferma dell'utente** (non scrivere codice del modulo prima).
-- [ ] Fase 1 — modulo per aree (1 termodinamica, 2 quasi-1D, 3 urto normale, 4 urti mobili,
-      5 onde semplici, 6 Riemann, 7 supersonico 2D, 8 grafici, 9 Godunov), test liv. 1–2 per area.
-      Fatte e testate: aree 1–7 (78 test verdi). Mancano: 8 grafici, 9 Godunov.
+- [x] Fase 1 — modulo per aree 1–9 completo, 82 test di livello 1–2 verdi. Figure di esempio
+      in `verifica/figure/` generate da `verifica/figure_esempio.py` e controllate a vista.
 - [ ] Fase 2 — validazione livello 3 su catalogo e soluzioni_A, `verifica/verifica_catalogo.md`.
 - [ ] Fase 3 — `gasdyn_guida.md`, pulizia, riepilogo.
 

@@ -1664,16 +1664,21 @@ def contorno_pistone(stato: State, lato: str, u_p: float, nome: str = ""):
 
 
 def contorno_serbatoio(stato: State, lato: str, p0: float, *, a0: float = None, T0: float = None,
-                       nome: str = "") -> dict:
-    """Estremo collegato a un grande serbatoio (p0, T0, u = 0) (S p.44–45).
+                       modello: str = "esatto", nome: str = "") -> dict:
+    """Estremo del condotto collegato a un grande serbatoio/ambiente (p0, T0, u = 0) (S p.44–45, F §9).
 
-    Ingresso dal serbatoio (gas che entra nel condotto): stato al contorno con
-    s = s_serbatoio, a_b² + δu_b² = a0² (h0 e s del serbatoio) e l'invariante
-    proveniente dall'interno (R1 = a − δu se il serbatoio è a sinistra,
-    R2 = a + δu se è a destra); il modello è isentropico come in S p.45.
-    Uscita verso il serbatoio: p_b = p0 e onda dall'interno (:func:`onda_verso`).
-    Restituisce dict con 'regime' ('ingresso'/'uscita'), 'stato' al contorno,
-    'onda' emessa nel condotto (per l'uscita) e 'nota'.
+    ``lato``: estremo del condotto a cui sta il serbatoio ('sinistra' o 'destra').
+    * Ingresso (gas che entra dal serbatoio): lo stato al contorno ha s e h0 del
+      serbatoio, a_b² + δu_b² = a0², p_b = p0 (a_b/a0)^(2γ/(γ−1)); verso
+      l'interno parte un'onda (famiglia u+a se il serbatoio è a sinistra) che
+      porta ``stato`` a (p_b, u_b); fra i due gas c'è un contatto se le entropie
+      differiscono. Con ``modello='esatto'`` l'onda interna è un urto se comprime
+      (estensione di S p.45, che usa solo relazioni isentropiche);
+      con ``modello='isentropico'`` è sempre un'onda semplice, come in S p.45.
+    * Uscita (gas che entra nel serbatoio): p_b = p0 (F §9 "Pressione imposta").
+    La scelta fra ingresso e uscita è automatica (segno di u al contorno).
+    Restituisce dict: 'regime', 'stato' (gas al contorno), 'stato_interno'
+    (gas interno dietro l'onda, stessi p e u), 'onda', 'contatto'.
     """
     gas = stato.gas
     if (a0 is None) == (T0 is None):
@@ -1681,28 +1686,33 @@ def contorno_serbatoio(stato: State, lato: str, p0: float, *, a0: float = None, 
     if T0 is not None:
         gas._serve_R("contorno_serbatoio con T0")
         a0 = math.sqrt(gas.gamma * gas.R * T0)
-    d = gas.delta
+    g, d = gas.gamma, gas.delta
     sin = lato.startswith("s")
-    sgn_in = 1.0 if sin else -1.0  # verso dell'ingresso
-    K = stato.R1 if sin else stato.R2  # a − sgn_in δ u = K
-    # (K + sgn_in δ u)² + δu² = a0²
-    A_, B_, C_ = d * d + d, 2.0 * K * d * sgn_in, K * K - a0 * a0
-    disc = B_ * B_ - 4 * A_ * C_
-    if disc >= 0:
-        u_b = (-B_ + sgn_in * math.sqrt(disc)) / (2 * A_)
-        if sgn_in * u_b >= 0:
-            a_b = K + sgn_in * d * u_b
-            s0 = p0 / (gas.gamma * p0 / a0**2) ** gas.gamma
-            stb = _stato_da_a_s(gas, a_b, s0, u_b, nome)
-            nota = "ingresso subsonico" if abs(u_b) < a_b else "ingresso supersonico: rivedere le condizioni"
-            compr = stb.p > stato.p
-            if compr:
-                nota += "; l'onda emessa comprime: trattata come isentropica (S p.45)"
-            return {"regime": "ingresso", "stato": stb, "nota": nota}
+    sgn_in = 1.0 if sin else -1.0
     fam = "u+a" if sin else "u-a"
-    onda = onda_verso(stato, fam, p=p0, nome=nome)
-    return {"regime": "uscita", "stato": onda.valle, "onda": onda, "nota": "p = p0 al contorno"}
+    s0 = p0 / (g * p0 / a0**2) ** g
 
+    def p_ser(u):
+        ab = math.sqrt(max(a0 * a0 - d * u * u, 0.0))
+        return p0 * (ab / a0) ** (2.0 * g / (g - 1.0))
+
+    def p_int(u):
+        return onda_verso(stato, fam, u=u, modello=modello, consenti_vuoto=True).valle.p
+
+    if p0 > p_int(0.0):  # il gas entra dal serbatoio
+        umax = a0 / math.sqrt(d)
+        f = lambda m: p_ser(sgn_in * m) - p_int(sgn_in * m)
+        m = brentq(f, 0.0, umax * (1 - 1e-12), xtol=1e-14, rtol=1e-14)
+        u_b = sgn_in * m
+        ab = math.sqrt(a0 * a0 - d * u_b * u_b)
+        stb = _stato_da_a_s(gas, ab, s0, u_b, nome)
+        onda = onda_verso(stato, fam, u=u_b, modello=modello, nome=nome)
+        nota = "ingresso subsonico" if m < ab else "ingresso supersonico: il serbatoio impone tutto lo stato"
+        return {"regime": "ingresso", "stato": stb, "stato_interno": onda.valle, "onda": onda,
+                "contatto": abs(stb.s / onda.valle.s - 1.0) > 1e-9, "nota": nota}
+    onda = onda_verso(stato, fam, p=p0, modello=modello, nome=nome)
+    return {"regime": "uscita", "stato": onda.valle, "stato_interno": onda.valle, "onda": onda,
+            "contatto": False, "nota": "p = p0 al contorno"}
 
 def riemann_area(sinistra: State, destra: State, A_sx: float, A_dx: float, tol: float = 1e-12) -> dict:
     """Interazione con una brusca variazione d'area in x0 (urto/flusso che attraversa la sezione).
@@ -2465,21 +2475,31 @@ def getto_adattamento(Me: float, pe: float, pa: float, gas: Gas) -> dict:
             "sigma": o.sigma, "onda": o}
 
 
-def sauer_meyer(R: float, gas: Gas) -> dict:
-    """Soluzione di Sauer–Meyer nella gola di raggio adimensionale R ≫ 1 (F §19, versione con (γ+1)).
+def sauer_meyer(R: float, gas: Gas, versione: str = "formulario") -> dict:
+    """Soluzione di Sauer–Meyer nella gola di raggio adimensionale R ≫ 1 (F §19).
 
+    ``versione='formulario'`` (default, F §19 e S p.65 "esercizio 2024"):
     d = 1/√((γ+1)R); u = dξ + (γ+1)d²η²/2; v = (γ+1)d²ξη + (γ+1)d³η³/6;
-    linea di gola ξ_g = −dη²/6; linea sonica ξ_s = −(γ+1)dη²/2;
-    M ≈ √((1+u)² + v²). Nota: S p.65 riporta anche una versione senza (γ+1)
-    (discrepanza 10 del report di Fase 0): qui si segue il formulario.
+    linea di gola ξ_g = −dη²/6; linea sonica ξ_s = −(γ+1)dη²/2.
+    ``versione='favini'`` (S p.65, appunti senza (γ+1)): d = 1/√R,
+    u = dξ + d²η²/2, v = d²ξη + d³η³/6, ξ_g = −dη²/6, ξ_s = −dη²/2.
+    È la discrepanza 10 del report di Fase 0; lo svolgimento B67-E01 (2022)
+    torna con la versione 'favini' (vedi verifica_catalogo.md).
+    In entrambe M ≈ √((1+u)² + v²); lunghezze scalate con la semialtezza di gola.
     Restituisce d e funzioni u(ξ,η), v(ξ,η), M(ξ,η), xi_gola(η), xi_sonica(η).
     """
     g = gas.gamma
-    d = 1.0 / math.sqrt((g + 1.0) * R)
-    u = lambda xi, eta: d * xi + 0.5 * (g + 1.0) * d * d * eta**2
-    v = lambda xi, eta: (g + 1.0) * d * d * xi * eta + (g + 1.0) * d**3 * eta**3 / 6.0
+    if versione == "formulario":
+        k = g + 1.0
+    elif versione == "favini":
+        k = 1.0
+    else:
+        raise GasdynError("versione: 'formulario' o 'favini'")
+    d = 1.0 / math.sqrt(k * R)
+    u = lambda xi, eta: d * xi + 0.5 * k * d * d * eta**2
+    v = lambda xi, eta: k * d * d * xi * eta + k * d**3 * eta**3 / 6.0
     return {"d": d, "u": u, "v": v, "M": lambda xi, eta: np.sqrt((1 + u(xi, eta)) ** 2 + v(xi, eta) ** 2),
-            "xi_gola": lambda eta: -d * eta**2 / 6.0, "xi_sonica": lambda eta: -0.5 * (g + 1.0) * d * eta**2}
+            "xi_gola": lambda eta: -d * eta**2 / 6.0, "xi_sonica": lambda eta: -0.5 * k * d * eta**2}
 
 
 # =============================================================================

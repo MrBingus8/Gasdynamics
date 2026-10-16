@@ -591,8 +591,14 @@ class TestArea6:
         b = r["stato"]
         assert r["regime"] == "ingresso" and b.u > 0
         assert b.a**2 + 0.2 * b.u**2 == pytest.approx(1.4)
-        assert b.R1 == pytest.approx(interno.R1)
-        assert b.p0 == pytest.approx(1.0)
+        assert b.p0 == pytest.approx(1.0) and b.s == pytest.approx(1.0)  # s e h0 del serbatoio
+        si = r["stato_interno"]
+        assert si.p == pytest.approx(b.p) and si.u == pytest.approx(b.u) and r["contatto"]
+        assert isinstance(r["onda"], gd.Urto)  # l'ingresso comprime il gas interno
+        # S p.45: stessa entropia e modello isentropico ⇒ invariante R1 dall'interno, nessun contatto
+        interno = gd.isentropica(gd.State(ARIA_ADIM, 1.0, 0.0, 1.0), p=0.5)
+        r = gd.contorno_serbatoio(interno, "sinistra", 1.0, a0=math.sqrt(1.4), modello="isentropico")
+        assert r["stato"].R1 == pytest.approx(interno.R1) and not r["contatto"]
         r = gd.contorno_serbatoio(_st(1.0, 0.0, 2.0), "sinistra", 1.0, a0=1.0)
         assert r["regime"] == "uscita" and r["stato"].p == pytest.approx(1.0)
 

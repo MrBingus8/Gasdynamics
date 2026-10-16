@@ -1,4 +1,4 @@
-﻿"""gasdyn — calcoli di Gasdinamica nella lingua del corso (Favini).
+"""gasdyn — calcoli di Gasdinamica nella lingua del corso (Favini).
 
 Fonte primaria delle formule: ``fonti/formulario.tex`` (citato come "F §n");
 fonte secondaria: ``fonti/summary_lectures.tex`` (citato come "S p.n").
@@ -689,6 +689,46 @@ def variazione_area(stato: State, A1: float, A2: float, ramo: str = "stesso", no
     rho2 = (p2 / stato.s) ** (1.0 / g)
     return State(stato.gas, rho2, math.copysign(M2 * a2, stato.u if stato.u != 0 else 1.0), p2,
                  0.0, nome)
+
+
+def miscelamento(correnti: Sequence, nome: str = "m") -> dict:
+    """Stato uniforme a valle del miscelamento di correnti parallele in un condotto a sezione costante (F §17).
+
+    ``correnti``: lista di coppie (stato, area), stesso gas, velocità lungo x.
+    Bilanci integrali stazionari con pareti senza attrito e adiabatiche:
+    ṁ = Σρu A, I = Σ(p + ρu²)A, ṁ h0 = Σ ρuA h0, sezione finale A = ΣA.
+    Con p = (I − ṁu)/A e ρ = ṁ/(uA) l'energia dà una quadratica in u con due
+    radici: ramo 'subsonico' e 'supersonico' (entrambe soddisfano i bilanci).
+    Restituisce dict con i due stati (None se assenti), Δs/R di ciascuno
+    rispetto alla media pesata sulla portata, e 'ammissibili' (Δs ≥ 0).
+    Solleva NessunaSoluzione se il discriminante è negativo (portata non smaltibile).
+    """
+    gas = correnti[0][0].gas
+    if any(c[0].gas != gas for c in correnti):
+        raise GasdynError("miscelamento: tutte le correnti devono avere lo stesso gas")
+    g = gas.gamma
+    mdot = sum(st.rho * st.u * A for st, A in correnti)
+    I = sum((st.p + st.rho * st.u**2) * A for st, A in correnti)
+    H = sum(st.rho * st.u * A * st.h0 for st, A in correnti)
+    At = sum(A for _, A in correnti)
+    h0, J, k = H / mdot, I / mdot, g / (g - 1.0)
+    a2, b2, c2 = 0.5 - k, k * J, -h0
+    disc = b2 * b2 - 4 * a2 * c2
+    if disc < 0:
+        raise NessunaSoluzione("miscelamento: nessuno stato uniforme soddisfa i bilanci (Δ < 0)")
+    radici = sorted([(-b2 + s * math.sqrt(disc)) / (2 * a2) for s in (1, -1)])
+    s_media = sum(st.rho * st.u * A * math.log(st.s) for st, A in correnti) / mdot
+    out = {"mdot": mdot, "I": I, "h0": h0, "A": At, "ammissibili": []}
+    for u in radici:
+        p = (I - mdot * u) / At
+        st = State(gas, mdot / (u * At), u, p, 0.0, nome)
+        ramo = "subsonico" if st.M < 1 else "supersonico"
+        ds_R = (math.log(st.s) - s_media) / (g - 1.0)
+        out[ramo] = st
+        out[f"ds_R_{ramo}"] = ds_R
+        if ds_R >= -1e-12:
+            out["ammissibili"].append(ramo)
+    return out
 
 
 def serbatoio_svuotamento(t, p_i: float, a_i: float, V: float, A: float, gas: Gas,

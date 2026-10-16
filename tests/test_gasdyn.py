@@ -1,4 +1,4 @@
-﻿"""Test di gasdyn.py.
+"""Test di gasdyn.py.
 
 Livello 1: coerenza interna (inverse, limiti, conservazione).
 Livello 2: valori di riferimento classici.

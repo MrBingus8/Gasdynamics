@@ -60,11 +60,20 @@ Regole fissate dall'utente:
 - Report completo di Fase 0: `fase0_report.md`.
 - Pistone: u_p = velocità del pistone; legge x_p(t).
 
-## Decisioni prese
+## Decisioni prese (confermate dall'utente il 2026-10-16)
 
-(nessuna ancora confermata)
+- Tutte le proposte sulle discrepanze di `fase0_report.md` (c) sono confermate: si segue il formulario
+  (Newton su u per Riemann, Sauer–Meyer con (γ+1), polari C+ ⇒ θ1+θ(σ), C− ⇒ θ1−θ(σ), ecc.).
+- Angoli in **gradi** in tutta l'interfaccia pubblica.
+- `Gas.aria(R=287.0, gamma=1.4)` disponibile come comodità, sempre sovrascrivibile; le funzioni richiedono
+  comunque il gas esplicitamente (nessun γ implicito).
+- Sigla del vuoto nel problema di Riemann: **"RVR"**.
+- Includere tutte le aggiunte proposte: serbatoi, contorno a serbatoio, caratteristiche 2D e ugello di
+  lunghezza minima, Sauer–Meyer, salti omotermi, natura di un salto tra due stati, diagramma θ–M1 RR/MR.
+- git installato con winget (`C:\Program Files\Git\cmd\git.exe`; se non è nel PATH della shell:
+  `$env:Path = "C:\Program Files\Git\cmd;" + $env:Path`). `fonti/*.pdf` escluso dal repository (113 MB).
+- Livelli di test 1–3 tutti in `tests/test_gasdyn.py`.
 
 ## Problemi aperti
 
-- Discrepanze formulario/summary elencate nel report di Fase 0 (vedi sotto, sezione da aggiornare dopo la risposta).
-- git da installare o meno.
+- (nessuno per ora)

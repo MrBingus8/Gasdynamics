@@ -37,6 +37,9 @@ Regole fissate dall'utente:
   esercizio, elenco svolgimenti affidabili). Ultimo esito: 211 concorda, 34 discorda per causa nota, 12 non confrontabili.
 - `fonti/` — formulario, summary, catalogo, rapporto, `esercizi_2003_2023.pdf` (113 MB, escluso da git).
 - `soluzioni_A/A_G_Bxx-Eyy.pdf` — 17 soluzioni 2021–2023 (tutte lette in Fase 2).
+- `metodo_docente.md` — metodo del docente (checklist, convenzioni, tipologie, immagini, errori, differenze di
+  programma), da caricare nel progetto claude.ai con formulario e summary. Ricavato da `trascrizioni/`
+  (49 file, 44 lezioni a.a. 2021/22, non in git) tramite `appunti_trascrizioni/NN_*.md` (uno per lezione, `_stato.md`).
 
 ## Ambiente
 

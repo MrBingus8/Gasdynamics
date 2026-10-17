@@ -25,6 +25,7 @@ Regole fissate dall'utente:
   urti mobili, onde semplici/pistoni/formazione urto, Riemann 1D e contorni, supersonico 2D, grafici, Godunov).
 - `tests/test_gasdyn.py` — 340 test: livello 1–2 (classi `TestArea1` … `TestArea89`) e livello 3
   (`TestLivello3`, parametrizzata su `verifica/casi_corso.py`), tutti verdi (~13 s).
+- `gasdyn_guida.md` — guida d'uso per le chat claude.ai (da caricare nel progetto insieme a `gasdyn.py`).
 - `fase0_report.md` — report di Fase 0 (convenzioni, algoritmo di Riemann, 13 discrepanze, struttura).
 - `verifica/rasterizza.py` — rasterizza pagine PDF: `python verifica/rasterizza.py <pdf> <dir> [pagine] --scala 2`.
   Immagini nello scratchpad o in `verifica/raster/` (ignorata da git).
@@ -52,8 +53,8 @@ Regole fissate dall'utente:
 - [x] Fase 1 — modulo aree 1–9 completo, test liv. 1–2 verdi, figure di esempio.
 - [x] Fase 2 — validazione livello 3 chiusa: `casi_corso.py` (257 casi), `verifica_catalogo.md`,
   classe `TestLivello3` in `tests/test_gasdyn.py` (asserisce esito == atteso). Totale test: 340 verdi.
-- [ ] Fase 3 — `gasdyn_guida.md` (convenzioni, firme di tutte le funzioni pubbliche con un esempio per area,
-  limiti noti), pulizia finale, riepilogo all'utente (cosa fatto, limiti, segnalazioni "fuori formulario").
+- [x] Fase 3 — `gasdyn_guida.md` scritta (convenzioni, firme, esempi per area eseguiti e verificati,
+  funzioni fuori formulario, limiti noti). Progetto completo al 2026-10-17.
 
 ## Convenzioni (confermate)
 

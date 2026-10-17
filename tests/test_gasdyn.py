@@ -821,3 +821,29 @@ class TestArea89:
         gd.grafico_p_theta([(st, "entrambe")], [st])
         gd.grafico_odografo([(st, "entrambe")], [st])
         plt.close("all")
+
+
+# =============================================================================
+# Livello 3 — risultati del corso (verifica/casi_corso.py)
+# =============================================================================
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "verifica"))
+import casi_corso  # noqa: E402
+
+CASI_CORSO = casi_corso.tutti()
+
+
+class TestLivello3:
+    """Ogni caso deve avere l'esito atteso: 'concorda', 'discorda' (causa nota in ``nota``) o
+    'non confrontabile'. Una discrepanza nuova o una scomparsa fanno fallire il test."""
+
+    @pytest.mark.parametrize("caso", CASI_CORSO,
+                             ids=[f"{c.id}-{i}" for i, c in enumerate(CASI_CORSO)])
+    def test_esito(self, caso):
+        assert caso.esito == caso.atteso, (
+            f"{caso.id} {caso.grandezza}: fonte {caso.fonte}, calcolato {caso.calcolato}, "
+            f"diff {caso.diff}, tol {caso.tol}")
+        if caso.atteso == "discorda":
+            assert caso.nota, "ogni discrepanza deve avere la causa documentata"
+
+    def test_nessuna_discrepanza_senza_causa(self):
+        assert all(c.nota for c in CASI_CORSO if c.esito == "discorda")

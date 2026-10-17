@@ -23,7 +23,8 @@ Regole fissate dall'utente:
 
 - `gasdyn.py` — il modulo (aree 1–9: termodinamica, quasi-1D/serbatoi/miscelamento, urto normale,
   urti mobili, onde semplici/pistoni/formazione urto, Riemann 1D e contorni, supersonico 2D, grafici, Godunov).
-- `tests/test_gasdyn.py` — 82 test di livello 1–2 (classi `TestArea1` … `TestArea89`), tutti verdi.
+- `tests/test_gasdyn.py` — 340 test: livello 1–2 (classi `TestArea1` … `TestArea89`) e livello 3
+  (`TestLivello3`, parametrizzata su `verifica/casi_corso.py`), tutti verdi (~13 s).
 - `fase0_report.md` — report di Fase 0 (convenzioni, algoritmo di Riemann, 13 discrepanze, struttura).
 - `verifica/rasterizza.py` — rasterizza pagine PDF: `python verifica/rasterizza.py <pdf> <dir> [pagine] --scala 2`.
   Immagini nello scratchpad o in `verifica/raster/` (ignorata da git).
@@ -49,11 +50,8 @@ Regole fissate dall'utente:
 
 - [x] Fase 0 — confermata dall'utente il 2026-10-16.
 - [x] Fase 1 — modulo aree 1–9 completo, test liv. 1–2 verdi, figure di esempio.
-- [~] Fase 2 — validazione livello 3. **Fatto**: lette tutte le soluzioni_A e le pagine della raccolta con
-  numeri; `casi_corso.py` e `verifica_catalogo.md` generati. **Da fare per chiudere la Fase 2**:
-  1. aggiungere a `tests/test_gasdyn.py` una classe `TestLivello3` parametrizzata su `casi_corso.tutti()`
-     che asserisce `caso.esito == caso.atteso` (importare con `sys.path` su `verifica/`);
-  2. eseguire tutti i test, rigenerare `verifica_catalogo.md`, rileggerlo una volta, commit.
+- [x] Fase 2 — validazione livello 3 chiusa: `casi_corso.py` (257 casi), `verifica_catalogo.md`,
+  classe `TestLivello3` in `tests/test_gasdyn.py` (asserisce esito == atteso). Totale test: 340 verdi.
 - [ ] Fase 3 — `gasdyn_guida.md` (convenzioni, firme di tutte le funzioni pubbliche con un esempio per area,
   limiti noti), pulizia finale, riepilogo all'utente (cosa fatto, limiti, segnalazioni "fuori formulario").
 

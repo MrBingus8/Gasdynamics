@@ -97,16 +97,19 @@ def _fmt(x, n=5):
         return str(x)
 
 
-def _radici(f, a, b, n=400, scala="lin", xtol=1e-14, rtol=1e-13):
+def _radici(f, a, b, n=400, scala="lin", xtol=1e-14, rtol=1e-13, extra=()):
     """Tutte le radici di f in [a, b] cercate per cambio di segno su n punti.
 
     Ogni radice è raffinata con ``brentq``. Usata dove la soluzione può non
     essere unica, per restituire tutti i rami invece di sceglierne uno.
+    ``extra``: punti aggiunti alla griglia (es. il bordo del dominio di f).
     """
     if scala == "log":
         xs = np.geomspace(a, b, n)
     else:
         xs = np.linspace(a, b, n)
+    if len(extra):
+        xs = np.unique(np.concatenate([xs, np.asarray(extra, dtype=float)]))
     fs = []
     for x in xs:
         try:
@@ -682,6 +685,11 @@ def variazione_area(stato: State, A1: float, A2: float, ramo: str = "stesso", no
     """
     M1 = abs(stato.u) / stato.a
     M2 = mach_da_area_tra_sezioni(M1, A1, A2, stato.gas, ramo)
+    return _stato_stazionario_M(stato, M2, nome)
+
+
+def _stato_stazionario_M(stato: State, M2: float, nome="") -> State:
+    """Stato con gli stessi h0 ed s di ``stato``, Mach M2 e stesso verso di u."""
     g = stato.gas.gamma
     f = 1.0 + stato.gas.delta * M2**2
     a2 = stato.a0 / math.sqrt(f)
@@ -1770,24 +1778,76 @@ def riemann_area(sinistra: State, destra: State, A_sx: float, A_dx: float, tol: 
       a sinistra della sezione, tale che lo stato 5 (stazionario a destra)
       sia collegato a ``destra`` da contatto + onda u+a (brentq su p').
       **Estensione** del procedimento del corso (dichiarata).
+      Vale anche per monte supersonico quando il caso precedente non regge
+      (Strozzamento in A_dx, o onda sinistra che risalirebbe): l'onda riflessa
+      è allora un urto u−a che risale la corrente (w ≤ 0) e lascia 2' subsonico.
+    * Regime strozzato (``regime='strozzato'``), quando il caso subsonico non
+      ha soluzione: la sezione minima diventa sonica. Il corso lo descrive solo
+      a parole (S p.48 punto 4, F §16 "avviamento": gola sonica, a valle
+      supersonico, l'informazione non risale); la costruzione seguente è
+      **fuori formulario**:
+        - A_dx < A_sx (o aree uguali): M5 = 1 in A_dx; 2' è subsonico con
+          M2' dalla legge area–Mach fra A_dx (sonica) e A_sx; a valle
+          riemann(5, destra) deve avere a sinistra un'espansione con testa
+          ferma in x0 (u5 − a5 = 0).
+        - A_dx > A_sx: M2' = 1 in A_sx; 5 sul ramo supersonico della legge
+          area–Mach; riemann(5, destra) deve avere l'onda sinistra che si
+          allontana dalla sezione (urto con w ≥ 0, come in S p.49, o espansione).
+          Se invece quell'urto risalirebbe la sezione (w < 0), l'urto resta
+          stazionario dentro il salto d'area, nella sezione A_s ∈ [A_sx, A_dx]:
+          è la procedura "urto normale nel divergente" di F §16 (ramo
+          supersonico fino ad A_s, urto normale, nuova A*, ramo subsonico fino
+          ad A_dx) applicata a un divergente di lunghezza nulla; A_s si trova
+          con brentq imponendo che 5 sia collegato a ``destra`` da contatto +
+          onda u+a ('urto_stazionario' nel risultato).
 
-    Restituisce dict con gli stati, le onde e la soluzione di Riemann a valle.
+    Restituisce dict con 'regime', gli stati ('stato_2p', 'stato_5'), le onde
+    ('onda_riflessa' u−a, 'onda_trasmessa' u+a) e, quando a valle della sezione
+    c'è anche un'onda u−a, 'riemann_valle' (Riemann fra 5 e ``destra`` nella
+    sezione A_dx). Nel regime strozzato: 'sezione_sonica' ('A_sx' o 'A_dx') e
+    'urto_stazionario' (None o dict con 'A_s', 'monte', 'valle').
     """
     if sinistra.u <= 0:
         raise GasdynError("riemann_area: richiede flusso verso destra a sinistra della sezione (u_sx > 0)")
+
+    def v_min(o):
+        return o.w if isinstance(o, Urto) else min(o.xi_testa, o.xi_coda)
+
     if sinistra.M >= 1.0:
-        st5 = variazione_area(sinistra, A_sx, A_dx, "stesso", nome="5")
-        sol = riemann(st5, destra)
-        o = sol.onda_sx
-        v_min = o.w if isinstance(o, Urto) else min(o.xi_testa, o.xi_coda)
-        if v_min < 0:
-            raise GasdynError("l'onda sinistra del Riemann a valle risalirebbe la sezione: "
-                              "il modello supersonico semplice non vale")
-        return {"regime": "supersonico", "stato_5": st5, "riemann_valle": sol, "onda_riflessa": None}
+        try:
+            st5 = variazione_area(sinistra, A_sx, A_dx, "stesso", nome="5")
+            sol = riemann(st5, destra)
+            if v_min(sol.onda_sx) >= 0:
+                return {"regime": "supersonico", "stato_5": st5, "riemann_valle": sol,
+                        "onda_riflessa": None, "onda_trasmessa": sol.onda_dx}
+        except Strozzamento:
+            pass  # la portata non passa in A_dx: serve un urto riflesso che risale la corrente
+
+    def onda_2p(pp):
+        o = onda_verso(sinistra, "u-a", p=pp)  # onda riflessa che risale verso sinistra
+        if isinstance(o, Urto) and o.w > 0:  # (per le espansioni basta 2' non supersonico)
+            raise GasdynError("l'urto riflesso non risale la corrente")
+        return o, o.valle
+
+    # Limite di strozzamento: stato 2'c con la sezione minima sonica.
+    # A_dx ≤ A_sx: M5 = 1 in A_dx, M2' dalla legge area–Mach; A_dx > A_sx: M2' = 1 in A_sx.
+    gas = sinistra.gas
+    if A_dx <= A_sx:
+        sezione = "A_dx"
+        M2c = 1.0 if A_dx == A_sx else mach_da_area_tra_sezioni(1.0, A_dx, A_sx, gas, "subsonico")
+        M5c = 1.0
+    else:
+        sezione = "A_sx"
+        M2c = 1.0
+        M5c = mach_da_area_tra_sezioni(1.0, A_sx, A_dx, gas, "subsonico")
+    lo, hi = sinistra.p * 1e-6, sinistra.p * 1e3
+    rad_c = _radici(lambda pp: onda_2p(pp)[1].Mu - M2c, lo, hi, n=600, scala="log")
+    p_c = rad_c[0] if len(rad_c) == 1 else None
 
     def stato5(pp):
-        o = onda_verso(sinistra, "u-a", p=pp)  # onda riflessa che risale verso sinistra
-        st2p = o.valle
+        o, st2p = onda_2p(pp)
+        if pp == p_c:  # bordo del dominio subsonico: 5 al limite di strozzamento
+            return o, st2p, _stato_stazionario_M(st2p, M5c, nome="5")
         if not 0 < st2p.u < st2p.a:  # 2' deve essere subsonico ed entrante nella sezione
             raise GasdynError("stato 2' non subsonico")
         return o, st2p, variazione_area(st2p, A_sx, A_dx, "stesso", nome="5")
@@ -1796,14 +1856,56 @@ def riemann_area(sinistra: State, destra: State, A_sx: float, A_dx: float, tol: 
         _, _, st5 = stato5(pp)
         return st5.u - curva_onda(destra, "u+a", st5.p)
 
-    lo, hi = sinistra.p * 1e-6, sinistra.p * 1e3
-    rad = _radici(f, lo, hi, n=600, scala="log")
-    if len(rad) != 1:
+    rad = _radici(f, lo, hi, n=600, scala="log", extra=[p_c] if p_c is not None else ())
+    if len(rad) > 1:
         raise GasdynError(f"riemann_area subsonico: {len(rad)} soluzioni trovate")
-    o, st2p, st5 = stato5(rad[0])
-    trasmessa = onda_verso(destra, "u+a", p=st5.p, nome="6")
-    return {"regime": "subsonico", "onda_riflessa": o, "stato_2p": st2p, "stato_5": st5,
-            "onda_trasmessa": trasmessa}
+    if len(rad) == 1:
+        o, st2p, st5 = stato5(rad[0])
+        trasmessa = onda_verso(destra, "u+a", p=st5.p, nome="6")
+        return {"regime": "subsonico", "onda_riflessa": o, "stato_2p": st2p, "stato_5": st5,
+                "onda_trasmessa": trasmessa}
+
+    # --- regime strozzato (fuori formulario) ---
+    if p_c is None:
+        raise NessunaSoluzione(f"riemann_area: nessuna soluzione subsonica e {len(rad_c)} stati 2' "
+                               f"con M = {M2c:.6g} raggiungibili da un'onda riflessa che risale la corrente")
+    o, st2p = onda_2p(p_c)
+    st2p = st2p.con(nome="2'")
+    risultato = {"regime": "strozzato", "sezione_sonica": sezione, "onda_riflessa": o,
+                 "stato_2p": st2p, "urto_stazionario": None}
+    if sezione == "A_dx":
+        st5 = _stato_stazionario_M(st2p, 1.0, nome="5")
+        sol = riemann(st5, destra)
+        if not (isinstance(sol.onda_sx, Ventaglio) and not sol.onda_sx.compressione):
+            raise NessunaSoluzione("riemann_area strozzato: a valle della sezione sonica l'onda u−a "
+                                   "non è un'espansione (incoerente con il limite di strozzamento)")
+        risultato.update(stato_5=st5, riemann_valle=sol, onda_trasmessa=sol.onda_dx)
+        return risultato
+    st5 = variazione_area(st2p, A_sx, A_dx, "supersonico", nome="5")
+    sol = riemann(st5, destra)
+    if v_min(sol.onda_sx) >= -1e-9 * st5.a:  # l'onda u−a si allontana dalla sezione
+        risultato.update(stato_5=st5, riemann_valle=sol, onda_trasmessa=sol.onda_dx)
+        return risultato
+
+    # urto normale stazionario dentro il salto d'area (F §16 con divergente di lunghezza nulla)
+    def urto_in(As):
+        s1 = variazione_area(st2p, A_sx, As, "supersonico", nome="monte urto")
+        s2 = urto_normale_stato(s1, nome="valle urto")
+        return s1, s2, variazione_area(s2, As, A_dx, "subsonico", nome="5")
+
+    def h(As):
+        st5 = urto_in(As)[2]
+        return st5.u - curva_onda(destra, "u+a", st5.p)
+
+    h0, h1 = h(A_sx), h(A_dx)
+    if h0 * h1 > 0:
+        raise NessunaSoluzione("riemann_area strozzato: nessuna posizione dell'urto stazionario nel "
+                               "salto d'area soddisfa la condizione a valle")
+    As = brentq(h, A_sx, A_dx, xtol=1e-14 * A_dx, rtol=1e-14)
+    s1, s2, st5 = urto_in(As)
+    risultato.update(stato_5=st5, onda_trasmessa=onda_verso(destra, "u+a", p=st5.p, nome="6"),
+                     urto_stazionario={"A_s": As, "monte": s1, "valle": s2})
+    return risultato
 
 
 # =============================================================================

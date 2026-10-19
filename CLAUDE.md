@@ -23,7 +23,7 @@ Regole fissate dall'utente:
 
 - `gasdyn.py` — il modulo (aree 1–9: termodinamica, quasi-1D/serbatoi/miscelamento, urto normale,
   urti mobili, onde semplici/pistoni/formazione urto, Riemann 1D e contorni, supersonico 2D, grafici, Godunov).
-- `tests/test_gasdyn.py` — 340 test: livello 1–2 (classi `TestArea1` … `TestArea89`) e livello 3
+- `tests/test_gasdyn.py` — 352 test: livello 1–2 (classi `TestArea1` … `TestArea89`) e livello 3
   (`TestLivello3`, parametrizzata su `verifica/casi_corso.py`), tutti verdi (~13 s).
 - `gasdyn_guida.md` — guida d'uso per le chat claude.ai (da caricare nel progetto insieme a `gasdyn.py`).
 - `fase0_report.md` — report di Fase 0 (convenzioni, algoritmo di Riemann, 13 discrepanze, struttura).
@@ -55,7 +55,8 @@ Regole fissate dall'utente:
 - [x] Fase 0 — confermata dall'utente il 2026-10-16.
 - [x] Fase 1 — modulo aree 1–9 completo, test liv. 1–2 verdi, figure di esempio.
 - [x] Fase 2 — validazione livello 3 chiusa: `casi_corso.py` (257 casi), `verifica_catalogo.md`,
-  classe `TestLivello3` in `tests/test_gasdyn.py` (asserisce esito == atteso). Totale test: 340 verdi.
+  classe `TestLivello3` in `tests/test_gasdyn.py` (asserisce esito == atteso). Totale test: 352 verdi
+  (340 + 12 sul regime strozzato di `riemann_area`, 2026-10-19).
 - [x] Fase 3 — `gasdyn_guida.md` scritta (convenzioni, firme, esempi per area eseguiti e verificati,
   funzioni fuori formulario, limiti noti). Progetto completo al 2026-10-17.
 
@@ -81,6 +82,10 @@ Regole fissate dall'utente:
 - `riemann_stazionario` restituisce la soluzione sui rami deboli (default); `intersezioni_polari` dà tutte.
 - Fuori formulario (dichiarati nei docstring): pressione totale incomprimibile/isoterma, M_valle_limite,
   urto isotermo, Pitot di Rayleigh, shock-expansion, MOC ugello di minima lunghezza, miscelamento è F §17.
+- `riemann_area` regime strozzato (fuori formulario; il corso lo cita solo a parole, S p.48 punto 4, F §16):
+  se non esiste soluzione subsonica la sezione minima è sonica. A↓: urto riflesso, M5 = 1, espansione u−a a valle
+  con testa ferma. A↑: 2' sonico; 5 supersonico + urto u−a con w ≥ 0, oppure urto normale stazionario dentro il
+  salto (procedura F §16 "urto nel divergente" a lunghezza nulla). Monte supersonico strozzato → urto riflesso.
 
 ## Risultati notevoli della Fase 2 (dettagli in verifica_catalogo.md)
 

@@ -609,6 +609,91 @@ class TestArea6:
         assert r["stato_5"].p == pytest.approx(s.p_star, rel=1e-9)
         assert r["stato_5"].u == pytest.approx(s.u_star, rel=1e-9)
 
+    # --- riemann_area: regime strozzato (fuori formulario) ---
+    @staticmethod
+    def _incidente(Mv):
+        q = gd.State.da_pa(ARIA_ADIM, 1, 1)
+        return gd.urto_mobile(q, "u+a", M_valle=Mv).valle, q
+
+    @staticmethod
+    def _p_trasmesso(r):
+        return r["onda_trasmessa"].valle.p
+
+    @staticmethod
+    def _verifica_collegamento(r, A_sx, A_dx, q):
+        """2' → 5 conserva ṁ e h0; 5 (o lo stato dietro l'onda u−a a valle) sta sulla curva u+a di q."""
+        s2, s5 = r["stato_2p"], r["stato_5"]
+        assert s2.rho * s2.u * A_sx == pytest.approx(s5.rho * s5.u * A_dx, rel=1e-9)
+        assert s2.h0 == pytest.approx(s5.h0, rel=1e-10)
+        t = r["onda_trasmessa"]
+        assert isinstance(t, gd.Urto) and t.monte == q
+        sol = r.get("riemann_valle")
+        st = sol.stati["2"] if sol is not None else s5
+        assert t.valle.p == pytest.approx(st.p, rel=1e-8) and t.valle.u == pytest.approx(st.u, rel=1e-8)
+
+    @pytest.mark.parametrize("Mv,A_sx,A_dx", [(0.5, 1.0, 1.5), (0.7, 1.0, 1.2), (0.7, 1.0, 1.5)])
+    def test_riemann_area_strozzato_urto_nel_salto(self, Mv, A_sx, A_dx):
+        # A crescente: 2' sonico in A_sx, urto normale stazionario dentro il salto (F §16), 5 subsonico
+        L, q = self._incidente(Mv)
+        r = gd.riemann_area(L, q, A_sx, A_dx)
+        assert r["regime"] == "strozzato" and r["sezione_sonica"] == "A_sx"
+        assert r["stato_2p"].Mu == pytest.approx(1.0, abs=1e-9)
+        assert isinstance(r["onda_riflessa"], gd.Ventaglio)
+        us = r["urto_stazionario"]
+        assert A_sx < us["A_s"] < A_dx and us["monte"].Mu > 1 > us["valle"].Mu
+        assert r["stato_5"].Mu < 1 and r["stato_5"].p0 < r["stato_2p"].p0
+        self._verifica_collegamento(r, A_sx, A_dx, q)
+        assert self._p_trasmesso(r) < L.p  # A↑: urto trasmesso più debole
+
+    @pytest.mark.parametrize("A_dx", [1.2, 1.5])
+    def test_riemann_area_strozzato_supersonico_a_valle(self, A_dx):
+        # A crescente, urto più forte: 5 supersonico, urto u−a che si allontana dalla sezione (S p.49)
+        L, q = self._incidente(0.9)
+        r = gd.riemann_area(L, q, 1.0, A_dx)
+        assert r["regime"] == "strozzato" and r["urto_stazionario"] is None
+        assert r["stato_2p"].Mu == pytest.approx(1.0, abs=1e-9) and r["stato_5"].Mu > 1
+        o = r["riemann_valle"].onda_sx
+        assert isinstance(o, gd.Urto) and o.w >= 0
+        self._verifica_collegamento(r, 1.0, A_dx, q)
+        assert self._p_trasmesso(r) < L.p
+
+    @pytest.mark.parametrize("Mv,A_sx", [(0.9, 3.0), (1.2, 1.2), (1.2, 1.5)])
+    def test_riemann_area_strozzato_area_decrescente(self, Mv, A_sx):
+        # A decrescente: urto riflesso, A_dx sonica, espansione u−a con testa ferma in x0
+        L, q = self._incidente(Mv)
+        r = gd.riemann_area(L, q, A_sx, 1.0)
+        assert r["regime"] == "strozzato" and r["sezione_sonica"] == "A_dx"
+        assert isinstance(r["onda_riflessa"], gd.Urto) and r["onda_riflessa"].w < 0
+        assert r["stato_5"].Mu == pytest.approx(1.0, abs=1e-12)
+        M2 = gd.mach_da_area_tra_sezioni(1.0, 1.0, A_sx, ARIA_ADIM, "subsonico")
+        assert r["stato_2p"].Mu == pytest.approx(M2, rel=1e-9)
+        o = r["riemann_valle"].onda_sx
+        assert isinstance(o, gd.Ventaglio) and o.xi_testa == pytest.approx(0.0, abs=1e-12)
+        self._verifica_collegamento(r, A_sx, 1.0, q)
+        assert self._p_trasmesso(r) > L.p  # A↓: urto trasmesso più forte
+
+    @pytest.mark.parametrize("A_sx", [1.2, 1.5])
+    def test_riemann_area_subsonico_vicino_al_limite(self, A_sx):
+        # Mv = 0.9, A decrescente: radice subsonica a ridosso dello strozzamento (prima persa)
+        L, q = self._incidente(0.9)
+        r = gd.riemann_area(L, q, A_sx, 1.0)
+        assert r["regime"] == "subsonico" and 0.9 < r["stato_5"].Mu < 1
+        self._verifica_collegamento(r, A_sx, 1.0, q)
+        assert self._p_trasmesso(r) > L.p
+
+    @pytest.mark.parametrize("A_sx,A_dx", [(1.0, 1.5), (1.5, 1.0)])
+    def test_riemann_area_continuita_fra_regimi(self, A_sx, A_dx):
+        # al variare di Mv l'urto trasmesso cresce con continuità attraverso i cambi di regime
+        Mvs = np.linspace(0.3, 1.5, 25)
+        ris = [gd.riemann_area(*self._incidente(Mv), A_sx, A_dx) for Mv in Mvs]
+        p = np.array([self._p_trasmesso(r) for r in ris])
+        pL = np.array([self._incidente(Mv)[0].p for Mv in Mvs])
+        assert np.all(np.diff(p) > 0)
+        assert np.all(p < pL) if A_dx > A_sx else np.all(p > pL)
+        assert len({r["regime"] for r in ris}) >= 2
+        # salto fra campioni adiacenti dello stesso ordine di quello dell'urto incidente
+        assert np.max(np.diff(p) / np.diff(pL)) < 2.0
+
 
 # =============================================================================
 # Area 7 — supersonico 2D

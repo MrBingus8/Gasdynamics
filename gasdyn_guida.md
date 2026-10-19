@@ -142,7 +142,8 @@ print(r["prima"], r["u-a"]["t_bu"], r["u-a"]["x_bu"], r["u-a"]["onda_semplice"])
 esterni, F §9) · `contorno_parete(stato, lato_parete, u_parete=0)` · `contorno_pistone(stato, lato, u_p)` ·
 `contorno_pressione(stato, lato, p_b)` · `contorno_serbatoio(stato, lato, p0, a0=|T0=)` (ingresso con
 urto + contatto oppure uscita a p0) · `riemann_area(sx, dx, A_sx, A_dx)` (urto/flusso attraverso una
-brusca variazione d'area, flusso verso destra).
+brusca variazione d'area, flusso verso destra; `r["regime"]` = 'supersonico', 'subsonico' o 'strozzato',
+con `sezione_sonica` e `urto_stazionario` nel caso strozzato).
 
 ```python
 sod = gd.riemann(gd.State(aria, 1, 0, 1), gd.State(aria, 0.125, 0, 0.1))
@@ -221,7 +222,8 @@ rho, u, p, dt = gd.godunov_passo([1.4, 1.4, s2.rho], [0, 0, s2.u], [1, 1, s2.p],
 Dichiarate nei docstring; usarle sapendo che non sono nelle fonti del corso:
 `pressione_totale` (modelli incomprimibile e isotermo), `M_valle_limite`, `urto_isotermo`,
 `pitot_supersonico`/`mach_da_pitot` (Rayleigh), `shock_expansion`, `ugello_minima_lunghezza` (MOC completo),
-`riemann_area` nel caso subsonico (estensione del procedimento del corso), `contorno_serbatoio` con
+`riemann_area` nel caso subsonico (estensione del procedimento del corso) e nel regime strozzato
+(il corso lo descrive solo a parole, S p.48 e F §16), `contorno_serbatoio` con
 urto in ingresso (S p.45 lo tratta solo isentropico), innesco del Riemann con γ diversi.
 
 ## 5. Discrepanze note fra le fonti
@@ -240,7 +242,15 @@ controllare lì il suo giudizio.
 
 - Gas perfetto caloricamente, flusso non viscoso. Strato limite, attrito e dissociazione non sono trattati.
 - 1D piano. La sezione variabile si tratta solo con il collegamento stazionario fra due sezioni
-  (`variazione_area`, `riemann_area`). In `riemann_area` i casi misti (sub/supersonico) sollevano un errore.
+  (`variazione_area`, `riemann_area`).
+- `riemann_area`, regime strozzato (fuori formulario): quando nessuna soluzione subsonica esiste, la sezione
+  minima diventa sonica. A decrescente: urto riflesso, M = 1 in A_dx, a valle espansione u−a con testa ferma in
+  x0. A crescente: espansione riflessa fino a M = 1 in A_sx; a valle o 5 supersonico con urto u−a che si
+  allontana (S p.49), o, se quell'urto risalirebbe la sezione, urto normale stazionario dentro il salto d'area
+  (procedura F §16 "urto nel divergente" con divergente di lunghezza nulla). Anche con monte supersonico che si
+  strozza in A_dx si passa all'urto riflesso. Verso fisico controllato nei test: A↑ urto trasmesso più debole,
+  A↓ più forte, continuità fra i regimi. Restano eccezioni esplicite (`NessunaSoluzione`) solo se le condizioni
+  di coerenza falliscono.
 - `riemann(..., modello='isentropico')`: le compressioni sono isentropiche, quindi `campiona` non è definito.
 - `formazione_urto_ci` è esatta solo per un'onda semplice (`onda_semplice=True` nel risultato); altrimenti è una stima.
 - `pistone_legge` vale fino a t_BU. Gas iniziale uniforme, pistone senza salto impulsivo iniziale di velocità.

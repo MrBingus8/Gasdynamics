@@ -59,13 +59,15 @@ Prima di consegnare, converti le pagine del PDF in immagini e guardale: niente f
 
 Poi fai commit (messaggio: `svolgimento: <ID o argomento>`) e push, così il PDF è consultabile su GitHub.
 
+Infine invia in chat il PDF compilato (`svolgimento.pdf`) come file allegato, così posso aprirlo subito senza passare da GitHub. Se lo svolgimento viene corretto e ricompilato, invia di nuovo il PDF aggiornato.
+
 **2. Sintesi nella risposta**, che si legge in un paio di minuti:
 - modello scelto e ipotesi principali;
 - struttura del campo d'onda in una o due frasi;
 - risultati richiesti, in una tabella compatta;
 - esito delle verifiche, segnalando quelle critiche;
 - punti delicati: approssimazioni, parti fuori modulo, interpretazioni della traccia;
-- percorso del PDF.
+- percorso del PDF (nel repository e branch su cui è stato pushato); il PDF stesso va allegato in chat.
 
 ## Esercizi con interpretazione di immagini
 (schlieren, shadowgraph, interferogrammi, mappe CFD, fotografie di getti, ugelli, corpi in volo...)

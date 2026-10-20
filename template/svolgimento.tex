@@ -1,0 +1,157 @@
+% Template per gli svolgimenti d'esame di Gasdinamica (prof. Favini).
+% Uso: copiare in svolgimenti/<AAAA-MM-GG>_<ID o argomento>/svolgimento.tex,
+% sostituire i segnaposto <<...>> e compilare con:  latexmk -pdf svolgimento.tex
+% Le figure vanno in figure/ (cartella dello svolgimento), generate da calcoli.py.
+% Ordine delle sezioni: CLAUDE.md, "Struttura dello svolgimento" (passi 1-11).
+% Per gli esercizi con immagini, i passi 1-4 diventano: lettura del testo e
+% dell'immagine, identificazione delle strutture, ipotesi ancorate all'immagine,
+% misure sull'immagine; seguono ricostruzione del campo (passi 2-11), coerenza
+% calcolo/immagine e figura annotata (vedi CLAUDE.md).
+
+\documentclass[11pt,a4paper]{article}
+
+% --- Preambolo di fonti/formulario.tex ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{array}
+
+% --- Pacchetti aggiuntivi per gli svolgimenti ---
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+
+\hypersetup{hidelinks}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\allowdisplaybreaks
+\graphicspath{{figure/}}
+
+% Numeri all'italiana: virgola decimale, unità SI.
+\sisetup{output-decimal-marker={,}, group-separator={\,}, per-mode=symbol,
+         exponent-product=\cdot, range-phrase={\text{--}}}
+
+% --- Macro con la notazione del formulario (F) ---
+% Il formulario usa direttamente \delta = (gamma-1)/2 (F §1) e q = (gamma-1)/(2 gamma) (F §8).
+\newcommand{\Vv}{\boldsymbol V}                 % vettore velocità |V|
+\newcommand{\sth}{s_{\rm th}}                    % entropia termodinamica
+% Invarianti di Riemann 1D (F §3): R1 = a - delta u lungo u-a, R2 = a + delta u lungo u+a.
+\newcommand{\Ru}{R_1}
+\newcommand{\Rd}{R_2}
+% Urti mobili (F §7): Mach relativo M_r = (u - w)/a, Mach dell'urto M_s = |M_{r1}|.
+\newcommand{\Mr}{M_{r}}
+\newcommand{\Ms}{M_{s}}
+% Onde 1D e caratteristiche 2D (F §3, §10).
+\newcommand{\uma}{u-a}                           % famiglia u-a
+\newcommand{\upa}{u+a}                           % famiglia u+a
+\newcommand{\Cp}{C^{+}}
+\newcommand{\Cm}{C^{-}}
+% Riferimento a una sezione del formulario o a una pagina del summary.
+\newcommand{\F}[1]{(F~\S#1)}
+\newcommand{\Sm}[1]{(S~p.~#1)}
+
+\title{Gasdinamica -- Svolgimento \texttt{<<ID esercizio>>}}
+\author{}
+\date{Prova del <<GG/MM/AAAA>>}
+
+\begin{document}
+\maketitle
+
+\section*{Traccia}
+% Trascrizione fedele della traccia (o riassunto puntuale con tutti i dati e le richieste).
+<<Testo della traccia.>>
+
+\section{Lettura del testo e dati}
+% Cosa chiede l'esercizio, dati con unità, grandezze richieste, eventuali
+% interpretazioni della traccia (dichiarate e motivate).
+<<Dati e richieste.>>
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    Grandezza & Valore & Note \\
+    \midrule
+    $\gamma$ & \num{1.4} & <<gas>> \\
+    $R$      & \SI{287}{J/(kg.K)} & \\
+    $p_1$    & \SI{1e5}{Pa} & <<stato 1>> \\
+    \bottomrule
+  \end{tabular}
+  \caption{Dati del problema.}
+\end{table}
+
+\section{Modello e ipotesi}
+% Modello scelto (1D instazionario, quasi-1D, 2D stazionario, ...) e ipotesi,
+% ciascuna motivata: perché vale in questo problema.
+<<Modello e ipotesi motivate.>>
+
+\section{Analisi qualitativa}
+% Previsione dei fenomeni prima del calcolo: quali onde, di che natura, in che
+% verso; argomentazione fisica (non solo cosa, ma perché).
+<<Analisi qualitativa.>>
+
+\section{Topologia del campo}
+% Struttura del campo d'onda: numerazione degli stati, onde che li separano,
+% famiglia e natura di ciascuna onda (schema x--t o piano fisico).
+<<Topologia, stati e onde.>>
+
+\section{Bilancio equazioni/incognite}
+% Se pertinente: incognite, equazioni disponibili, condizioni di raccordo.
+<<Bilancio (oppure: non pertinente, perché ...).>>
+
+\section{Scorciatoie fisiche}
+% Se presenti: simmetrie, invarianti uniformi, stati noti a priori.
+<<Scorciatoie (oppure: nessuna).>>
+
+\section{Calcolo}
+% Per ogni stato: formula del formulario (con la sezione), valori sostituiti,
+% risultato. Per i procedimenti iterativi: primo tentativo come lo imposta il
+% docente, criterio di convergenza, risultato finale. Niente codice.
+\subsection{Stato <<n>>}
+Dalla relazione \F{<<n>>}
+\[
+  \frac{T_0}{T} = 1 + \delta M^2
+  \quad\Rightarrow\quad
+  \frac{T_0}{T} = 1 + \num{0.2}\cdot \num{2}^2 = \num{1.8}.
+\]
+
+\section{Verifiche a posteriori}
+% Ogni verifica scritta esplicitamente con il suo esito (verificata / non
+% verificata e conseguenze). Se una fallisce: correzione dell'impostazione.
+\begin{itemize}
+  \item <<Verifica>>: <<esito>>.
+\end{itemize}
+
+\section{Risultati}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    Grandezza & Valore & Esatto / approssimato \\
+    \midrule
+    <<grandezza>> & <<valore>> & <<esatto>> \\
+    \bottomrule
+  \end{tabular}
+  \caption{Risultati richiesti.}
+\end{table}
+
+\section{Rappresentazioni}
+% Diagrammi (x--t, p--u, p--theta, ...) generati da calcoli.py, assi e stati
+% etichettati. Ogni figura va commentata nel testo.
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.8\textwidth]{<<nome_figura>>}
+%   \caption{<<Didascalia.>>}
+%   \label{fig:<<nome>>}
+% \end{figure}
+<<Commento ai diagrammi.>>
+
+\section{Discussione fisica}
+% Significato dei risultati, limiti del modello, cosa cambierebbe variando i dati.
+<<Discussione.>>
+
+\end{document}

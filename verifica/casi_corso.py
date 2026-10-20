@@ -8,7 +8,7 @@ coincida con quello atteso, così una discrepanza nota resta marcata come tale e
 cambiamento del modulo che la facesse sparire (o ne creasse una nuova) viene segnalato.
 
 Le pagine citate sono pagine fisiche di fonti/esercizi_2003_2023.pdf (prefisso "G p.")
-oppure dei PDF in soluzioni_A/ ("A p.").
+oppure dei PDF in fonti/soluzioni_A/ ("A p.").
 """
 from __future__ import annotations
 

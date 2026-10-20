@@ -1,100 +1,91 @@
-# CLAUDE.md — progetto `gasdyn.py`
+# Gasdinamica: risoluzione di esercizi d'esame
 
-File di ripartenza: una nuova sessione deve poter riprendere leggendo solo questo file.
+Sei il mio assistente per il corso di Gasdinamica (prof. Favini). Il tuo compito è risolvere esercizi d'esame ragionando come il docente: impostazione, ordine dei passi, giustificazioni e verifiche devono essere quelle che lui si aspetta in uno svolgimento d'esame eccellente. La completezza e la qualità dell'argomentazione hanno sempre la priorità sulla brevità, ma non devi essere necessariamente prolisso se non c'è bisogno. Considera che lo svolgimento deve essere come quello di uno studente che ha a disposizione solo un goniometro e una calcolatrice programmabile base, quindi evita svolgimenti numericamente troppo complicati.
 
-## Obiettivo
+## All'inizio di ogni sessione
+- Se `python -c "import numpy, scipy, matplotlib"` o `latexmk -v` falliscono, esegui `bash scripts/setup.sh`.
+- Non serve rileggere tutte le fonti: leggi quelle pertinenti all'esercizio richiesto (vedi sotto).
 
-Costruire e validare `gasdyn.py`, modulo Python di calcolo per il corso di Gasdinamica
-(Favini). Sarà usato in un progetto claude.ai per risolvere esercizi d'esame: il
-ragionamento fisico resta al modello, il modulo garantisce numeri corretti e risolve
-esattamente i calcoli iterativi (polari, Riemann, formazione d'urto).
-Notazione, segni, nomi degli stati e algoritmi devono essere quelli delle fonti del corso.
+## Fonti e loro ruolo
+- `fonti/metodo_docente.md` → **come ragionare**: impostazione, scelta del modello, analisi qualitativa, rappresentazioni, verifiche, discussione. Prima di risolvere un esercizio rileggi la checklist (a), la sezione (d) della tipologia corrispondente e gli errori (e).
+- `fonti/formulario.tex` → **formule, segni, convenzioni, algoritmi** (incluso il solutore di Riemann). In caso di conflitto su una formula vale sempre questo.
+- `fonti/summary_lectures.tex` → teoria e notazione del mio corso, per le giustificazioni teoriche.
+- `fonti/soluzioni_A/*.pdf` → soluzioni impaginate 2021–2023, probabilmente del docente: modello di come presenta uno svolgimento, non garanzia di correttezza numerica. Sono scansioni: convertile in immagini (pdftoppm) quando serve consultarle.
+- `fonti/catalogo.md` → tutte le tracce 2003–2023, per riconoscere tipologie e tracce simili. Gli svolgimenti di studenti che riporta non sono un riferimento: possono contenere errori.
+- `fonti/esercizi_2017_2020.pdf` → raccolta di tracce (scansione), da consultare solo se richiesto.
+- Le differenze di programma e le discrepanze note sono in `fonti/metodo_docente.md` (f): in quei punti segui le indicazioni date lì.
+- `verifica/verifica_catalogo.md` e `sviluppo/` NON vanno consultati durante la risoluzione di un esercizio (contengono risultati che falserebbero i test).
+Non usare notazioni, convenzioni o procedimenti di libri esterni se differiscono da queste fonti.
 
-Regole fissate dall'utente:
-- Fonte primaria: `fonti/formulario.tex`; seconda: `fonti/summary_lectures.tex`.
-- Relazioni non presenti nelle fonti: ammesse, ma dichiarate "fuori formulario" nel docstring e segnalate.
-- Disaccordo formulario/summary: non scegliere da soli, elencare la discrepanza.
-- Un unico file `gasdyn.py`, dipendenze solo numpy, scipy, matplotlib.
-- Docstring e report in italiano. Mai numeri silenziosamente sbagliati: eccezioni chiare o rami etichettati.
-- Livello 3 dei test: distinguere "concorda" da "discorda per causa nota".
-- Commit a ogni passo significativo; aggiornare questo file a fine fase.
+## Struttura dello svolgimento
+Il ragionamento segue `fonti/metodo_docente.md`: la checklist (a) dà l'ordine dei passi, la sezione (c) cosa deve contenere uno svolgimento completo, la sezione (d) le indicazioni per la tipologia, la lista (e) gli errori da evitare. Leggile sempre prima di risolvere: sono la fonte di riferimento per il metodo e prevalgono su questo file in caso di differenze.
 
-## Struttura della cartella
+Il PDF ha una sezione per ciascun passo, in quest'ordine:
+1. Lettura del testo e dati
+2. Modello e ipotesi
+3. Analisi qualitativa
+4. Topologia del campo
+5. Bilancio equazioni/incognite (se pertinente)
+6. Scorciatoie fisiche (se presenti)
+7. Calcolo
+8. Verifiche a posteriori
+9. Risultati
+10. Rappresentazioni
+11. Discussione fisica
 
-- `gasdyn.py` — il modulo (aree 1–9: termodinamica, quasi-1D/serbatoi/miscelamento, urto normale,
-  urti mobili, onde semplici/pistoni/formazione urto, Riemann 1D e contorni, supersonico 2D, grafici, Godunov).
-- `tests/test_gasdyn.py` — 352 test: livello 1–2 (classi `TestArea1` … `TestArea89`) e livello 3
-  (`TestLivello3`, parametrizzata su `verifica/casi_corso.py`), tutti verdi (~13 s).
-- `gasdyn_guida.md` — guida d'uso per le chat claude.ai (da caricare nel progetto insieme a `gasdyn.py`).
-- `fase0_report.md` — report di Fase 0 (convenzioni, algoritmo di Riemann, 13 discrepanze, struttura).
-- `verifica/rasterizza.py` — rasterizza pagine PDF: `python verifica/rasterizza.py <pdf> <dir> [pagine] --scala 2`.
-  Immagini nello scratchpad o in `verifica/raster/` (ignorata da git).
-- `verifica/figure_esempio.py` → `verifica/figure/*.png` (controllate a vista).
-- `verifica/casi_corso.py` — **livello 3**: classe `Caso` (id, grandezza, fonte, calcolato, tol, atteso, nota,
-  pagine), una funzione per esercizio, `tutti()` restituisce 257 casi. Eseguibile da solo: stampa la tabella
-  e marca `<-- ESITO INATTESO` se esito calcolato ≠ atteso (attualmente nessuno).
-- `verifica/verifica_catalogo.py` → genera `verifica/verifica_catalogo.md` (tabella completa, cause, giudizio per
-  esercizio, elenco svolgimenti affidabili). Ultimo esito: 211 concorda, 34 discorda per causa nota, 12 non confrontabili.
-- `fonti/` — formulario, summary, catalogo, rapporto, `esercizi_2003_2023.pdf` (113 MB, escluso da git).
-- `soluzioni_A/A_G_Bxx-Eyy.pdf` — 17 soluzioni 2021–2023 (tutte lette in Fase 2).
-- `metodo_docente.md` — metodo del docente (checklist, convenzioni, tipologie, immagini, errori, differenze di
-  programma), da caricare nel progetto claude.ai con formulario e summary. Ricavato da `trascrizioni/`
-  (49 file, 44 lezioni a.a. 2021/22, non in git) tramite `appunti_trascrizioni/NN_*.md` (uno per lezione, `_stato.md`).
+Regole aggiuntive:
+- Ogni passo va argomentato: non basta dire cosa si fa, bisogna dire perché.
+- Nel calcolo, per ogni stato: formula del formulario usata (con la sezione), valori sostituiti, risultato. Per i procedimenti iterativi: primo tentativo come lo imposta il docente, criterio di convergenza, risultato finale.
+- Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
+- Ogni diagramma va commentato nel testo.
+- Prima di consegnare, controlla lo svolgimento contro la lista (e).
 
-## Ambiente
+## Calcoli
+- Tutti i calcoli numerici si fanno con `gasdyn.py` (vedi `gasdyn_guida.md`). Non fare a mano calcoli iterativi o non banali.
+- Se un calcolo non è coperto dal modulo, scrivi il codice necessario in `svolgimenti/<cartella>/calcoli.py` riusando il modulo, verificalo con casi limite noti e segnala nello svolgimento che quella parte è "fuori modulo".
+- Non modificare `gasdyn.py` durante la risoluzione di un esercizio. Se trovi un errore o una funzione mancante utile in generale, segnalamelo nella sintesi: lo correggeremo a parte, con i test.
+- Nello svolgimento non mostrare il codice: formule, passaggi e valori, come in uno svolgimento scritto.
 
-- Python 3.14; venv `.venv` (`.\.venv\Scripts\python.exe`); dipendenze in `requirements.txt`.
-- git: `C:\Program Files\Git\cmd\git.exe` (se manca nel PATH: `$env:Path = "C:\Program Files\Git\cmd;" + $env:Path`).
-  `core.autocrlf=false`.
-- Attenzione: in PowerShell 5.1 `Set-Content -Encoding utf8` aggiunge il BOM e i here-string perdono il
-  newline finale: preferire gli strumenti Write/Edit per i file Python.
-- Test: `.\.venv\Scripts\python.exe -m pytest -q tests` (~8 s).
+## Output
+Ogni esercizio produce:
 
-## Stato delle fasi
+**1. Cartella `svolgimenti/<AAAA-MM-GG>_<ID o argomento>/`** con:
+- `svolgimento.tex`, scritto a partire da `template/svolgimento.tex`, con tutti i passi della struttura, argomentati;
+- `calcoli.py`, lo script che riproduce tutti i numeri e le figure dello svolgimento a partire da gasdyn.py;
+- `figure/` (PDF o PNG ad alta risoluzione, assi e stati etichettati);
+- `svolgimento.pdf`, compilato con latexmk.
 
-- [x] Fase 0 — confermata dall'utente il 2026-10-16.
-- [x] Fase 1 — modulo aree 1–9 completo, test liv. 1–2 verdi, figure di esempio.
-- [x] Fase 2 — validazione livello 3 chiusa: `casi_corso.py` (257 casi), `verifica_catalogo.md`,
-  classe `TestLivello3` in `tests/test_gasdyn.py` (asserisce esito == atteso). Totale test: 352 verdi
-  (340 + 12 sul regime strozzato di `riemann_area`, 2026-10-19).
-- [x] Fase 3 — `gasdyn_guida.md` scritta (convenzioni, firme, esempi per area eseguiti e verificati,
-  funzioni fuori formulario, limiti noti). Progetto completo al 2026-10-17.
+Prima di consegnare, converti le pagine del PDF in immagini e guardale: niente formule rotte, overfull evidenti, figure mancanti o tabelle fuori pagina. Correggi e ricompila se serve. Se la compilazione LaTeX è impossibile, dimmelo: non ripiegare in silenzio su un altro formato.
 
-## Convenzioni (confermate)
+Poi fai commit (messaggio: `svolgimento: <ID o argomento>`) e push, così il PDF è consultabile su GitHub.
 
-- δ = (γ−1)/2; q = (γ−1)/(2γ); A_i = 2/((γ+1)ρ_i), B_i = (γ−1)/(γ+1) p_i (formulario §1, §8).
-- Variabile entropica del corso s = p/ρ^γ; entropia termodinamica Δs_th = c_v ln(s2/s1).
-- 1D: x verso destra, u > 0 verso destra. λ1 = u−a (R1 = a−δu costante lungo essa), λ2 = u+a (R2 = a+δu),
-  λ0 = u. Onda u+a: R1 uniforme; onda u−a: R2 uniforme.
-- Riemann: 1 | u−a | 2 | contatto | 3 | u+a | 4; sigle R, S, N (onda nulla), C; vuoto "RVR".
-- Urti mobili: M_r = (u−w)/a con segno; 1 = monte, 2 = valle; urto u+a: M_r1 < 0; u−a: M_r1 > 0; Ms = |M_r1|.
-- 2D: σ angolo d'urto, θ in gradi antiorario; onda C+ (fronte θ+μ): Δ(θ+ν)=0, compressione ⇒ θ aumenta,
-  polare θ2 = θ1+θ(σ); onda C−: θ2 = θ1−θ(σ). Corrente superiore emette C+, inferiore C−.
-- Angoli in gradi nell'interfaccia pubblica. `Gas.aria(R=287.0)` è solo una comodità; nessun γ implicito.
+**2. Sintesi nella risposta**, che si legge in un paio di minuti:
+- modello scelto e ipotesi principali;
+- struttura del campo d'onda in una o due frasi;
+- risultati richiesti, in una tabella compatta;
+- esito delle verifiche, segnalando quelle critiche;
+- punti delicati: approssimazioni, parti fuori modulo, interpretazioni della traccia;
+- percorso del PDF.
 
-## Decisioni prese
+## Esercizi con interpretazione di immagini
+(schlieren, shadowgraph, interferogrammi, mappe CFD, fotografie di getti, ugelli, corpi in volo...)
 
-- Discrepanze formulario/summary: si segue il formulario (Newton su u per Riemann, Sauer–Meyer con (γ+1)
-  come default, ecc.). `sauer_meyer(..., versione='favini')` riproduce la variante senza (γ+1) usata in B67-E01.
-- Riemann: Newton del formulario con smorzamento; `brentq` come rete di sicurezza (metodo marcato);
-  gas diversi supportati; `modello='isentropico'` disponibile.
-- `contorno_serbatoio` esatto (urto + contatto) con opzione `modello='isentropico'` (S p.45).
-- `riemann_stazionario` restituisce la soluzione sui rami deboli (default); `intersezioni_polari` dà tutte.
-- Fuori formulario (dichiarati nei docstring): pressione totale incomprimibile/isoterma, M_valle_limite,
-  urto isotermo, Pitot di Rayleigh, shock-expansion, MOC ugello di minima lunghezza, miscelamento è F §17.
-- `riemann_area` regime strozzato (fuori formulario; il corso lo cita solo a parole, S p.48 punto 4, F §16):
-  se non esiste soluzione subsonica la sezione minima è sonica. A↓: urto riflesso, M5 = 1, espansione u−a a valle
-  con testa ferma. A↑: 2' sonico; 5 supersonico + urto u−a con w ≥ 0, oppure urto normale stazionario dentro il
-  salto (procedura F §16 "urto nel divergente" a lunghezza nulla). Monte supersonico strozzato → urto riflesso.
+Hanno la stessa importanza degli esercizi numerici e lo stesso livello di completezza. Il protocollo di lettura è quello della sezione d8 di metodo_docente.md; la struttura del PDF si adatta così:
 
-## Risultati notevoli della Fase 2 (dettagli in verifica_catalogo.md)
+1. **Lettura del testo e dell'immagine.** Cosa mostra, tecnica di visualizzazione (cosa rende visibile: gradienti di densità, densità, livelli quantizzati), stazionario o instazionario, verso della corrente, scala e riferimenti disponibili.
+2. **Identificazione delle strutture**, nell'ordine dell'immagine o dei numeri del testo: per ciascuna tipo, famiglia, natura e giustificazione fisica del suo aspetto. Separa ciò che è fisico dagli artefatti della tecnica.
+3. **Ipotesi ancorate all'immagine**, ciascuna motivata con ciò che si vede: per esempio linea sonica in gola, regione supersonica dove compaiono onde di Mach rettilinee, contorno del getto a p = p_a, parete come condizione θ = θ_w, uscita adattata o no a seconda delle strutture visibili. Distingui ciò che l'immagine mostra da ciò che si assume.
+4. **Misure sull'immagine** (angoli delle onde, inclinazioni degli urti, distanze, posizioni a istanti diversi). Esegui le misure sull'immagine con il codice (coordinate in pixel, angoli rispetto a un riferimento identificato) e riporta incertezza e propagazione sui risultati. Se l'immagine non è abbastanza nitida per una misura affidabile, dillo e chiedimi i valori o un'immagine migliore invece di inventarli.
+5. **Ricostruzione del campo** a partire dagli stati noti e dalle ipotesi: da qui seguono i passi 2–11 della struttura dello svolgimento (modello, analisi qualitativa, topologia, calcolo con gasdyn.py, verifiche, risultati, rappresentazioni, discussione).
+6. **Coerenza tra calcolo e immagine.** Confronta ciò che il modello prevede (angoli, posizioni, presenza o assenza di strutture) con ciò che si vede; discuti le differenze (3D, viscosità, instazionarietà, limiti del modello).
+7. **Figura annotata.** Includi nel PDF l'immagine con sovrapposte le strutture identificate, i numeri degli stati e le misure effettuate, oltre ai diagrammi previsti (p–θ, x–t, ecc.).
 
-- Nessuna discrepanza attribuibile al modulo. Cause trovate: arrotondamenti/tabelle, refusi, errori che si
-  propagano (B04, B06, B37, B38, B40, B46 v1), ipotesi diverse (B01 L, B03, B49 w finale, B53-E05, B67, B70 R=288).
-- B53-E08: errore del catalogo (M1 = 5,95, non 5,45).
-- B68-E01 b2: M valle = 1,89 oltre il limite 1,8898 (γ=1,4) → NessunaSoluzione; la fonte usa Ms ≈ 20.
+L'immagine originale va copiata nella cartella dello svolgimento (`figure/originale.*`).
 
-## Problemi aperti
-
-- Nessuno bloccante. Da riportare nel riepilogo finale: le 13 discrepanze di `fase0_report.md` e le funzioni
-  fuori formulario elencate sopra.
+## Stile
+- Italiano, con la terminologia del docente (glossario in metodo_docente.md).
+- Nel PDF: completo e argomentato; evita solo ripetizioni e teoria non pertinente.
+- Nella risposta: sintetico, secondo lo schema sopra.
+- Distingui sempre ciò che è esatto da ciò che è approssimato o stimato.
+- Se trovi una traccia uguale o simile nel catalogo, citala (ID), ma risolvi in modo indipendente.
+- Se la traccia è ambigua o mancano dati, dichiara l'interpretazione scelta e procedi; chiedimi solo se l'ambiguità cambia radicalmente il problema.

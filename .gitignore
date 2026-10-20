@@ -1,8 +1,25 @@
+# Python
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# File ausiliari di LaTeX
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+
+# Immagini temporanee delle pagine PDF
 verifica/raster/
 
-# raccolta completa (113 MB): fuori dal repository
-fonti/*.pdf
+# PDF esclusi: raccolta completa (113 MB), libri di testo, dispense
+fonti/esercizi_2003_2023.pdf
+Gas_lectures.pdf
+**/Gas_lectures.pdf
+libri/
+**/*[Ll]ibro*.pdf
+**/*textbook*.pdf

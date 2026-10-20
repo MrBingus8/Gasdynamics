@@ -2,7 +2,7 @@
 
 Livello 1: coerenza interna (inverse, limiti, conservazione).
 Livello 2: valori di riferimento classici.
-Livello 3: risultati del corso (catalogo e soluzioni_A), in fondo al file.
+Livello 3: risultati del corso (catalogo e fonti/soluzioni_A), in fondo al file.
 """
 import math
 import pathlib

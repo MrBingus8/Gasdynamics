@@ -2,7 +2,7 @@
 
 Generato da `verifica/verifica_catalogo.py` a partire da `verifica/casi_corso.py` (gli stessi casi sono eseguiti da `tests/test_gasdyn.py::TestLivello3`).
 
-**Metodo.** Per ogni svolgimento con valori numerici (campo *Associazione e contenuto dello svolgimento* di `fonti/catalogo.md`, più i numeri letti direttamente sulle pagine) si ricalcola la grandezza con il modulo usando i dati della traccia. La tolleranza relativa è scelta in base alle cifre riportate dalla fonte (valori a 2 cifre: 1–2%; valori a 5–6 cifre: 10⁻⁵–10⁻⁴). Ogni discrepanza è stata ricondotta a una causa controllando la pagina originale (rasterizzata da `fonti/esercizi_2003_2023.pdf` o da `soluzioni_A/`). Pagine: 'G p.' = pagina fisica della raccolta, 'A p.' = pagina del PDF in `soluzioni_A/`.
+**Metodo.** Per ogni svolgimento con valori numerici (campo *Associazione e contenuto dello svolgimento* di `fonti/catalogo.md`, più i numeri letti direttamente sulle pagine) si ricalcola la grandezza con il modulo usando i dati della traccia. La tolleranza relativa è scelta in base alle cifre riportate dalla fonte (valori a 2 cifre: 1–2%; valori a 5–6 cifre: 10⁻⁵–10⁻⁴). Ogni discrepanza è stata ricondotta a una causa controllando la pagina originale (rasterizzata da `fonti/esercizi_2003_2023.pdf` o da `fonti/soluzioni_A/`). Pagine: 'G p.' = pagina fisica della raccolta, 'A p.' = pagina del PDF in `fonti/soluzioni_A/`.
 
 **Esito complessivo:** 257 confronti — concorda 211, discorda per causa nota 34, non confrontabile 12. Nessuna discrepanza è attribuibile al modulo.
 

@@ -228,15 +228,17 @@ urto in ingresso (S p.45 lo tratta solo isentropico), innesco del Riemann con γ
 
 ## 5. Discrepanze note fra le fonti
 
-Il modulo segue il formulario; le varianti sono in `fase0_report.md`. Le due che si vedono negli
-svolgimenti:
+Il modulo segue il formulario; le discrepanze rilevanti per la risoluzione sono in
+`fonti/metodo_docente.md` (f) (l'elenco completo di sviluppo è in `sviluppo/fase0_report.md`, da non
+consultare durante un esercizio). Le due che si vedono negli svolgimenti:
 - **Sauer–Meyer**: default con (γ+1) come nel formulario; lo svolgimento del 2022 (B67-E01) usa la
   versione senza (γ+1): `sauer_meyer(R, gas, versione='favini')`.
 - **Iterazione di Riemann**: Newton del formulario (il summary propone una secante).
 
-Il confronto con gli svolgimenti d'esame (affidabili, con riserva, errati) è in
-`verifica/verifica_catalogo.md`: prima di usare uno svolgimento come riferimento numerico,
-controllare lì il suo giudizio.
+Il confronto del modulo con gli svolgimenti d'esame è in `verifica/verifica_catalogo.md`: serve
+alla validazione del modulo e **non va consultato durante la risoluzione di un esercizio** (contiene
+i risultati delle tracce). Gli svolgimenti di `fonti/catalogo.md` e `fonti/soluzioni_A/` non sono
+garanzia di correttezza numerica.
 
 ## 6. Limiti noti
 

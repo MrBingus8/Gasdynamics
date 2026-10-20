@@ -353,8 +353,6 @@ Inferiti dai suoi controlli [I]:
   dopo; vale 1 a sinistra.
 - "Singolarità di Richardson" al piede dell'urto transonico (lez. 40): altrove il docente la chiama di **Zierep**.
 - Condizione di vuoto citata a voce come "u_lim,1 + u_lim,4": vale quella del formulario u4 − u1 ≥ (a1+a4)/δ.
-- **Refuso nel summary** (quasi-1D non isentropico): "if A↑, it strengthens up"; in un divergente l'urto si attenua
-  (trascrizioni e logica del formulario).
 
 ---
 

@@ -1,0 +1,1 @@
+File di test per verificare l'apertura di PR dal fork. Può essere eliminato.

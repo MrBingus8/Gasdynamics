@@ -9,6 +9,8 @@ I testi sono ricostruiti con normalizzazione tipografica; lacune e attribuzioni 
 
 Consultazione: [indice per argomento](indice_argomenti.md) · [anomalie](riepilogo_anomalie.md) · [parti da verificare](parti_da_verificare.md) · [registro delle pagine](registro_pagine.md).
 
+Prove successive alla raccolta, con soluzione ufficiale del docente: sezioni **U** in fondo al catalogo; testi e soluzioni in [soluzioni_ufficiali/](soluzioni_ufficiali/).
+
 
 
 ## B01 — 03/02/2003 — pp. 1–4
@@ -5747,3 +5749,54 @@ Stato: completato. Pagine esaminate: [279, 280].
 **Anomalie del batch:**
 
 Nessuno svolgimento delle due tracce nel batch finale. Le traduzioni inglesi non costituiscono esercizi aggiuntivi.
+
+
+## U01 — 14/09/2026 — fuori raccolta, soluzioni ufficiali
+
+Stato: completato. Fonte: foto delle tracce e soluzioni ufficiali del docente fornite da Alessio (21/10/2026), in [soluzioni_ufficiali/](soluzioni_ufficiali/).
+
+<a id="u01-e01"></a>
+
+
+### U01-E01 — Svuotamento di un tubo da un orifizio
+
+**Data della prova:** 14/09/2026. **Numero originale:** 1.
+
+**Testo e soluzione:** [2026-09-14_E01.md](soluzioni_ufficiali/2026-09-14_E01.md) (foto della traccia: [2026-09-14_E01.jpg](soluzioni_ufficiali/2026-09-14_E01.jpg)).
+
+**Sottoargomenti:** Onde di espansione 1D; riflessioni a parete e all'uscita strozzata; condizione al contorno con legge delle aree; fine dell'efflusso critico
+
+**Testo ricostruito:** Determinare la storia nel tempo della pressione sulla parete di testa del serbatoio dopo l'apertura del setto e fino al raggiungimento delle condizioni di flusso subsonico in uscita. Fornire il grafico pressione–tempo. Condizioni iniziali: P_tot=10 atm, T_tot=293,15 K, P_amb=1 atm. Figura: condotto di sezione A1 e lunghezza L=10 m, chiuso a sinistra, che termina a destra con la sezione A2, A2/A1=0,506, chiusa dal setto.
+
+**Dati:** L=10 m; A2/A1=0,506; P_tot=10 atm; T_tot=293,15 K; P_amb=1 atm.
+
+**Richieste:** Storia p(t) sulla parete di testa fino alla fine del flusso critico in uscita; grafico p–t.
+
+**Figure:** Schema del condotto con setto all'estremità destra (foto della traccia).
+
+**Associazione e contenuto dello svolgimento:** Soluzione ufficiale completa: modello 1D (diametro ≪ L), M_e=0,31 come condizione al contorno d'uscita, stati 1–4 (6,56; 4,2; 2,76; 1,76 atm) confrontati con p_tot,lim=1,892 atm, tempi con caratteristiche semirette. Riassunta in metodo_docente.md d3; svolgimento nel repository in [svolgimenti/2026-09-14_svuotamento_tubo_orifizio](../svolgimenti/2026-09-14_svuotamento_tubo_orifizio/svolgimento.pdf).
+
+**Affidabilità / parti da verificare:** Soluzione ufficiale del docente.
+
+<a id="u01-e02"></a>
+
+
+### U01-E02 — Distribuzione di M in un ugello separato (schlieren)
+
+**Data della prova:** 14/09/2026. **Numero originale:** 2.
+
+**Testo e soluzione:** [2026-09-14_E02.md](soluzioni_ufficiali/2026-09-14_E02.md) (foto della traccia: [2026-09-14_E02.jpg](soluzioni_ufficiali/2026-09-14_E02.jpg)).
+
+**Sottoargomenti:** Interpretazione di immagini schlieren; separazione in ugello sovraespanso; urti obliqui (θ–σ–M); onda di Mach; Sauer–Meyer; gambetto di Mach e punto triplo
+
+**Testo ricostruito:** Determine the Mach number distribution in the nozzle downstream of the throat / Stimare la distribuzione del numero di Mach nell'ugello a valle della gola.
+
+**Dati:** Solo l'immagine schlieren; angoli e posizioni da misurare con goniometro e righello.
+
+**Richieste:** Distribuzione del numero di Mach a valle della gola.
+
+**Figure:** Schlieren della regione di gola di un ugello piano convergente–divergente: urti di separazione dalle pareti che si incrociano sull'asse, strati separati, gambetto di Mach con punti tripli al bordo destro della finestra.
+
+**Associazione e contenuto dello svolgimento:** Soluzione ufficiale completa: gola efficace, divergente supersonico, separazione indotta dalla pressione d'uscita; Sauer–Meyer qualitativo (M più alto a parete); separazione 16°/60° ⇒ M≈1,68; onda di Mach sull'asse a 44° ⇒ M≈1,44; urto forte dal punto triplo a 78°, rotazione ≈8°. Riassunta in metodo_docente.md d8; svolgimento nel repository in [svolgimenti/2026-09-14_E02_ugello_schlieren](../svolgimenti/2026-09-14_E02_ugello_schlieren/svolgimento.pdf).
+
+**Affidabilità / parti da verificare:** Soluzione ufficiale del docente.

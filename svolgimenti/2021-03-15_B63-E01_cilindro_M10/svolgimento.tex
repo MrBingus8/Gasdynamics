@@ -1,0 +1,318 @@
+% Svolgimento B63-E01 (prova del 15/03/2021): cilindro in corrente a M = 10, schlieren.
+% Numeri e figure: calcoli.py (stessa cartella). Compilare con: latexmk -pdf svolgimento.tex
+
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+
+\hypersetup{hidelinks}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\allowdisplaybreaks
+\graphicspath{{figure/}}
+\sisetup{output-decimal-marker={,}, group-separator={\,}, per-mode=symbol,
+         exponent-product=\cdot, range-phrase={\text{--}}}
+
+\newcommand{\Cp}{C^{+}}
+\newcommand{\Cm}{C^{-}}
+
+\title{Gasdinamica -- Prova scritta del 15/03/2021, esercizio 1\\[2pt]
+\large Cilindro in corrente supersonica a $M_\infty=10$}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Traccia}
+\emph{Nella figura vediamo un'immagine schlieren di un flusso supersonico, stazionario, piano, a numero
+di Mach pari a 10, che investe un cilindro. Analizzare il campo di moto e descrivere le sue
+caratteristiche principali. Determinare: a) la stand-off distance dell'urto; b) la posizione della
+linea sonica nel punto di intersezione di questa con il cilindro; c) il numero di Mach nel punto di
+separazione; d) la pressione media nella bolla di ricircolo; e) il numero di Mach a monte dell'urto
+nella zona di riattacco della scia. Riportare le stime fatte sul piano odografo e su quello $p$--$\theta$.}
+
+%==============================================================================
+\section{Lettura del testo e dell'immagine}
+La schlieren mostra la metà superiore del campo attorno al cilindro. La corrente va da sinistra verso destra
+e il bordo inferiore dell'immagine passa per il centro del cilindro, quindi coincide con l'asse di simmetria.
+La tecnica rende visibili i gradienti di densità: gli urti appaiono come linee nette, gli strati di scorrimento
+come bande sfumate, le zone uniformi come regioni a luminosità costante. Per questo dall'immagine prendo solo
+posizioni e inclinazioni. Gli urti sono nitidi, come ci si aspetta da un campo stazionario; solo la scia
+vicina ha una tessitura irregolare, segno di un ricircolo turbolento. La barra fornisce la scala delle lunghezze.
+Assumo aria, $\gamma=1{,}4$, e uso $p_1$ (corrente indisturbata) come pressione di riferimento.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{annotata.png}
+  \caption{Schlieren con le strutture identificate e gli stati numerati: urto di prua (rosso), strato di
+  scorrimento (arancio), urto di separazione (verde), urto di riattacco (magenta), punto sonico 3 sul
+  cilindro (3$'$: regola di Busemann).}
+  \label{fig:ann}
+\end{figure}
+
+%==============================================================================
+\section{Identificazione delle strutture}
+Nell'ordine in cui le incontra la corrente (fig.~\ref{fig:ann}):
+\begin{enumerate}
+\item \textbf{Urto di prua, staccato.} Il cilindro è un corpo tozzo: impone una deviazione maggiore di
+  $\theta_{\max}(10)=\ang{44.4}$, e un urto da solo non può portare la velocità a zero. L'urto si stacca
+  quindi a distanza finita (stand-off). Sull'asse è normale, poi si inclina e si indebolisce allontanandosi
+  dal corpo. Nella finestra visibile è ancora lontano dalla linea di Mach ($\mu_\infty=\ang{5.7}$).
+\item \textbf{Bolla subsonica al naso}, delimitata dalla \textbf{linea sonica}. La linea sonica non si
+  vede nella schlieren e va stimata.
+\item \textbf{Espansione $\Cp$ lungo la parete convessa}, dalla linea sonica fino alla separazione.
+  Vicino al corpo c'è lo \emph{strato d'entropia}: queste linee di corrente hanno attraversato la parte
+  normale dell'urto, quindi hanno la pressione totale minima $p_0'$. Il campo dietro l'urto curvo è rotazionale (Crocco).
+\item \textbf{Separazione S} sul dorso del cilindro, provocata dallo strato limite.
+\item \textbf{Urto di separazione} (lip shock), la linea quasi orizzontale che parte dalla zona di S.
+  Raddrizza la corrente dalla direzione della parete a quella dello strato di scorrimento, quindi è una compressione $\Cp$.
+\item \textbf{Strato di scorrimento}, banda sfumata che scende verso l'asse e racchiude la \textbf{bolla di
+  ricircolo} B, a bassa velocità e a pressione praticamente uniforme.
+\item \textbf{Collo della scia}, dove lo strato raggiunge l'asse, e \textbf{urto di riattacco}. L'urto riallinea
+  la corrente all'asse ed è curvo, perché nasce dalla coalescenza delle compressioni con cui lo strato si raddrizza.
+  Più a valle incrocia l'urto di separazione.
+\end{enumerate}
+Sono invece artefatti la cornice dentellata (bordo della finestra), l'anello chiaro attorno al cilindro e
+le scritte ritoccate a destra.
+
+%==============================================================================
+\section{Ipotesi e modello}
+\begin{itemize}
+\item Flusso piano, stazionario, simmetrico: studio la metà superiore e l'asse fa da parete ($\theta=0$).
+  Gas perfetto, non viscoso fuori dagli strati sottili. La separazione dipende dalla viscosità, quindi la sua
+  posizione la \emph{misuro}.
+\item Corrente adiabatica: $h_0$ è uniforme anche attraverso gli urti, quindi $a^*$ è unico e c'è un solo piano odografo.
+\item Al naso (regione subsonica) uso solo relazioni esatte sulla linea di ristagno: urto normale e
+  decelerazione isentropica fino a $p_0'$.
+\item Dalla linea sonica in poi il campo è supersonico, quindi vale il modello 2D stazionario
+  (Prandtl--Meyer e urti obliqui). Lungo la parete assumo un'onda semplice $\Cp$, trascurando le onde riflesse
+  dall'urto di prua.
+\item La corrente W che lambisce lo strato è uniforme, ha direzione $-\Delta\theta$ e pressione totale $p_0'$.
+  La bolla ha la stessa pressione: $p_B=p_W$.
+\end{itemize}
+
+%==============================================================================
+\section{Misure sull'immagine}
+Con righello e goniometro, riferendo gli angoli all'asse:
+\begin{itemize}
+\item raggio del cilindro $R\approx\SI{16}{mm}$; distanza urto--naso sull'asse $\Delta\approx\SI{5.7}{mm}$;
+\item separazione a $\theta_s\approx\ang{38}$ dal punto di ristagno posteriore, dove la parete è inclinata di
+  $-(\ang{90}-\theta_s)=-\ang{52}$;
+\item strato di scorrimento inclinato di $\Delta\theta\approx\ang{18}$ verso l'asse;
+\item urto di riattacco: circa \ang{8} al piede, $\sigma_{ax}\approx\ang{12}$ nel tratto formato prima
+  dell'incrocio con l'urto di separazione.
+\end{itemize}
+Per l'urto di riattacco uso il tratto formato. Al piede l'urto raccoglie solo una parte delle compressioni dello
+strato, come in una compressione su parete concava, e porta tutta la deviazione $\Delta\theta$ solo dopo la coalescenza.
+Oltre l'incrocio, invece, lo stato a monte non è più W.
+
+%==============================================================================
+\section{Analisi qualitativa e topologia}
+Una particella vicina al corpo subisce, nell'ordine:
+\begin{enumerate}
+\item l'urto normale (1$\to$2) e la compressione fino al ristagno ($p_0'$);
+\item la riaccelerazione fino a $M=1$ nel punto sonico 3;
+\item l'espansione $\Cp$ lungo la parete fino a S, in cui $\theta$ diminuisce e $\theta+\nu$ resta costante;
+\item alla separazione, la compressione $\Cp$ da $-\ang{52}$ a $-\ang{18}$ (stato W);
+\item al collo, l'urto di riattacco $\Cp$ da $-\ang{18}$ a \ang{0} (stato 6).
+\end{enumerate}
+Mi aspetto una base in depressione e un Mach molto alto alla separazione, perché l'espansione attorno al cilindro supera i \ang{90}.
+
+\begin{table}[H]
+  \centering
+  \small
+  \begin{tabular}{cp{6.3cm}p{6.3cm}}
+    \toprule
+    Stato & Posizione & Onda che lo separa dal precedente \\
+    \midrule
+    1 & corrente indisturbata ($M=10$, $\theta=0$) & -- \\
+    2 & a valle dell'urto, sull'asse & urto di prua (normale) \\
+    3 & punto sonico sul cilindro ($M=1$, $\theta=\theta^*$) & ristagno e riaccelerazione subsonica \\
+    S & parete a monte della separazione ($\theta=-\ang{52}$) & espansione $\Cp$ lungo la parete \\
+    W & corrente lungo lo strato ($\theta=-\ang{18}$) & compressione $\Cp$ alla separazione \\
+    B & bolla di ricircolo ($p_B=p_W$) & strato di scorrimento \\
+    6 & a valle del riattacco ($\theta=0$) & urto di riattacco $\Cp$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Stati della metà superiore (la metà inferiore è speculare, con onde $\Cm$).}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{schema.pdf}
+  \caption{Schema in unità di $R$: punto sonico 3 (3$'$ secondo Busemann) con la tangente, separazione a $\theta_s$,
+  strato di scorrimento e urto di riattacco.}
+\end{figure}
+
+%==============================================================================
+\section{Calcolo}
+
+\subsection*{Urto normale e pressione di ristagno}
+\[
+\frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}(M_1^2-1)=\num{116.5},\qquad
+M_2^2=\frac{1+\delta M_1^2}{\gamma M_1^2-\delta}=\frac{21}{139{,}8}\ \Rightarrow\ M_2=\num{0.388},
+\]
+\[
+\frac{p_{02}}{p_{01}}=\left[\frac{(\gamma+1)M_1^2}{(\gamma-1)M_1^2+2}\right]^{\frac{\gamma}{\gamma-1}}
+\left[\frac{\gamma+1}{2\gamma M_1^2-(\gamma-1)}\right]^{\frac{1}{\gamma-1}}=\num{3.05e-3},
+\]
+\[
+\frac{p_{01}}{p_1}=(1+\delta M_1^2)^{\frac{\gamma}{\gamma-1}}=21^{3{,}5}=\num{4.24e4},
+\]
+\[
+\frac{p_0'}{p_1}=\num{3.05e-3}\cdot\num{4.24e4}=\num{129}.
+\]
+$p_0'$ è la pressione al punto di ristagno e la pressione totale di tutta la corrente di parete.
+
+\subsection*{a) Stand-off distance}
+Dalla misura: $\boxed{\Delta\approx\SI{5.7}{mm}}$, cioè $\Delta/R\approx\num{0.36}$. La correlazione empirica
+di Billig, $\Delta/R=0{,}386\,e^{4{,}67/M_\infty^2}=\num{0.40}$, dà $\Delta\approx\SI{6.5}{mm}$, in buon accordo.
+
+\subsection*{e) Mach a monte dell'urto di riattacco}
+La deviazione è $\theta=\Delta\theta=\ang{18}$. L'angolo d'urto va misurato rispetto alla velocità a monte, che è
+inclinata di $-\ang{18}$: $\sigma=\sigma_{ax}+\Delta\theta=\ang{12}+\ang{18}=\ang{30}$. Ricavando $M^2$ dalla
+relazione $\theta$--$\sigma$--$M$:
+\[
+M_W^2=\frac{2(\tan\theta+\cot\sigma)}{2\cot\sigma\,\sin^2\sigma-\tan\theta\,(\gamma+\cos2\sigma)}
+\]
+\[
+M_W^2=\frac{2(0{,}325+1{,}732)}{2\cdot1{,}732\cdot0{,}25-0{,}325\cdot1{,}9}=\frac{4{,}114}{0{,}249}=16{,}5
+\ \Rightarrow\ \boxed{M_W\approx\num{4.1}}
+\]
+(più precisamente $M_W=4{,}07$). A valle: $M_{n1}=M_W\sin\sigma=\num{2.03}$, $p_6/p_W=\num{4.66}$, $M_6=\num{2.75}$.
+
+\subsection*{d) Pressione nella bolla}
+W ha pressione totale $p_0'$: lungo la parete il moto è isentropico e la compressione alla separazione lo è
+anch'essa (verifica 3). Quindi
+\[
+\frac{p_B}{p_1}=\frac{p_W}{p_1}=\frac{p_0'}{p_1}\,(1+\delta M_W^2)^{-\frac{\gamma}{\gamma-1}}
+=129\cdot(1+0{,}2\cdot4{,}07^2)^{-3{,}5}=129\cdot\num{6.0e-3}
+\ \Rightarrow\ \boxed{p_B\approx\num{0.78}\,p_1}
+\]
+Dopo il riattacco: $p_6=\num{4.66}\,p_W\approx\num{3.6}\,p_1$.
+
+\subsection*{c) Mach nel punto di separazione}
+Alla separazione la corrente passa da $\theta_S=-\ang{52}$ a $\theta_W=-\ang{18}$: è una compressione $\Cp$ di
+\ang{34}. Lungo la compressione isentropica $\theta+\nu$ si conserva:
+\[
+\nu_S=\nu_W+\ang{34}=\ang{66.7}+\ang{34}=\ang{100.7}\ \Rightarrow\ \boxed{M_S\approx\num{9.4}},
+\qquad p_S\approx\num{4.5e-3}\,p_1.
+\]
+Per $M$ così alti $\nu(M)$ cresce molto lentamente verso $\nu_{\max}=\ang{130.5}$, quindi pochi gradi di
+errore sugli angoli cambiano molto $M_S$: questo valore è solo un ordine di grandezza.
+
+\subsection*{b) Linea sonica sul cilindro}
+L'espansione lungo la parete e la compressione alla separazione sono onde $\Cp$ della stessa famiglia: $\theta+\nu$
+è costante dal punto sonico ($\nu=0$) fino a W. La posizione del punto sonico dipende quindi solo da W:
+\[
+\theta^*=\theta_W+\nu_W=-\ang{18}+\ang{66.7}=\ang{48.7},\qquad
+\boxed{\theta_c=\ang{90}-\theta^*\approx\ang{41}}\ \text{dal punto di ristagno anteriore}.
+\]
+Il punto sonico sta a circa \SI{10.5}{mm} dall'asse e \SI{4}{mm} a valle del naso. Lì
+$p_3=p_0'/1{,}893\approx\num{68}\,p_1$.
+
+\emph{Confronto con la regola di Busemann.} Il punto sonico sul corpo sta dove la parete ha l'inclinazione della rampa
+che, a $M_\infty=10$, dà corrente sonica a valle dell'urto obliquo. È il punto sonico della polare:
+$\theta_{son}=\ang{44.4}$, quindi $\theta_c=\ang{45.6}$. Le due stime concordano entro qualche grado:
+il punto sonico si trova a circa \ang{41}--\ang{46} dal ristagno.
+
+%==============================================================================
+\section{Verifiche}
+\begin{enumerate}
+\item Urto normale: $M_2<1$ e $p_{02}<p_{01}$ (entropia crescente). \emph{Verificata.}
+\item Urto di riattacco: $M_{n1}=2{,}03>1$; $\theta=\ang{18}<\theta_{\max}(M_W)=\ang{39}$; ramo debole
+  ($\sigma=\ang{30}<\sigma_{\max}=\ang{66}$), corretto in campo aperto. \emph{Verificata.}
+\item Compressione isentropica alla separazione. Un urto unico di \ang{34} non lascerebbe mai, nemmeno per
+  $M\to\infty$, un Mach a valle maggiore di 2,5, mentre $M_W=4{,}1$. Quindi la corrente adiacente allo strato è
+  compressa da onde che coalescono solo più in alto, dove si vede l'urto di separazione. \emph{Verificata.}
+\item Regioni supersoniche nel modello 2D: $M_S$, $M_W$ e $M_6=2{,}75$ sono tutti maggiori di 1. \emph{Verificata.}
+\item Assenza di vuoto: $\nu_S=\ang{100.7}<\nu_{\max}$. \emph{Verificata.}
+\item Punto sonico: dalla catena \ang{41}, con la regola di Busemann \ang{46}. \emph{Coerente.} Se si parte da
+  Busemann e si percorre la catena all'indietro, si trova un urto di riattacco a \ang{13} sull'asse: è il valore
+  misurato dopo la coalescenza.
+\item Pressioni: $p_B<p_\infty$ (base in depressione) e $p_6>p_B$ (ricompressione al collo). \emph{Coerente.}
+\end{enumerate}
+
+%==============================================================================
+\section{Risultati}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Grandezza & Valore \\
+    \midrule
+    a) stand-off distance & $\Delta\approx\SI{5.7}{mm}$ ($\Delta/R\approx0{,}36$) \\
+    b) punto sonico sul cilindro & $\theta_c\approx\ang{41}$ dal ristagno anteriore (Busemann: \ang{46}) \\
+    c) Mach alla separazione & $M_S\approx9$ \\
+    d) pressione nella bolla & $p_B\approx0{,}8\,p_1$ \\
+    e) Mach a monte del riattacco & $M_W\approx4{,}1$ \\
+    \midrule
+    pressione di ristagno & $p_0'=129\,p_1$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+%==============================================================================
+\section{Rappresentazioni}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{p_theta.pdf}
+  \caption{Piano $p$--$\theta$, pressione in scala logaritmica.}
+  \label{fig:pth}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth]{p_theta_lin.pdf}
+  \caption{Lo stesso piano $p$--$\theta$ in scala lineare.}
+  \label{fig:pthlin}
+\end{figure}
+\textbf{Piano $p$--$\theta$.} La polare di 1 parte da $(0,1)$, non dall'origine, e arriva allo stato 2 dell'urto normale.
+Lungo l'urto di prua il campo a valle la percorre tutta, dal ramo forte vicino all'asse al ramo debole lontano.
+Il quadratino è il punto sonico della polare, cioè la regola di Busemann. Il punto sonico 3 sul corpo sta più in basso,
+perché la corrente di parete ha la pressione totale ridotta $p_0'$: la linea sonica non è un'isobara.
+
+Da 3 la curva isentropica di parete scende fino a S. La compressione isentropica riporta la corrente lungo la
+\emph{stessa} curva fino a W, che fissa la pressione della bolla. Infine la polare di W taglia $\theta=0$ nello stato 6.
+Le pressioni vanno da $\num{5e-3}\,p_1$ a $\num{117}\,p_1$, per questo il piano è riportato in due scale.
+Quella lineare (fig.~\ref{fig:pthlin}) mostra le forme vere delle curve e la separazione netta tra il punto sonico della polare
+($\approx99\,p_1$) e il punto 3 ($68\,p_1$), ma schiaccia sull'asse la catena S--W--6. Quella logaritmica (fig.~\ref{fig:pth})
+rende leggibile questa catena, al prezzo di deformare la concavità dei rami.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{odografo.pdf}
+  \caption{Piano odografo $(u^*,v^*)=(V/a^*)(\cos\theta,\sin\theta)$.}
+  \label{fig:od}
+\end{figure}
+\textbf{Piano odografo.} Lo stato 1 è a $M_1^*=2{,}39$, vicino al cerchio limite $\sqrt6$. La strofoide di 1 arriva
+allo stato 2 a $M_2^*=1/M_1^*=0{,}42$ e taglia il cerchio sonico nel punto 3$'$ di Busemann. Il punto sonico 3 sul corpo
+è sul cerchio sonico a $\theta^*=\ang{48.7}$. Da 3 l'epicicloide di Prandtl--Meyer porta a S, quasi al cerchio limite
+(espansione quasi completa), e poi all'indietro fino a W. Infine la polare di W porta allo stato 6 sull'asse.
+
+%==============================================================================
+\section{Coerenza con l'immagine e discussione}
+\begin{itemize}
+\item Il modello ritrova tutte le strutture visibili. Spiega anche la curvatura dell'urto di riattacco
+  (coalescenza) e l'inclinazione dell'urto di separazione: un urto che partisse da S e portasse tutta la
+  deviazione sarebbe inclinato di circa $-\ang{8}$ sull'asse, mentre quello osservato è orizzontale perché si forma più a valle.
+\item L'onda semplice lungo la parete trascura le onde riflesse dall'urto e lo strato limite, quindi
+  sovrastima l'espansione: $p_S\approx\num{4.5e-3}\,p_1$ è un valore troppo basso, e $M_S$ è il risultato più incerto. La
+  posizione del punto sonico non passa per S ed è molto più affidabile, come conferma l'accordo con Busemann.
+\item Tutto ciò che sta a valle della linea sonica non influenza il naso: la scia instazionaria non disturba
+  l'urto di prua, e la stand-off dipende solo dalla regione subsonica.
+\item La resistenza è dominata dalla pressione al naso ($p_0'\approx129\,p_1$, contro $p_B\approx0{,}8\,p_1$). È la logica
+  dei corpi tozzi ipersonici: l'urto staccato dissipa energia ma tiene lontano dalla parete il gas più caldo.
+\end{itemize}
+
+\end{document}

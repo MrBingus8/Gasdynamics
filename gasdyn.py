@@ -1967,6 +1967,31 @@ def theta_da_sigma(M: float, sigma, gas: Gas):
     return float(th) if np.ndim(th) == 0 else th
 
 
+def mach_da_theta_sigma(theta: float, sigma: float, gas: Gas) -> float:
+    """Mach a monte M1 dati deviazione θ e angolo d'urto σ [gradi]: inversa esplicita della
+    relazione θ–σ–M (F §12),
+
+        M² = 2(tanθ + cotσ) / [2cotσ sin²σ − tanθ(γ + cos2σ)].
+
+    Per θ = 0 dà l'onda di Mach M = 1/sinσ. La soluzione è unica (vale su entrambi i rami).
+    Solleva :class:`NessunaSoluzione` se 0 ≤ θ < σ ≤ 90° non è rispettato o se nessun M ≥ 1
+    realizza la coppia (θ, σ) (θ oltre la deviazione massima possibile per quel σ).
+    """
+    if not (0.0 <= theta < sigma <= 90.0):
+        raise NessunaSoluzione(f"serve 0 ≤ θ < σ ≤ 90°: θ = {theta}°, σ = {sigma}°")
+    t, s = _tand(theta), math.radians(sigma)
+    if sigma == 90.0:
+        if theta == 0.0:
+            return 1.0
+        raise NessunaSoluzione("σ = 90° (urto normale) implica θ = 0")
+    cot = math.cos(s) / math.sin(s)
+    den = 2.0 * cot * math.sin(s) ** 2 - t * (gas.gamma + math.cos(2.0 * s))
+    M2 = 2.0 * (t + cot) / den if den > 0 else -1.0
+    if M2 < 1.0 - 1e-12:
+        raise NessunaSoluzione(f"nessun M ≥ 1 realizza θ = {theta}° con σ = {sigma}°")
+    return math.sqrt(max(M2, 1.0))
+
+
 def _M2_obliquo(M: float, sigma: float, gas: Gas) -> float:
     """Mach a valle M2 = M_n2/sin(σ − θ) (F §12)."""
     Mn1 = M * _sind(sigma)

@@ -163,7 +163,7 @@ x–t usare `x0`, `t0` del punto d'incontro.
 ### 3.7 Supersonico stazionario 2D
 
 `angolo_mach(M)` · `prandtl_meyer(M, gas)` · `mach_da_pm(nu, gas)` · `nu_max(gas)` ·
-`theta_da_sigma(M, sigma, gas)` · `sigma_da_theta(M, theta, gas, ramo)` · `theta_max(M, gas)` → (θmax, σ) ·
+`theta_da_sigma(M, sigma, gas)` · `sigma_da_theta(M, theta, gas, ramo)` · `mach_da_theta_sigma(theta, sigma, gas)` (inversa esplicita) · `theta_max(M, gas)` → (θmax, σ) ·
 `sonico(M, gas)` → (θ_s, σ_s) · `urto_obliquo(stato, theta=|sigma=, famiglia='C+'|'C-', ramo)` ·
 `espansione_pm(stato, dtheta, famiglia)` · `onda_isentropica_2d(stato, famiglia, theta2=|M2=|p2=)` ·
 `onda_verso_theta_2d(stato, theta2, famiglia, ramo, modello)` (condizione di parete) ·
@@ -178,6 +178,7 @@ modello, ramo='debole')` · `riflessione_regolare(stato1, theta_w)` · `riflessi
 
 ```python
 gd.sigma_da_theta(2.0, 10.0, aria)              # 39.31° (ramo debole)
+gd.mach_da_theta_sigma(18.0, 30.07, aria)       # 4.048: M a monte da deviazione e angolo d'urto misurati (B63-E01)
 gd.prandtl_meyer(2.0, aria)                     # 26.38°
 s1 = gd.State.da_M(aria, 2.0, p=1.0, a=1.0)
 o2 = gd.urto_obliquo(s1, theta=11.31)           # B71-E01: rampa sotto il flusso ⇒ C+

@@ -723,6 +723,23 @@ class TestArea7:
                 s = gd.sigma_da_theta(3.0, th, ARIA, ramo)
                 assert gd.theta_da_sigma(3.0, s, ARIA) == pytest.approx(th, abs=1e-10)
 
+    def test_mach_da_theta_sigma(self):
+        # andata e ritorno con θ(σ; M) su entrambi i rami, anche con γ diverso
+        for gas in [ARIA, gd.Gas(1.3)]:
+            for M in [1.2, 2.0, 4.0, 10.0]:
+                mu = gd.angolo_mach(M)
+                for sg in np.linspace(mu + 0.5, 89.5, 7):
+                    th = gd.theta_da_sigma(M, sg, gas)
+                    assert gd.mach_da_theta_sigma(th, sg, gas) == pytest.approx(M, rel=1e-9)
+        # onda di Mach: θ = 0 ⇒ M = 1/sinσ; urto normale
+        assert gd.mach_da_theta_sigma(0.0, 30.0, ARIA) == pytest.approx(2.0, rel=1e-12)
+        assert gd.mach_da_theta_sigma(0.0, 90.0, ARIA) == pytest.approx(1.0)
+        # B63-E01: urto di riattacco, θ = 18°, σ = 30,07°
+        assert gd.mach_da_theta_sigma(18.0, 30.07, ARIA) == pytest.approx(4.048, abs=1e-3)
+        for th, sg in [(20.0, 15.0), (10.0, 90.0), (-1.0, 30.0), (40.0, 50.0)]:
+            with pytest.raises(gd.NessunaSoluzione):
+                gd.mach_da_theta_sigma(th, sg, ARIA)
+
     def test_limiti_polare(self):
         mu = gd.angolo_mach(2.0)
         assert gd.theta_da_sigma(2.0, mu, ARIA) == pytest.approx(0.0, abs=1e-12)

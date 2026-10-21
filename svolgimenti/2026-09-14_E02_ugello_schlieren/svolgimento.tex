@@ -13,6 +13,7 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{caption}
 \usepackage{hyperref}
 
 \hypersetup{hidelinks}
@@ -41,24 +42,22 @@ dell'ugello (fig.~\ref{fig:ann}).
 
 %==============================================================================
 \section{Lettura del testo e dell'immagine}
-La schlieren mostra, attraverso una finestra circolare, un ugello piano convergente--divergente. I blocchi neri in alto
-e in basso sono le pareti, opache. La corrente va da sinistra verso destra: la sezione più stretta è in corrispondenza
-dei due fori, che segnano la \textbf{gola}, e le onde rettilinee nascono dalle pareti e scendono verso valle.
-La tecnica rende visibili i gradienti di densità: le discontinuità appaiono come linee nette e sottili, le zone a
-luminosità uniforme sono zone con gradienti deboli. Le strutture sono nitide e non c'è alcun segno di sorgenti
-impulsive, quindi tratto il campo come \textbf{stazionario}.
+La schlieren mostra, attraverso una finestra circolare, la regione di gola di un ugello piano
+convergente--divergente. I blocchi neri in alto e in basso sono le pareti; la sezione più stretta è in
+corrispondenza dei due fori, che segnano la \textbf{gola}, e la corrente va da sinistra verso destra. La tecnica rende
+visibili i gradienti di densità: urti e onde appaiono come linee nette e sottili. Le strutture sono nitide, quindi
+tratto il campo come \textbf{stazionario}. L'uscita dell'ugello è fuori dalla figura.
 
-Non ci sono scale né pressioni assegnate: tutte le lunghezze le riferisco all'altezza di gola $h^*$ e le pressioni
-alla pressione totale $p_0$ del serbatoio. Assumo aria, $\gamma=1{,}4$. I risultati sono quindi rapporti
-($M$, $p/p_0$, angoli) ricavati da misure di angoli e di lunghezze sulla figura.
+Non ci sono scale né pressioni assegnate: le lunghezze le riferisco all'altezza di gola $h^*$ e le pressioni alla
+pressione totale $p_0$; assumo aria, $\gamma=1{,}4$. Il campo è approssimativamente simmetrico: per il calcolo basta una
+delle due metà.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{annotata.png}
-  \caption{Schlieren con le strutture identificate. Ciano: gola; verde: pareti; rosso: urti di separazione da W e W$'$
-  e loro prolungamenti oltre l'incrocio P (tratteggio); arancio: strati di scorrimento (tratteggio: quello visibile
-  sotto; punteggiato: quello superiore, ricostruito); magenta: caratteristica $\Cm$ che da Q raggiunge l'asse in P.
-  I numeri indicano gli stati.}
+  \includegraphics[width=0.64\textwidth]{annotata.png}
+  \caption{Schlieren con le strutture identificate. Ciano: gola; verde: pareti; rosso: urti di separazione da W e
+  W$'$ e loro prosecuzione oltre l'incrocio P (tratteggio); arancio: strato separato inferiore; magenta: gambetto di
+  Mach fra i punti tripli T e T$'$ e urti obliqui forti che ne partono. I numeri indicano gli stati.}
   \label{fig:ann}
 \end{figure}
 
@@ -66,220 +65,178 @@ alla pressione totale $p_0$ del serbatoio. Assumo aria, $\gamma=1{,}4$. I risult
 \section{Identificazione delle strutture}
 Nell'ordine in cui le incontra la corrente (fig.~\ref{fig:ann}):
 \begin{enumerate}
-\item \textbf{Convergente} (parte sinistra della finestra): luminosità quasi uniforme e grigia. La corrente è subsonica e
-  lenta, quindi i gradienti di densità sono piccoli.
-\item \textbf{Gola e inizio del divergente} (zona 1, scura). È la zona dei gradienti più forti: la corrente accelera
-  rapidamente attraverso $M=1$ e prosegue in espansione supersonica, attaccata a pareti convesse la cui
-  inclinazione cresce con continuità verso valle.
-\item \textbf{Due linee rettilinee nette} che partono dalle pareti in W (sopra) e W$'$ (sotto), a circa
-  $0{,}23\,h^*$ dalla gola, e si incrociano in P vicino all'asse. Quella da W è della famiglia $\Cm$ (fronte inclinato
-  $\theta-\sigma$, scende verso l'asse), quella da W$'$ della famiglia $\Cp$. Oltre P proseguono quasi senza cambiare
-  inclinazione. Nel calcolo mostro che sono troppo ripide per essere onde di Mach della corrente attaccata: sono
-  \textbf{urti obliqui deboli}. La linea è sottile perché in un urto le caratteristiche convergono e lo tengono
-  compatto.
-\item \textbf{Zone 2 e 2$'$}, chiare e uniformi, a valle degli urti: lì l'espansione si è interrotta.
-\item \textbf{Strati di scorrimento} che partono da W e W$'$ quasi paralleli all'asse. Quello inferiore si vede come una
-  linea orizzontale con una frangia irregolare (vortici del mescolamento); quello superiore non si distingue.
-  Fra lo strato e la parete, che continua ad aprirsi fino a circa \ang{42} al bordo della finestra, ci sono le
-  \textbf{zone separate} B e B$'$: aria quasi ferma, a pressione uniforme.
-\item \textbf{Zona 3}, a valle dell'incrocio P, sull'asse.
+\item \textbf{Convergente e gola} (sinistra e centro): luminosità senza strutture nette; nella zona 1, scura, la
+  corrente accelera attraverso $M=1$ ed espande lungo le pareti convesse del divergente.
+\item \textbf{Linee sottili che partono dalle pareti in W e W$'$}, a circa $0{,}2\,h^*$ dalla gola, dove lo strato
+  limite si separa: sono gli \textbf{urti di separazione}. Quello da W è della famiglia $\Cm$, quello da W$'$ della
+  famiglia $\Cp$.
+\item \textbf{Strati separati} che partono da W e W$'$ quasi paralleli all'asse. Quello inferiore è netto (linea con
+  frangia irregolare dovuta ai vortici del mescolamento); fra lo strato e la parete, che continua ad aprirsi, ci sono
+  le \textbf{zone separate} B e B$'$, ad aria quasi ferma.
+\item \textbf{Incrocio P} delle due linee, vicino all'asse: oltre P ciascuna prosegue con la stessa inclinazione.
+\item \textbf{Estremo destro della finestra} (fig.~\ref{fig:det}): le due linee, oltre P, finiscono su un tratto di urto quasi verticale a
+  cavallo dell'asse, il \textbf{gambetto di Mach} (fra T e T$'$); nei due \textbf{punti tripli} T e T$'$ il fronte
+  piega e prosegue verso le pareti come \textbf{urto obliquo forte}, che delimita la zona chiara. A valle del fronte
+  (zone 3, 4, 4$'$, la sottile fascia scura prima del bordo della finestra) la luminosità cambia: è la corrente
+  subsonica dietro gli urti forti.
 \end{enumerate}
-Sono invece artefatti la tessitura a macchie (grana della stampa e della foto), il bordo spezzato della zona chiara a
-destra (contorno della stampa) e la fascia chiara sottile che accompagna le pareti (riflesso del bordo del blocco).
+Sono invece artefatti la tessitura a macchie (grana della stampa e della foto) e la fascia chiara sottile che
+accompagna le pareti.
 
 %==============================================================================
 \section{Ipotesi e modello}
 \begin{itemize}
-\item Gola strozzata, con $M=1$ nella sezione dei fori. Lo giustifica l'immagine: a valle compaiono urti obliqui
-  rettilinei, possibili solo in corrente supersonica. Trascuro la curvatura della linea sonica, quindi le stime
-  vicino alla gola sono le meno precise.
-\item Fra la gola e gli urti la corrente è adiabatica, isentropica e irrotazionale ($p_0$ e $h_0$ uniformi).
-  Valgono quindi la legge delle aree, come valore medio sulla sezione, e il modello 2D stazionario supersonico con le
-  caratteristiche: lungo $\Cm$ si conserva $\theta+\nu$, lungo $\Cp$ si conserva $\theta-\nu$.
-\item A parete, prima di W, uso l'onda semplice. Le $\Cp$ che raggiungono la parete superiore partono dalla regione
-  sonica di gola, dove $\theta\simeq0$ e $\nu\simeq0$, e lungo di esse $\theta-\nu\simeq0$: quindi a parete
-  $\nu=\theta_w$. Per la parete inferiore vale lo stesso con le $\Cm$ e $\nu=|\theta_w|$.
-\item Le linee da W e W$'$ sono \textbf{urti di separazione}. La corrente si stacca dalle pareti perché a valle c'è una
-  contropressione maggiore di quella che l'espansione lungo la parete raggiungerebbe: l'ugello è
-  \textbf{sovraespanso}. Le zone separate hanno pressione uniforme $p_B$, che fissa la pressione dietro l'urto
-  vicino alla parete.
-\item Il campo è quasi simmetrico. Le due metà differiscono di qualche grado (P è appena sopra l'asse, a circa
-  $0{,}05\,h^*$), come capita spesso nelle separazioni: per il calcolo uso i valori medi dei due lati.
+\item La linea sottile che parte dalla parete in corrispondenza della separazione dice tre cose: (a) la gola è
+  \textbf{efficace} (strozzata); (b) nel divergente la corrente è \textbf{supersonica}, perché solo lì può esistere un
+  urto obliquo; (c) la pressione all'uscita, fuori dalla figura, è abbastanza alta da provocare la
+  \textbf{separazione dentro il condotto}: l'ugello è sovraespanso.
+\item Fino agli urti la corrente è adiabatica e isentropica; la uso nel modello 2D stazionario supersonico (urti
+  obliqui, onde di Mach). Le zone separate sono a pressione uniforme $p_B$.
+\item \textbf{Linea sonica} (Sauer--Meyer). Con $\xi$ lungo l'asse, $\eta$ trasversale ($\eta=\pm1$ a parete) e
+  $d=1/\sqrt{(\gamma+1)R}$:
+  \[
+  u=d\,\xi+\frac{(\gamma+1)d^2}{2}\eta^2,\qquad
+  \xi_{\rm gola}=-\frac d6\eta^2,\qquad
+  \xi_{\rm sonica}=-\frac{(\gamma+1)d}{2}\eta^2 .
+  \]
+  A parete ($\eta^2=1$) la linea sonica sta a $\xi=-1{,}2\,d$, prima della sezione di gola ($\xi=-d/6$); sull'asse
+  sta a $\xi=0$, dopo di essa. Non è richiesta la sua posizione: conta la conseguenza, che $M$ \textbf{non è uniforme
+  sulla sezione} e, a parità di ascissa, è più alto a parete che sull'asse.
+\item Uso la metà inferiore per la separazione, dove lo strato separato è netto, e i valori medi delle due metà per le
+  strutture vicino all'asse.
 \end{itemize}
 
 %==============================================================================
 \section{Misure sull'immagine}
+\begin{minipage}[t]{0.68\textwidth}
+\vspace{0pt}
 Con righello e goniometro, prendendo l'asse come la mezzeria fra le due pareti:
 \begin{itemize}
-\item inclinazione delle pareti dalla gola: \ang{5.9} a $x=0{,}05\,h^*$, \ang{8.2} a $0{,}10\,h^*$, \ang{11} a
-  $0{,}15\,h^*$, \ang{14.3} a $0{,}20\,h^*$, e circa \ang{42} al bordo della finestra;
-\item altezze del condotto $h/h^*$: $1{,}004$, $1{,}016$, $1{,}033$, $1{,}055$ nelle stesse stazioni;
-\item piedi degli urti: W a $0{,}25\,h^*$ (parete a \ang{18}), W$'$ a $0{,}21\,h^*$ (parete a \ang{-15});
-  in media $x_W\approx0{,}23\,h^*$, $\theta_W\approx\ang{16.5}$, $h/h^*\approx1{,}07$;
-\item inclinazione degli urti sull'asse: \ang{-40.7} da W e \ang{+43.7} da W$'$; l'angolo fra i due vale \ang{84}, quindi
-  ciascuno forma con l'asse $\sigma_P\approx\ang{42}$;
-\item angolo fra urto e parete nel piede: circa \ang{59} su entrambi i lati;
-\item incrocio P a $x_P\approx0{,}82\,h^*$; oltre P gli urti sono inclinati di circa \ang{43} sull'asse;
-\item strato di scorrimento inferiore inclinato di circa \ang{-1} sull'asse.
+\item separazione inferiore W$'$ a $x\approx0{,}21\,h^*$, dove la parete è inclinata di \ang{-15}; strato separato a
+  circa \ang{-1} sull'asse, cioè \textbf{\ang{14} rispetto alla tangente alla parete};
+\item urto di separazione a circa \textbf{\ang{59} rispetto alla tangente alla parete}, su entrambi i lati;
+\item vicino all'asse: urto da W$'$ inclinato di \ang{44} prima di P e di \ang{43} dopo; quello da W di \ang{41} e
+  \ang{43}. In media \textbf{\ang{43}}, uguale prima e dopo l'incrocio;
+\item gambetto di Mach a $x\approx0{,}99\,h^*$, perpendicolare all'asse;
+\item urti obliqui forti dai punti tripli: \ang{81} da T e \ang{76} da T$'$ sull'asse, in media \textbf{\ang{79}}.
 \end{itemize}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.27\textwidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\textwidth]{dettaglio_T.png}
+
+\captionof{figure}{Estremo destro: incrocio P, gambetto di Mach T--T$'$, urti forti.}
+\label{fig:det}
+\end{minipage}
 
 %==============================================================================
 \section{Analisi qualitativa e topologia}
-Le zone sono:
-\begin{itemize}
-\item \textbf{zona 1}: corrente attaccata in espansione, con entrambe le famiglie attive. Le pareti convesse emettono
-  espansioni ($\Cm$ dall'alto, $\Cp$ dal basso) che si incrociano sull'asse. Nessuna linea di questa zona è una
-  semiretta e $M$ cresce verso valle e verso le pareti;
-\item \textbf{urti in W e W$'$}: compressioni che riportano la corrente quasi parallela all'asse, verso lo strato di
-  scorrimento. Una compressione $\Cm$ dalla parete superiore diminuisce $\theta$, una $\Cp$ dalla parete inferiore
-  lo aumenta;
-\item \textbf{zone 2, 2$'$}: corrente compressa, ancora supersonica, che scorre lungo le zone separate B, B$'$;
-\item \textbf{incrocio in P}: interazione regolare dei due urti. Ciascuno attraversa la zona deviata dall'altro e la
-  corrente torna parallela all'asse nella zona 3. Per simmetria è come una riflessione regolare sull'asse.
-\end{itemize}
-Mi aspetto, procedendo verso valle: $M$ che cresce da 1 nella zona 1, più in fretta a parete che sull'asse, poi cala
-attraverso gli urti, e $M\approx0$ nelle zone separate. Questo campo non ha l'urto normale previsto dal modello
-quasi-1D, ma la stessa compressione distribuita su urti obliqui.
-
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth]{schema.pdf}
-  \caption{Schema del campo in unità di $h^*$: pareti misurate (tratteggio: convergente, fuori dalla parte leggibile),
-  urti di separazione e incrocio in P, strati di scorrimento (arancio), caratteristica $\Cm$ da Q a P.}
+  \includegraphics[width=0.66\textwidth]{schema.pdf}
+  \caption{Schema del campo in unità di $h^*$: pareti misurate (tratteggio: convergente), linea sonica qualitativa,
+  urti di separazione e loro prosecuzione oltre P, gambetto di Mach T--T$'$ e urti forti (magenta), linee di
+  scorrimento dai punti tripli (punteggiato), strati separati (arancio).}
   \label{fig:schema}
 \end{figure}
+Le pareti convesse espandono la corrente a partire dalla linea sonica; l'espansione è più rapida vicino alle pareti,
+quindi il nucleo 1 ha $M$ crescente verso valle e verso le pareti. L'urto di separazione nasce forte a parete (devia la
+corrente di circa \ang{14}) e si indebolisce verso l'asse, dove arriva come un'onda quasi di Mach: per questo dopo
+l'incrocio in P la direzione non cambia e il nucleo resta, sull'asse, nello stato 1. Al termine della zona visibile la
+compressione richiesta dalla contropressione avviene con un urto quasi normale (gambetto di Mach), raccordato agli urti
+obliqui forti nei punti tripli; dietro di essi la corrente è subsonica.
 
 \begin{table}[H]
   \centering
   \small
-  \begin{tabular}{cp{6.3cm}p{6.3cm}}
+  \begin{tabular}{cp{6.4cm}p{5.6cm}}
     \toprule
     Stato & Posizione & Come lo si raggiunge \\
     \midrule
-    gola & sezione dei fori, $M=1$ & convergente subsonico \\
-    1 & corrente attaccata fra gola e urti (1$_W$ a parete in W, 1$_P$ sull'asse in P) & espansione isentropica \\
-    2 & dietro gli urti (2$_W$ vicino a W, 2$_P$ vicino a P) & urto di separazione \\
-    B & zone separate a parete, $p=p_B$ & strato di scorrimento \\
-    3 & a valle dell'incrocio, sull'asse ($\theta=0$) & urto trasmesso \\
+    1 & nucleo supersonico fra gola e urti (1$_W$ a parete prima di W$'$; sull'asse prima di T) & espansione
+    isentropica \\
+    2, 2$'$ & dietro gli urti di separazione, lungo gli strati separati & urto di separazione \\
+    B, B$'$ & zone separate a parete, $p=p_B$ & strato separato \\
+    3 & dietro il gambetto di Mach, sull'asse & urto normale \\
+    4, 4$'$ & dietro gli urti forti che partono da T, T$'$ & urto obliquo forte \\
     \bottomrule
   \end{tabular}
-  \caption{Stati (2$'$, B$'$ sono i simmetrici di 2, B).}
+  \caption{Stati. Fra 3 e 4 (e fra 3 e 4$'$) c'è la linea di scorrimento che parte dal punto triplo.}
 \end{table}
 
 %==============================================================================
 \section{Calcolo}
 
-\subsection*{a) Corrente attaccata: valore medio e valore a parete}
-La legge delle aree dà il Mach medio sulla sezione (ramo supersonico, $\delta=0{,}2$):
+\subsection*{a) Separazione: $M$ a parete a monte di W$'$ (1$_W\to$2$'$)}
+Deviazione $\theta=\ang{14}$ (strato separato rispetto alla parete) e angolo d'urto $\sigma=\ang{59}$ (rispetto alla
+stessa direzione, che è quella della corrente a monte). Invertendo la relazione $\theta$--$\sigma$--$M$:
 \[
-\frac{A}{A^*}=\frac1M\left[\frac{2}{\gamma+1}\left(1+\delta M^2\right)\right]^{\frac{\gamma+1}{2(\gamma-1)}}
-=\frac1M\left(\frac{1+0{,}2M^2}{1{,}2}\right)^{3}.
+M_1^2=\frac{2(\tan\theta+\cot\sigma)}{2\cot\sigma\sin^2\sigma-\tan\theta\,(\gamma+\cos2\sigma)}
+=\frac{2(0{,}249+0{,}601)}{2\cdot0{,}601\cdot0{,}735-0{,}249\,(1{,}4-0{,}469)}=\frac{1{,}700}{0{,}651},
 \]
-A parete, con l'onda semplice $\nu(M_w)=\theta_w$:
+quindi $M_1\approx1{,}62$,
+con $p_1/p_0=(1+0{,}2\cdot1{,}62^2)^{-3{,}5}=0{,}228$. Dietro l'urto:
 \[
-\nu(M)=\sqrt{\frac{\gamma+1}{\gamma-1}}\tan^{-1}\sqrt{\frac{\gamma-1}{\gamma+1}(M^2-1)}-\tan^{-1}\sqrt{M^2-1}.
+M_{n1}=1{,}62\sin\ang{59}=1{,}39,\qquad \frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}(M_{n1}^2-1)=2{,}08,
 \]
-\begin{table}[H]
-  \centering
-  \begin{tabular}{cccccc}
-    \toprule
-    $x/h^*$ & $A/A^*$ & $M$ medio & $\theta_w$ & $M$ a parete & $\mu$ a parete \\
-    \midrule
-    0 (gola) & 1 & 1 & \ang{0} & 1 & \ang{90} \\
-    0,05 & 1,004 & 1,07 & \ang{5.9} & 1,29 & \ang{50.8} \\
-    0,10 & 1,016 & 1,14 & \ang{8.2} & 1,37 & \ang{46.9} \\
-    0,15 & 1,033 & 1,21 & \ang{11.0} & 1,47 & \ang{42.9} \\
-    0,20 & 1,055 & 1,27 & \ang{14.3} & 1,58 & \ang{39.3} \\
-    0,23 (W) & 1,07 & 1,31 & \ang{16.5} & 1,66 & \ang{37.0} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-Esempio in W: $\nu_W=\ang{16.5}$, quindi $M_W\approx1{,}66$ e $p_W/p_0=(1+0{,}2\cdot1{,}66^2)^{-3{,}5}=0{,}215$. Vicino alla gola
-$A/A^*$ varia pochissimo con $M$ (è stazionario in $M=1$), quindi i valori medi dei primi decimi di $h^*$ sono solo indicativi.
+\[
+M_{n2}^2=\frac{1+0{,}2M_{n1}^2}{1{,}4M_{n1}^2-0{,}2}\ \Rightarrow\ M_{n2}=0{,}745,
+\]
+\[
+M_2=\frac{M_{n2}}{\sin(\sigma-\theta)}=\frac{0{,}745}{\sin\ang{45}}\approx1{,}05,\qquad
+\frac{p_B}{p_0}\simeq\frac{p_2}{p_0}=2{,}08\cdot0{,}228\approx0{,}47 .
+\]
 
-\subsection*{b) Natura delle linee da W e W$'$}
-Se la linea da W fosse un'onda di Mach della corrente attaccata, formerebbe con la parete l'angolo
-$\mu_W=\sin^{-1}(1/1{,}66)=\ang{37}$. Anche con il valore medio della sezione, $M=1{,}31$, sarebbe $\mu=\ang{49.8}$, e
-sull'asse avrebbe inclinazione $\theta_W-\mu_W=\ang{16.5}-\ang{37}\approx\ang{-21}$. Quella misurata vale \ang{-42} e
-l'angolo con la parete \ang{59}: $\sigma>\mu$. La linea è quindi una \textbf{compressione}, cioè un urto obliquo, e
-$1/\sin\sigma$ dà solo un limite inferiore di $M$ a monte.
+\subsection*{b) Asse: onda di Mach in P}
+Vicino all'asse l'urto arriva inclinato di circa \ang{43} e, oltre l'incrocio, prosegue con la stessa inclinazione:
+un urto di intensità finita, dopo l'incrocio, cambierebbe inclinazione perché attraversa una corrente già deviata. È
+quindi un'\textbf{onda di Mach} del nucleo, e il suo angolo è l'angolo di Mach:
+\[
+M=\frac{1}{\sin\mu}=\frac{1}{\sin\ang{43}}\approx1{,}47,\qquad \frac{p}{p_0}=(1+0{,}2\cdot1{,}47^2)^{-3{,}5}=0{,}284 .
+\]
+Il valore sull'asse, pur letto più a valle, è minore di quello a parete prima della separazione, come prevede
+Sauer--Meyer.
 
-\subsection*{c) Urto di separazione in W (1$_W\to$2$_W$)}
-Con $M_1=1{,}66$ e $\sigma=\ang{58.7}$ (angolo con la corrente a monte, parallela alla parete):
-\[
-M_{n1}=M_1\sin\sigma=1{,}66\cdot0{,}854=1{,}42,\qquad
-\frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}\left(M_{n1}^2-1\right)=1+1{,}167\cdot1{,}012=2{,}18,
-\]
-\[
-\tan\theta=2\cot\sigma\,\frac{M_1^2\sin^2\sigma-1}{M_1^2(\gamma+\cos2\sigma)+2}
-=2\cdot0{,}608\cdot\frac{1{,}012}{2{,}756\cdot0{,}940+2}=0{,}268\ \Rightarrow\ \theta=\ang{15.0},
-\]
-\[
-M_{n2}^2=\frac{1+\delta M_{n1}^2}{\gamma M_{n1}^2-\delta}=\frac{1{,}402}{2{,}617}\Rightarrow M_{n2}=0{,}732,\qquad
-M_2=\frac{M_{n2}}{\sin(\sigma-\theta)}=\frac{0{,}732}{\sin\ang{43.7}}=1{,}06.
-\]
-La corrente dietro l'urto ha direzione $\theta_2=\ang{16.5}-\ang{15.0}=\ang{+1.5}$, quasi parallela all'asse. Con i
-valori di ciascun lato: \ang{+1.9} sopra e \ang{-1.4} sotto, dove lo strato di scorrimento visibile è inclinato di
-circa \ang{-1}. La pressione delle zone separate è quella dietro l'urto:
-\[
-\frac{p_B}{p_0}=\frac{p_2}{p_1}\cdot\frac{p_W}{p_0}=2{,}18\cdot0{,}215\approx0{,}47 .
-\]
-Le zone separate comunicano con l'uscita, quindi questa è anche una stima della contropressione:
-$p_a\approx0{,}47\,p_0$, cioè un rapporto di espansione $p_0/p_a\approx2{,}1$, molto basso per un ugello che a parete
-supera $M=1{,}6$.
-
-\subsection*{d) Asse fino a P}
-Lungo la $\Cm$ che parte da un punto Q della parete superiore $\theta+\nu$ si conserva. Sull'asse $\theta=0$, quindi
-\[
-\nu_{asse}=\theta_Q+\nu_Q=2\,\theta_Q .
-\]
-Il punto Q che raggiunge l'asse proprio in P si trova per tentativi, tracciando la $\Cm$ come un segmento con
-inclinazione media fra Q, dove vale $\theta_Q-\mu_Q$, e l'asse, dove vale $-\mu$.
+\subsection*{c) Punto triplo: gambetto di Mach e urto obliquo forte}
+Per semplicità prendo a monte di T$'$ (e di T) lo stato 1 dell'asse: $M_1=1{,}47$, corrente parallela all'asse.
 \begin{itemize}
-\item \emph{Primo tentativo}, Q $=$ W: $\nu_{asse}=2\cdot\ang{18.2}=\ang{36.4}$, cioè $M=2{,}39$. Questa $\Cm$ arriva
-  sull'asse a $1{,}65\,h^*$, ben oltre P: è inghiottita dall'urto e Q va spostato a monte.
-\item \emph{Risultato}: Q a $0{,}12\,h^*$ dalla gola, con $\theta_Q=\ang{9.1}$, $\nu_Q=\ang{9.1}$, $M_Q=1{,}40$,
-  $\mu_Q=\ang{45.4}$. In P
-  \[
-  \nu_P=\ang{18.2}\ \Rightarrow\ M_P\approx1{,}71,\quad \mu_P=\ang{35.7};
-  \]
-  l'inclinazione media è $\tfrac12[(\ang{9.1}-\ang{45.4})+(-\ang{35.7})]=\ang{-36}$, e da Q (a $0{,}51\,h^*$
-  dall'asse) la $\Cm$ arriva sull'asse a $0{,}12+0{,}51/\tan\ang{36}=0{,}82\,h^*$, cioè in P.
+\item \textbf{Gambetto di Mach} (urto normale, 1$\to$3):
+\[
+\frac{p_3}{p_1}=1+1{,}167\,(1{,}47^2-1)=2{,}35,\qquad M_3^2=\frac{1+0{,}2\cdot1{,}47^2}{1{,}4\cdot1{,}47^2-0{,}2}
+\Rightarrow M_3=0{,}71,\qquad \frac{p_3}{p_0}=0{,}67 .
+\]
+\item \textbf{Urto obliquo forte} con $\sigma=\ang{79}$ (1$\to$4$'$):
+\[
+M_{n1}=1{,}47\sin\ang{79}=1{,}44,
+\]
+\[
+\tan\theta=2\cot\sigma\,\frac{M_1^2\sin^2\sigma-1}{M_1^2(\gamma+\cos2\sigma)+2}=\frac{0{,}421}{3{,}02}=0{,}139
+\ \Rightarrow\ \theta\approx\ang{8},
+\]
+\[
+\frac{p_4}{p_1}=2{,}26,\qquad M_{n2}=0{,}722,\qquad M_4=\frac{0{,}722}{\sin(\ang{79}-\ang{7.9})}\approx0{,}76,\qquad
+\frac{p_4}{p_0}=0{,}64 .
+\]
+La corrente ruota di circa \ang{8} allontanandosi dall'asse.
 \end{itemize}
-Lo stesso procedimento, con Q fra il primo punto leggibile della parete ($\theta_Q=\ang{5.1}$) e $0{,}12\,h^*$, dà la
-distribuzione sull'asse: $M=1{,}44$ a $0{,}54\,h^*$, $1{,}53$ a $0{,}62\,h^*$, $1{,}62$ a $0{,}72\,h^*$, $1{,}71$ in P.
-Fra la gola e $0{,}5\,h^*$ la corrente sull'asse è transonica e $M$ sale da 1 a circa 1,4.
-
-\subsection*{e) Incrocio degli urti in P (1$_P\to$2$_P\to$3)}
-A monte di P: $M_1=1{,}71$, $\theta=0$, $p_1/p_0=0{,}200$. Con $\sigma_P=\ang{42.2}$:
-\[
-M_{n1}=1{,}71\cdot\sin\ang{42.2}=1{,}15,\quad \frac{p_2}{p_1}=1{,}38,\quad \theta=\ang{6.4},\quad M_2=1{,}49,\quad
-\frac{p_2}{p_0}=0{,}274 .
-\]
-L'urto trasmesso riporta la corrente a $\theta=0$: sulla polare di 2 la deviazione di \ang{6.4} richiede
-$\sigma=\ang{50.2}$, cioè un urto inclinato di $\ang{50.2}-\ang{6.4}=\ang{43.8}$ sull'asse, e
-\[
-M_3=1{,}27,\qquad p_3/p_0=0{,}375 .
-\]
 
 %==============================================================================
 \section{Verifiche}
 \begin{enumerate}
-\item Natura delle linee: $\sigma>\mu$ sia in W (\ang{58.7} contro \ang{37}) sia in P (\ang{42.2} contro \ang{35.7}).
-  Sono compressioni. \emph{Verificata.}
-\item Urti fisicamente ammissibili: $M_{n1}=1{,}42$ in W e $1{,}15$ in P, con $p_{02}/p_{01}=0{,}954$ e $0{,}998$
-  (entropia crescente). \emph{Verificata.}
-\item Ramo debole: in W $\theta=\ang{15.0}<\theta_{\max}(1{,}66)=\ang{16.1}$, e $\sigma=\ang{58.7}$ è minore dell'angolo del
-  punto di $\theta_{\max}$ (\ang{65.5}). L'urto è sul ramo debole ma vicino al distacco. In P $\theta=\ang{6.4}\ll\theta_{\max}(1{,}71)=\ang{17.2}$.
-  \emph{Verificata, ma critica in W.}
-\item Regioni supersoniche nel modello 2D: $M_1$ fra 1,3 e 1,7; $M_{2,W}=1{,}06$, $M_{2,P}=1{,}49$; $M_3=1{,}27$.
-  \emph{Verificata}, ma dietro l'urto vicino alla parete la corrente è appena supersonica.
-\item Direzione dello strato di scorrimento: prevista \ang{-1.4}, misurata circa \ang{-1}. \emph{Verificata.}
-\item Urto trasmesso oltre P: previsto a \ang{43.8} sull'asse, misurato a circa \ang{43}. \emph{Verificata.}
-\item Ordine dei valori in W: parete (1,66) $>$ media (1,31) $>$ asse, che arriva a 1,44 solo a $0{,}54\,h^*$. È coerente
-  con pareti convesse che espandono la corrente prima vicino a sé. \emph{Verificata.}
-\item Separazione: $p_W/p_B=0{,}215/0{,}47=0{,}46$. È il valore tipico dei criteri empirici di separazione negli ugelli,
-  circa 0,4 (Summerfield). \emph{Coerente.}
+\item $M$ a parete prima della separazione con l'onda semplice ($\nu=|\theta_w|=\ang{14.9}$): $M=1{,}60$, contro
+  $1{,}62$ dalla relazione $\theta$--$\sigma$--$M$. \emph{Verificata.}
+\item Urto di separazione sul ramo debole: $\theta=\ang{14}<\theta_{\max}(1{,}62)=\ang{15.1}$ e
+  $\sigma=\ang{59}<\ang{65.7}$ (angolo del punto di $\theta_{\max}$); $M_2\approx1{,}05$, appena supersonico.
+  \emph{Verificata, ma vicino al distacco.}
+\item Onda in P: stessa inclinazione prima e dopo l'incrocio (\ang{44} e \ang{43} per quella da W$'$). \emph{Coerente con
+  un'onda di Mach.}
+\item Ordine dei valori: $M$ a parete ($1{,}62$ a $0{,}21\,h^*$) maggiore di $M$ sull'asse ($1{,}47$ a $0{,}8$--$1\,h^*$).
+  \emph{Coerente con Sauer--Meyer.}
+\item Urto forte: $\sigma=\ang{79}$ maggiore dell'angolo del punto di $\theta_{\max}(1{,}47)$ (\ang{66.9}), e
+  $\theta=\ang{8}<\theta_{\max}=\ang{11.3}$: ramo forte, $M_4<1$. \emph{Verificata.}
+\item Separazione: $p_1/p_B=0{,}228/0{,}47=0{,}48$, nell'ordine dei valori tipici della separazione negli ugelli
+  (circa 0,4). \emph{Coerente.}
 \end{enumerate}
 
 %==============================================================================
@@ -290,14 +247,13 @@ M_3=1{,}27,\qquad p_3/p_0=0{,}375 .
     \toprule
     Posizione & $M$ & $p/p_0$ \\
     \midrule
-    gola ($x=0$) & 1 & 0,528 \\
-    parete, da 0 a W ($x_W\approx0{,}23\,h^*$) & da 1 a $\approx1{,}66$ & da 0,528 a 0,215 \\
-    media sulla sezione, da 0 a W & da 1 a $\approx1{,}31$ & -- \\
-    asse, da 0 a P ($x_P\approx0{,}82\,h^*$) & da 1 a $\approx1{,}71$ ($1{,}44$ a $0{,}54\,h^*$) & fino a 0,200 \\
-    dietro l'urto vicino a W (2$_W$) & $\approx1{,}06$ & $\approx0{,}47$ \\
-    dietro l'urto vicino a P (2$_P$) & $\approx1{,}49$ & $0{,}27$ \\
-    a valle dell'incrocio, sull'asse (3) & $\approx1{,}27$ & $0{,}375$ \\
-    zone separate B, B$'$ & $\approx0$ & $p_B\approx0{,}47$ \\
+    linea sonica (a parete prima della gola, sull'asse dopo) & 1 & 0,528 \\
+    parete, fino alla separazione ($x\approx0{,}21\,h^*$) & fino a $\approx1{,}62$ & fino a 0,228 \\
+    asse, da P al gambetto ($x\approx0{,}8$--$1\,h^*$) & $\approx1{,}47$ & 0,284 \\
+    dietro l'urto di separazione (2, 2$'$) & $\approx1{,}05$ & $\approx0{,}47$ \\
+    zone separate (B, B$'$) & $\approx0$ & $\approx0{,}47$ \\
+    dietro il gambetto di Mach (3) & $\approx0{,}71$ & 0,67 \\
+    dietro gli urti forti (4, 4$'$), $\theta\approx\ang{8}$ & $\approx0{,}76$ & 0,64 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -307,50 +263,44 @@ M_3=1{,}27,\qquad p_3/p_0=0{,}375 .
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.72\textwidth]{mach.pdf}
-  \caption{Distribuzione di $M$ a valle della gola: a parete (rosso), media sulla sezione (blu), sull'asse (verde), e
-  valori dietro gli urti.}
+  \caption{Distribuzione di $M$ a valle della gola, a parete e sull'asse, con i valori dietro gli urti.}
   \label{fig:mach}
 \end{figure}
-\textbf{Distribuzione di $M$} (fig.~\ref{fig:mach}). Fino a W le tre curve partono da $M=1$ e si separano subito. La parete
-convessa espande la corrente vicino a sé: $M$ a parete cresce più in fretta, la media segue la legge delle aree e
-l'asse resta indietro. Sull'asse $M$ continua a crescere fino all'urto in P, perché vi arrivano ancora le espansioni
-emesse dalla parete prima di W. In W e in P le linee verticali segnano i salti attraverso gli urti: vicino alla parete
-la corrente scende quasi a $M=1$, sull'asse a 1,49 e poi a 1,27 dopo l'incrocio. Il triangolo è $1/\sin\sigma_P$:
-cade sotto $M_P$, come deve per un urto. Il primo tratto vicino alla gola (punteggiato) non è risolto da queste misure.
+\textbf{Distribuzione di $M$} (fig.~\ref{fig:mach}). A parete $M$ parte da 1 poco prima della gola e cresce
+rapidamente lungo la parete convessa (curva dall'onda semplice, $\nu=|\theta_w|$, con le inclinazioni misurate) fino a
+1,62 alla separazione, dove scende a circa 1,05 attraverso l'urto. Sull'asse $M$ vale 1 poco dopo la gola e cresce più
+lentamente (tratto punteggiato: solo qualitativo) fino a 1,47 in P; resta tale fino al gambetto di Mach, dove scende a
+0,71. Il punto viola è la corrente dietro l'urto forte.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.68\textwidth]{p_theta.pdf}
-  \caption{Piano $p$--$\theta$ (pressione riferita a $p_0$).}
+  \caption{Piano $p$--$\theta$ per la metà inferiore (pressione riferita a $p_0$).}
   \label{fig:pth}
 \end{figure}
 \textbf{Piano $p$--$\theta$} (fig.~\ref{fig:pth}). La curva punteggiata è la corrente attaccata lungo la parete
-superiore ($\nu=\theta$): parte dalla gola ($\theta=0$, $p^*/p_0=0{,}528$) e scende fino a 1$_W$. La polare $\Cm$ di
-1$_W$ (rossa) non parte dall'origine ma da 1$_W$. Il suo ramo debole risale fino a 2$_W$, sulla retta $p=p_B$ delle
-zone separate, con $\theta\approx\ang{1.5}$: quasi in cima alla polare, cioè vicino a $\theta_{\max}$. Sull'asse, la
-polare $\Cm$ di 1$_P$ porta a 2$_P$ ($\theta=\ang{-6.4}$), e la polare $\Cp$ di 2$_P$ riporta a $\theta=0$ nello
-stato 3. Le pressioni stanno fra $0{,}20\,p_0$ e $0{,}53\,p_0$, quindi basta la scala lineare. Il diagramma mostra
-anche che $p_3<p_B$: dopo l'incrocio il nucleo supersonico è ancora sotto la pressione delle zone separate.
+inferiore, che arriva in 1$_W$ ($\theta=\ang{-15}$). La polare $\Cp$ di 1$_W$ porta, sul ramo debole e vicino al suo
+massimo, a 2$'$ ($\theta\approx\ang{-1}$), sulla retta $p=p_B$ delle zone separate. Sull'asse la polare $\Cm$ dello stato 1
+contiene sia il gambetto di Mach (3, in cima, $\theta=0$) sia l'urto forte (4$'$, $\theta\approx\ang{-8}$): entrambi
+sul ramo forte, molto sopra $p_B$. Le pressioni stanno fra $0{,}23\,p_0$ e $0{,}67\,p_0$, quindi basta la scala
+lineare.
 
 %==============================================================================
 \section{Coerenza con l'immagine e discussione}
 \begin{itemize}
-\item Il modello ritrova le strutture visibili: urti rettilinei che nascono in W e W$'$ con l'angolo misurato, la
-  corrente dietro di essi quasi parallela all'asse lungo lo strato inferiore, gli urti trasmessi oltre P con
-  l'inclinazione prevista. Spiega anche la luminosità: scura dove la corrente attaccata espande, uniforme a valle
-  degli urti e nelle zone separate, anche se la parete continua ad aprirsi fino a \ang{42}.
-\item L'ipotesi alternativa (onde di Mach della corrente attaccata) non regge. Darebbe $M\approx1{,}5$ sull'asse da
-  $1/\sin\sigma$, ma richiederebbe linee inclinate di circa \ang{21} invece di \ang{42}, e a valle una corrente che
-  continua a espandere fino a $M>2$ a parete.
-\item Il modello quasi-1D, con questa contropressione, metterebbe un urto normale nel divergente. In realtà la
-  compressione avviene con urti obliqui di separazione che si incrociano sull'asse. Il quasi-1D ne dà solo la media
-  sulla sezione, e infatti fra gola e W il suo $M$ sta fra i valori di parete e di asse.
-\item Gli stati più incerti sono quelli dietro l'urto vicino alla parete. L'urto è vicino a $\theta_{\max}$, quindi
-  pochi gradi sull'angolo cambiano molto $M_2$, che resta comunque prossimo a 1. La stima di $M_P$ e la distribuzione
-  sull'asse dipendono invece da angoli di parete piccoli e ben leggibili, e sono le più affidabili.
-\item Oltre la finestra il nucleo, con $p_3<p_B$, deve ancora comprimersi. Lo fanno le riflessioni degli urti sugli
-  strati di scorrimento, a pressione costante, che tornano verso l'asse come espansioni e compressioni alternate:
-  è la struttura a celle di un getto sovraespanso, qui confinata dentro l'ugello.
+\item Il modello ritrova le strutture visibili: urti di separazione con l'angolo misurato, strato separato quasi
+  parallelo all'asse ($\theta_2\approx\ang{-1}$, come misurato), onde che attraversano l'asse senza cambiare
+  inclinazione, fronte quasi normale vicino all'asse che piega di circa \ang{11} nei punti tripli.
+\item L'urto di separazione è rettilineo ma la sua intensità non è costante: a parete forma \ang{59} con la corrente
+  ($M_{n1}=1{,}39$), sull'asse \ang{43}, cioè l'angolo di Mach. La differenza viene dal nucleo non uniforme: verso
+  l'asse $M$ è più basso e la corrente è parallela all'asse.
+\item Il punto triplo qui è degenere: l'onda che vi arriva è di Mach, quindi gambetto e urto forte sono lo stesso fronte,
+  quasi normale vicino all'asse e inclinato più all'esterno. Le pressioni dietro i due tratti (0,67 e $0{,}64\,p_0$)
+  differiscono di poco; l'equilibrio attraverso la linea di scorrimento lo realizza la curvatura del gambetto,
+  trascurata assumendolo normale.
+\item Dietro il fronte la corrente è subsonica e a pressione maggiore di $p_B$: a valle, fuori dalla figura, riaccelera
+  verso l'uscita. La stima più sensibile alle misure è quella dell'urto forte: per $M_1=1{,}47$ la deviazione varia di
+  circa mezzo grado per ogni grado di $\sigma$, quindi $\theta\approx\ang{8}$ è indicativo.
 \end{itemize}
 
 \end{document}

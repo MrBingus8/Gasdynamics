@@ -197,184 +197,90 @@ x_fin = 835
 print(f"Parete visibile fino a X = {X(x_fin):.2f} (inf) e {X(905):.2f} (sup); "
       f"inclinazione massima letta {theta_sup(900):.0f} gradi")
 
-# --- stazioni per la legge delle aree (tratto attaccato, fra gola e W)
-X_staz = [0.0, 0.05, 0.10, 0.15, 0.20]
-staz = []
-for Xs in X_staz:
-    x = x_gola + Xs * h_star
-    if Xs == 0.0:
-        h = h_star
-        th = 0.0
-    else:
-        h = np.polyval(c_inf, x) - np.polyval(c_sup, x)
-        th = 0.5 * (theta_sup(x) - theta_inf(x))
-    staz.append((Xs, h / h_star, th))
+# --- estremo destro della finestra: bordo netto chiaro -> scuro della zona chiara, riga per riga
+# (gradiente orizzontale più negativo fra x = 1170 e 1250), poi retta x = a + b y
+gE = gaussian_filter(im, 2.5)
+gEx = np.gradient(gE, axis=1)
+
+
+def bordo(y0, y1):
+    ys_ = np.arange(y0, y1 + 1, 2)
+    xs_ = np.array([1170 + np.argmin(gEx[y, 1170:1250]) for y in ys_])
+    b, a = np.polyfit(ys_, xs_, 1)
+    return a, b, np.std(xs_ - (a + b * ys_))
+
+
+a_g, b_g, r_g = bordo(430, 590)        # tratto quasi verticale vicino all'asse: gambo di Mach
+a_Fs, b_Fs, r_Fs = bordo(345, 400)     # tratto che sale dal punto triplo superiore
+a_Fi, b_Fi, r_Fi = bordo(625, 715)     # tratto che scende dal punto triplo inferiore
+
+
+def incl_asse(b):                      # angolo acuto fra la retta x = a + b y e l'asse
+    return 90.0 if abs(b) < 1e-9 else deg(math.atan(1.0 / abs(b)))
+
+
+# punti tripli: incontro dei prolungamenti delle onde oltre P con il gambo
+x_T = (a_g + b_g * a_i2) / (1 - b_g * b_i2)      # T, sopra: arriva l'onda partita da W'
+y_T = a_i2 + b_i2 * x_T
+x_Ti = (a_g + b_g * a_s2) / (1 - b_g * b_s2)     # T', sotto: arriva l'onda partita da W
+y_Ti = a_s2 + b_s2 * x_Ti
+sig_Fs, sig_Fi = incl_asse(b_Fs), incl_asse(b_Fi)
+sig_F = 0.5 * (sig_Fs + sig_Fi)
+print(f"Gambo di Mach: x = {a_g + b_g * y_asse:.0f} px (X = {X(a_g + b_g * y_asse):.2f}), inclinato di {incl_asse(b_g):.1f} "
+      f"gradi sull'asse (residuo {r_g:.1f} px)")
+print(f"Punti tripli: T a X = {X(x_T):.2f}, Y = {(y_asse - y_T) / h_star:+.2f}; T' a X = {X(x_Ti):.2f}, "
+      f"Y = {(y_asse - y_Ti) / h_star:+.2f}")
+print(f"Urti che partono dai punti tripli: da T {sig_Fs:.1f} gradi, da T' {sig_Fi:.1f} gradi sull'asse "
+      f"(residui {r_Fs:.1f}, {r_Fi:.1f} px); media {sig_F:.1f}")
 
 # =============================================================================
 # 3. CALCOLO
 # =============================================================================
-print("\n--- Legge delle aree (valori medi sulla sezione) e Prandtl-Meyer a parete")
-tab = []
-for Xs, AA, th in staz:
-    M1d = 1.0 if AA <= 1.0 + 1e-9 else gd.mach_da_area(AA, aria, "supersonico")
-    Mw = 1.0 if th <= 0 else M_da_nu(th)
-    tab.append((Xs, AA, M1d, th, Mw))
-    print(f"X = {Xs:.2f}: A/A* = {AA:.3f}  M_1D = {M1d:.2f}  theta_w = {th:.1f}  M_parete = {Mw:.2f}")
+# a) separazione: si usa la metà inferiore, dove lo strato di scorrimento è netto
+th_sep = th_strato - th_Wi             # deviazione = angolo fra strato separato e tangente alla parete
+sig_sep = sig_Wi = phi_i - th_Wi       # angolo fra urto e tangente alla parete
+M_sep = gd.mach_da_theta_sigma(th_sep, sig_sep, aria)          # (F §12, inversa θ-σ-M)
+print(f"\n--- Separazione (metà inferiore): strato a {th_sep:.1f} gradi dalla tangente alla parete, "
+      f"urto a {sig_sep:.1f} gradi -> M_1 = {M_sep:.2f}")
+print(f"   (metà superiore: urto a {th_Ws - phi_s:.1f} gradi dalla parete; strato non leggibile)")
+s1W = gd.State.da_M(aria, M_sep, theta=th_Wi, p=p_p0(M_sep), a=1.0, nome="1")
+uW = gd.urto_obliquo(s1W, sigma=sig_sep, famiglia="C+", nome="2'")
+thm, sig_thm = gd.theta_max(M_sep, aria)
+print(f"Urto di separazione: Mn1 = {uW.Mn1:.3f}, deviazione {uW.deflessione:.1f}, p2/p1 = {uW.p2_p1:.2f}, "
+      f"M2 = {uW.valle.M:.2f}, theta2 = {uW.valle.theta:+.1f}, p1/p0 = {s1W.p:.3f}, p2/p0 = {uW.valle.p:.3f}")
+print(f"   theta_max({M_sep:.2f}) = {thm:.1f}, sigma a theta_max = {sig_thm:.1f}: ramo debole")
+M_PM = M_da_nu(-th_Wi)
+print(f"Verifica a parete (onda semplice, nu = |theta_w| = {-th_Wi:.1f}): M = {M_PM:.2f}; "
+      f"metà superiore nu = {th_Ws:.1f} -> M = {M_da_nu(th_Ws):.2f}")
+p_B = uW.valle.p
+print(f"Zona separata: p_B/p0 = {p_B:.3f}; p_1/p_B = {s1W.p / p_B:.2f}")
 
-# stato a parete in W (media dei due lati) e confronto con l'angolo dell'onda
-th_W = 0.5 * (th_Ws - th_Wi)
-X_W = 0.5 * (X(x_Ws) + X(x_Wi))
-AA_W = (np.polyval(c_inf, 0.5 * (x_Ws + x_Wi)) - np.polyval(c_sup, 0.5 * (x_Ws + x_Wi))) / h_star
-M1d_W = gd.mach_da_area(AA_W, aria, "supersonico")
-sig_Ws = th_Ws - phi_s             # angolo fra onda e corrente a monte (lato superiore)
-sig_Wi = phi_i - th_Wi             # lato inferiore
-sig_W = 0.5 * (sig_Ws + sig_Wi)
-M_Ws, M_Wi = M_da_nu(th_Ws), M_da_nu(-th_Wi)
-M_W = M_da_nu(th_W)
-print(f"\nIn W: X = {X_W:.2f}, A/A* = {AA_W:.3f} -> M_1D = {M1d_W:.2f}; theta_w = {th_W:.1f} -> nu = theta_w -> "
-      f"M_parete = {M_W:.2f} (sup {M_Ws:.2f}, inf {M_Wi:.2f})")
-print(f"Angolo onda-parete: sup {sig_Ws:.1f}, inf {sig_Wi:.1f}, medio {sig_W:.1f} gradi; "
-      f"angolo di Mach mu(M_parete) = {mu(M_W):.1f}, mu(M_1D) = {mu(M1d_W):.1f}")
-print(f"Se fosse un'onda di Mach: M = 1/sin(sigma) = {1 / math.sin(rad(sig_W)):.2f}, "
-      f"e la sua inclinazione sull'asse sarebbe theta_w - mu = {th_W - mu(M_W):.1f} gradi (misurata {-0.5 * apertura:.1f})")
+# b) asse: l'onda arriva e riparte con la stessa inclinazione -> onda di Mach
+angoli_asse = [-phi_s, phi_i, deg(math.atan(b_s2)), -deg(math.atan(b_i2))]
+sig_ax = float(np.mean(angoli_asse))
+M_ax = 1.0 / math.sin(rad(sig_ax))
+print(f"\n--- Asse: inclinazioni {', '.join(f'{v:.1f}' for v in angoli_asse)} -> media {sig_ax:.1f} gradi; "
+      f"onda di Mach: M = 1/sin = {M_ax:.2f} (con 43 gradi: {1 / math.sin(rad(43)):.2f})")
+M_ax = round(1.0 / math.sin(rad(43.0)), 2)      # come nello svolgimento: sigma letto ~43 gradi
+s1T = gd.State.da_M(aria, M_ax, theta=0.0, p=p_p0(M_ax), a=1.0, nome="1")
+print(f"Stato 1 sull'asse: M = {M_ax:.2f}, p/p0 = {s1T.p:.3f}, mu = {mu(M_ax):.1f}")
 
-# urto in W (stati 1 -> 2), lato superiore e inferiore
-sW_s = gd.State.da_M(aria, M_Ws, theta=th_Ws, p=p_p0(M_Ws), a=1.0, nome="1")
-uW_s = gd.urto_obliquo(sW_s, sigma=sig_Ws, famiglia="C-", nome="2")
-sW_i = gd.State.da_M(aria, M_Wi, theta=th_Wi, p=p_p0(M_Wi), a=1.0, nome="1'")
-uW_i = gd.urto_obliquo(sW_i, sigma=sig_Wi, famiglia="C+", nome="2'")
-sW = gd.State.da_M(aria, M_W, theta=th_W, p=p_p0(M_W), a=1.0, nome="1")
-uW = gd.urto_obliquo(sW, sigma=sig_W, famiglia="C-", nome="2")
-for nome, u in (("sup", uW_s), ("inf", uW_i), ("medio", uW)):
-    print(f"Urto in W ({nome}): M1 = {u.monte.M:.2f}, sigma = {u.sigma:.1f}, Mn1 = {u.Mn1:.3f}, "
-          f"deviazione = {u.deflessione:.1f}, theta2 = {u.valle.theta:+.1f}, p2/p1 = {u.p2_p1:.2f}, "
-          f"M2 = {u.valle.M:.2f}, p2/p0 = {u.valle.p:.3f}, p02/p01 = {u.p02_p01:.4f}")
-print(f"Direzione dello strato di scorrimento inferiore: prevista {uW_i.valle.theta:+.1f}, misurata {th_strato:+.1f}")
-p_B = uW.valle.p          # pressione nella zona separata (p/p0)
-print(f"Pressione nelle zone separate p_B/p0 = {p_B:.3f}; p_W/p0 = {sW.p:.3f}; p_W/p_B = {sW.p / p_B:.2f}")
-
-# --- asse: M dall'invariante theta+nu lungo la C- che parte dalla parete in Q
-print("\n--- Asse: C- da un punto Q della parete superiore (onda semplice a parete: nu_Q = theta_Q)")
-Y_asse_px = y_asse
-
-
-def da_Q(xQ):
-    """C- da Q (parete superiore) fino all'asse: rettilinea con pendenza media."""
-    thQ = theta_sup(xQ)
-    nQ = thQ
-    MQ = M_da_nu(nQ)
-    nA = thQ + nQ                 # theta + nu costante lungo la C-, theta = 0 sull'asse
-    MA = M_da_nu(nA)
-    incl = 0.5 * ((thQ - mu(MQ)) + (0.0 - mu(MA)))
-    YQ = (Y_asse_px - np.polyval(c_sup, xQ)) / h_star
-    XA = X(xQ) + YQ / math.tan(rad(-incl))
-    return dict(xQ=xQ, XQ=X(xQ), YQ=YQ, thQ=thQ, MQ=MQ, nA=nA, MA=MA, muQ=mu(MQ), muA=mu(MA), incl=incl, XA=XA)
-
-
-XP = X(x_P)
-# primo tentativo come a mano: Q sul piede W (la C- coinciderebbe con l'onda)
-t0 = da_Q(x_Ws)
-print(f"Primo tentativo, Q = W: theta_Q = {t0['thQ']:.1f}, M_Q = {t0['MQ']:.2f}, nu_asse = {t0['nA']:.1f} -> "
-      f"M = {t0['MA']:.2f}; la C- raggiunge l'asse a X = {t0['XA']:.2f}, oltre P (X_P = {XP:.2f})")
-xQ = brentq(lambda x: da_Q(x)["XA"] - XP, 556, x_Ws)
-QP = da_Q(xQ)
-print(f"Punto Q la cui C- arriva in P: X_Q = {QP['XQ']:.3f}, Y_Q = {QP['YQ']:.3f}, theta_Q = {QP['thQ']:.1f}, M_Q = {QP['MQ']:.2f}, "
-      f"mu_Q = {QP['muQ']:.1f}; in P nu = {QP['nA']:.1f}, M_P = {QP['MA']:.2f}, mu_P = {QP['muA']:.1f}; "
-      f"inclinazione media {QP['incl']:.1f}")
-asse = [da_Q(x) for x in np.linspace(556, xQ, 7)]
-for d in asse:
-    print(f"   Q a X = {d['XQ']:.3f} (theta {d['thQ']:.1f}) -> asse X = {d['XA']:.2f}, M = {d['MA']:.2f}")
-M_P = QP["MA"]
-
-# --- incrocio degli urti in P (stati 1 -> 2 -> 3), schema simmetrico con l'angolo medio
-sig_P = 0.5 * apertura
-print(f"\nIn P: sigma = {sig_P:.1f} (metà dell'angolo fra le onde); 1/sin(sigma) = {1 / math.sin(rad(sig_P)):.2f}")
-s1P = gd.State.da_M(aria, M_P, theta=0.0, p=p_p0(M_P), a=1.0, nome="1")
-iP = gd.urto_obliquo(s1P, sigma=sig_P, famiglia="C-", nome="2")
-rr = gd.riflessione_regolare(s1P, iP.deflessione)
-s2P, s3P = rr["2"], rr["3"]
-ang_rifl = rr["angolo_riflesso_parete"]
-print(f"Urto in P: Mn1 = {iP.Mn1:.3f}, deviazione {iP.deflessione:.1f}, p2/p1 = {iP.p2_p1:.2f}, M2 = {s2P.M:.2f}, p2/p0 = {s2P.p:.3f}")
-print(f"Dopo l'incrocio: M3 = {s3P.M:.2f}, p3/p0 = {s3P.p:.3f}, theta3 = {s3P.theta:.1f}; "
-      f"urto trasmesso inclinato di {ang_rifl:.1f} gradi sull'asse (misurato {-deg(math.atan(b_i2)):.1f} e {deg(math.atan(b_s2)):.1f})")
-print(f"Pressione: p3/p0 = {s3P.p:.3f} contro p_B/p0 = {p_B:.3f}")
+# c) punto triplo: gambo di Mach (urto normale) e urto obliquo forte
+un = gd.urto_normale(M_ax, aria)
+print(f"\n--- Gambo di Mach (urto normale con M1 = {M_ax:.2f}): {un}")
+sig_T = round(sig_F)
+uF = gd.urto_obliquo(s1T, sigma=sig_T, famiglia="C-", nome="4'")
+thmT, sig_thmT = gd.theta_max(M_ax, aria)
+print(f"Urto forte da T' (sigma = {sig_T} gradi): Mn1 = {uF.Mn1:.3f}, deviazione {uF.deflessione:.1f}, "
+      f"p2/p1 = {uF.p2_p1:.2f}, M2 = {uF.valle.M:.2f}, p2/p0 = {uF.valle.p:.3f}")
+print(f"   theta_max({M_ax:.2f}) = {thmT:.1f} a sigma = {sig_thmT:.1f}: sigma > sigma(theta_max) -> ramo forte")
+for s_ in (sig_Fi, sig_Fs):
+    print(f"   sensibilita': sigma = {s_:.1f} -> deviazione {gd.theta_da_sigma(M_ax, s_, aria):.1f}")
+s3 = gd.State.da_M(aria, un["M2"], theta=0.0, p=s1T.p * un["p2_p1"], a=1.0, nome="3")
+print(f"Stato 3 (dietro il gambo): M = {s3.M:.2f}, p/p0 = {s3.p:.3f}")
 
 # =============================================================================
-# 4. FUORI MODULO: verifica con il metodo delle caratteristiche (solo per la sintesi)
-# =============================================================================
-def moc(Yw, thw, X0, M_ax0, N=30, Xmax=1.8):
-    """Rete di caratteristiche piana dalla linea iniziale X = X0 (theta lineare da 0 a theta_w,
-    nu uniforme) con parete Yw(X), theta_w(X) e asse di simmetria. Coordinate in unità di h*."""
-    def Mn(v):
-        return M_da_nu(max(v, 1e-6))
-
-    def interno(A, B):
-        thP = 0.5 * ((A[2] + A[3]) + (B[2] - B[3]))
-        nP = 0.5 * ((A[2] + A[3]) - (B[2] - B[3]))
-        P = [0, 0, thP, nP]
-        for _ in range(3):
-            mA = math.tan(rad(0.5 * ((A[2] - mu(Mn(A[3]))) + (thP - mu(Mn(nP))))))
-            mB = math.tan(rad(0.5 * ((B[2] + mu(Mn(B[3]))) + (thP + mu(Mn(nP))))))
-            P[0] = (B[1] - A[1] + mA * A[0] - mB * B[0]) / (mA - mB)
-            P[1] = A[1] + mA * (P[0] - A[0])
-        return P
-
-    def sull_asse(A):
-        nP = A[2] + A[3]
-        m = math.tan(rad(0.5 * ((A[2] - mu(Mn(A[3]))) + (-mu(Mn(nP))))))
-        return [A[0] - A[1] / m, 0.0, 0.0, nP]
-
-    def a_parete(B):
-        Xp = B[0]
-        for it in range(4):
-            th = thw(Xp) if it else B[2]
-            nP = th - (B[2] - B[3])
-            m = math.tan(rad(0.5 * ((B[2] + mu(Mn(B[3]))) + (th + mu(Mn(nP))))))
-            Xp = brentq(lambda Z: B[1] + m * (Z - B[0]) - Yw(Z), B[0] + 1e-9, B[0] + 1.5)
-        th = thw(Xp)
-        return [Xp, Yw(Xp), th, th - (B[2] - B[3])]
-
-    n0 = nu(M_ax0)
-    riga = [[X0, j / N * Yw(X0), j / N * thw(X0), n0] for j in range(N + 1)]
-    tutti = [p[:] for p in riga]
-    while riga[0][0] < Xmax:
-        mezza = [interno(riga[j + 1], riga[j]) for j in range(N)]
-        riga = [sull_asse(mezza[0])] + [interno(mezza[j], mezza[j - 1]) for j in range(1, N)] + [a_parete(mezza[-1])]
-        tutti += mezza + riga
-    return np.array(tutti)
-
-
-X_vis = X(905)                     # oltre la finestra: parete prolungata in linea retta (serve solo a
-                                   # chiudere la rete, non influenza l'asse fino a P)
-
-
-def Yw_sup(Xs):
-    if Xs > X_vis:
-        return Yw_sup(X_vis) + (Xs - X_vis) * math.tan(rad(thw_sup(X_vis)))
-    return (y_asse - np.polyval(c_sup, x_gola + Xs * h_star)) / h_star
-
-
-def thw_sup(Xs):
-    return theta_sup(x_gola + min(Xs, X_vis) * h_star)
-
-
-# caso limite: pareti parallele e corrente uniforme a M = 1,5 -> deve restare uniforme
-rete0 = moc(lambda Z: 0.5, lambda Z: 0.0, 0.0, 1.5, N=10, Xmax=1.0)
-print(f"\n[fuori modulo] Caso limite MOC (canale a pareti parallele, M = 1,5): "
-      f"M min/max = {M_da_nu(rete0[:, 3].min()):.4f}/{M_da_nu(rete0[:, 3].max()):.4f}")
-X0m = X(556)
-rete = moc(Yw_sup, thw_sup, X0m, M_da_nu(1e-3) * 1.02, N=30, Xmax=XP + 0.05)
-ax_m = rete[np.abs(rete[:, 1]) < 1e-12]
-ax_m = ax_m[np.argsort(ax_m[:, 0])]
-par_m = rete[np.abs(rete[:, 1] - np.array([Yw_sup(z) for z in rete[:, 0]])) < 1e-9]
-par_m = par_m[np.argsort(par_m[:, 0])]
-M_P_moc = M_da_nu(np.interp(XP, ax_m[:, 0], ax_m[:, 3]))
-M_W_moc = M_da_nu(np.interp(X(x_Ws), par_m[:, 0], par_m[:, 3]))
-print(f"[fuori modulo] MOC con corrente quasi sonica uniforme in X = {X0m:.3f}: M in P (asse) = {M_P_moc:.2f} "
-      f"(stima a mano {M_P:.2f}); M a parete in W = {M_W_moc:.2f} (onda semplice {M_Ws:.2f})")
-
-# =============================================================================
-# 5. FIGURE
+# 4. FIGURE
 # =============================================================================
 plt.rcParams.update({"font.size": 9})
 
@@ -388,69 +294,95 @@ fig, ax = plt.subplots(figsize=(7.2, 6.0))
 ax.imshow(rett, cmap="gray")
 ax.set_xlim(0, Wr)
 ax.set_ylim(Hr, 0)
-xx = np.linspace(x_gola, 1240, 2)
-ax.plot(xx, [y_asse] * 2, ls="-.", color="yellow", lw=0.8)
+ax.plot([x_gola, 1240], [y_asse] * 2, ls="-.", color="yellow", lw=0.8)
 ax.text(30, y_asse - 10, "asse", color="yellow", fontsize=8)
 ax.plot([x_gola, x_gola], [np.polyval(c_sup, 556), np.polyval(c_inf, 558)], color="cyan", lw=1.2)
-ax.text(x_gola + 12, y_asse + 200, "gola\n(fori)\nM = 1", color="cyan", fontsize=8)
+ax.text(x_gola + 12, y_asse + 200, "gola\n(fori)", color="cyan", fontsize=8)
 xs_p = np.linspace(555, 905, 60)
 ax.plot(xs_p, np.polyval(c_sup, xs_p), color="lime", lw=1.2)
 xs_p = np.linspace(558, 835, 60)
 ax.plot(xs_p, np.polyval(c_inf, xs_p), color="lime", lw=1.2)
 for (a, b, xa, xb) in [(a_s, b_s, x_Ws, x_P), (a_i, b_i, x_Wi, x_P)]:
     ax.plot([xa, xb], [a + b * xa, a + b * xb], color="red", lw=1.4)
-for (a, b, xa, xb) in [(a_s2, b_s2, x_P, 1215), (a_i2, b_i2, x_P, 1205)]:
-    ax.plot([xa, xb], [a + b * xa, a + b * xb], color="red", lw=1.0, ls="--")
+ax.plot([x_P, x_T], [a_i2 + b_i2 * x_P, y_T], color="red", lw=1.0, ls="--")
+ax.plot([x_P, x_Ti], [a_s2 + b_s2 * x_P, y_Ti], color="red", lw=1.0, ls="--")
+ax.plot([a_g + b_g * y_T, a_g + b_g * y_Ti], [y_T, y_Ti], color="magenta", lw=1.6)
+ax.plot([x_T, a_Fs + b_Fs * 335], [y_T, 335], color="magenta", lw=1.4)
+ax.plot([x_Ti, a_Fi + b_Fi * 725], [y_Ti, 725], color="magenta", lw=1.4)
 ax.plot([x_Wi, 1120], [a_l + b_l * x_Wi, a_l + b_l * 1120], color="orange", lw=1.2, ls="--")
-yS = np.polyval(c_sup, x_Ws)
-ax.plot([x_Ws, 1120], [yS, yS - (1120 - x_Ws) * math.tan(rad(uW_s.valle.theta))], color="orange", lw=1.0, ls=":")
-ax.plot(*px(QP["XQ"], QP["YQ"]), "o", color="magenta", ms=4)
-ax.plot([px(QP["XQ"], QP["YQ"])[0], x_P], [px(QP["XQ"], QP["YQ"])[1], y_asse], color="magenta", lw=0.9, ls=":")
 for (x, y, t, dx, dy) in [(x_Ws, np.polyval(c_sup, x_Ws), "W", -10, -22), (x_Wi, np.polyval(c_inf, x_Wi), "W'", -18, 40),
-                          (x_P, y_P, "P", 10, -14), (px(QP["XQ"], QP["YQ"])[0], px(QP["XQ"], QP["YQ"])[1], "Q", -30, -18)]:
+                          (x_P, y_P, "P", -12, -16), (x_T, y_T, "T", -26, -6), (x_Ti, y_Ti, "T'", -32, 22)]:
     ax.text(x + dx, y + dy, t, color="white", fontsize=10, fontweight="bold")
-for (x, y, t) in [(800, 560, "1"), (930, 300, "2"), (900, 830, "2'"), (1180, 540, "3"),
-                  (960, 115, "B"), (1000, 985, "B'")]:
-    ax.text(x, y, t, color="yellow", fontsize=11, fontweight="bold", ha="center", va="center",
-            bbox=dict(boxstyle="circle,pad=0.15", fc="black", ec="yellow", lw=0.6))
-ax.annotate(f"σ ≈ {sig_P:.1f}°".replace(".", ","), (x_P - 60, y_P + 10), xytext=(860, 640), color="white", fontsize=8,
-            arrowprops=dict(arrowstyle="-", color="white", lw=0.6))
+for (x, y, t) in [(800, 560, "1"), (930, 300, "2"), (900, 830, "2'"), (1240, 470, "3"), (1244, 700, "4'"),
+                  (1236, 360, "4"), (960, 115, "B"), (1000, 985, "B'")]:
+    ax.text(x, y, t, color="yellow", fontsize=9 if t in ("3", "4", "4'") else 11, fontweight="bold", ha="center",
+            va="center", bbox=dict(boxstyle="circle,pad=0.12", fc="black", ec="yellow", lw=0.6))
 ax.axis("off")
 fig.tight_layout()
 fig.savefig(os.path.join(FIG, "annotata.png"), dpi=220, bbox_inches="tight", pad_inches=0.02)
 plt.close(fig)
 
-# --- schema del campo (metà superiore e inferiore), unità h*
+# --- dettaglio dell'estremo destro (punto triplo)
+fig, ax = plt.subplots(figsize=(3.4, 5.0))
+ax.imshow(rett, cmap="gray")
+ax.set_xlim(1040, 1262)
+ax.set_ylim(780, 300)
+ax.plot([x_P, x_T], [a_i2 + b_i2 * x_P, y_T], color="red", lw=1.0, ls="--")
+ax.plot([x_P, x_Ti], [a_s2 + b_s2 * x_P, y_Ti], color="red", lw=1.0, ls="--")
+ax.plot([a_g + b_g * y_T, a_g + b_g * y_Ti], [y_T, y_Ti], color="magenta", lw=1.4)
+ax.plot([x_T, a_Fs + b_Fs * 335], [y_T, 335], color="magenta", lw=1.2)
+ax.plot([x_Ti, a_Fi + b_Fi * 725], [y_Ti, 725], color="magenta", lw=1.2)
+ax.plot([1040, 1262], [y_asse] * 2, ls="-.", color="yellow", lw=0.8)
+for (x, y, t, dx, dy) in [(x_P, y_P, "P", -14, -12), (x_T, y_T, "T", -22, -4), (x_Ti, y_Ti, "T'", -28, 18)]:
+    ax.text(x + dx, y + dy, t, color="white", fontsize=10, fontweight="bold")
+ax.text(1150, 640, f"σ ≈ {sig_T}°", color="white", fontsize=8)
+ax.axis("off")
+fig.tight_layout()
+fig.savefig(os.path.join(FIG, "dettaglio_T.png"), dpi=220, bbox_inches="tight", pad_inches=0.02)
+plt.close(fig)
+
+# --- schema del campo, unità h* (pareti misurate, onde con le inclinazioni misurate)
 fig, ax = plt.subplots(figsize=(7.0, 4.6))
+
+
+def Yw(Xs):
+    return (y_asse - np.polyval(c_sup, x_gola + Xs * h_star)) / h_star
+
+
 Xg = np.linspace(X(555), X(905), 100)
-ax.plot(Xg, [Yw_sup(z) for z in Xg], "k", lw=1.6)
-ax.plot(Xg, [-Yw_sup(z) for z in Xg], "k", lw=1.6)
+ax.plot(Xg, Yw(Xg), "k", lw=1.6)
+ax.plot(Xg, -Yw(Xg), "k", lw=1.6)
 Xc = np.linspace(-0.25, X(555), 20)
 ax.plot(Xc, 0.5 + 0.35 * Xc ** 2, "k", lw=1.6, ls=(0, (2, 2)))
 ax.plot(Xc, -(0.5 + 0.35 * Xc ** 2), "k", lw=1.6, ls=(0, (2, 2)))
 ax.axhline(0, color="gray", ls="-.", lw=0.7)
-ax.plot([0, 0], [-0.5, 0.5], color="C0", lw=1.0)
-ax.text(0.01, 0.06, "M = 1", color="C0", fontsize=8)
-XWm, YWm = X_W, Yw_sup(X_W)
-ax.plot([XWm, XP], [YWm, 0], "r", lw=1.6)
-ax.plot([XWm, XP], [-YWm, 0], "r", lw=1.6)
-Xe = XP + 0.2
-ax.plot([XP, Xe], [0, -0.2 * math.tan(rad(ang_rifl))], "r", lw=1.2)
-ax.plot([XP, Xe], [0, 0.2 * math.tan(rad(ang_rifl))], "r", lw=1.2)
-ax.plot([XWm, Xe], [YWm, YWm + (Xe - XWm) * math.tan(rad(uW.valle.theta))], color="C1", lw=1.2, ls="--")
-ax.plot([XWm, Xe], [-YWm, -YWm - (Xe - XWm) * math.tan(rad(uW.valle.theta))], color="C1", lw=1.2, ls="--")
-ax.plot([QP["XQ"], XP], [QP["YQ"], 0], color="C4", lw=0.9, ls=":")
-ax.text(QP["XQ"] - 0.02, QP["YQ"] + 0.03, "Q", color="C4")
-ax.text(XWm - 0.03, YWm + 0.03, "W")
-ax.text(XWm - 0.04, -YWm - 0.07, "W'")
-ax.text(XP + 0.01, 0.025, "P")
-for (x, y, t) in [(0.45, 0.0, "1"), (0.62, 0.38, "2"), (0.62, -0.38, "2'"), (XP + 0.12, 0.0, "3"),
-                  (0.78, 0.62, "B"), (0.78, -0.62, "B'")]:
-    ax.text(x, y, t, fontsize=11, ha="center", va="center", bbox=dict(boxstyle="circle,pad=0.2", fc="white", ec="k", lw=0.6))
-ax.text(0.86, 0.75, "zona separata", fontsize=7, ha="center")
-ax.text(0.2, -0.12, "corrente attaccata,\nin espansione", fontsize=7, ha="center")
+ax.plot([0, 0], [-0.5, 0.5], color="C0", lw=0.8, ls=":")
+ys_ = np.linspace(-0.5, 0.5, 41)
+ax.plot(0.04 - 0.16 * ys_ ** 2, ys_, color="C0", lw=1.2)
+ax.text(0.05, 0.08, "linea\nsonica", color="C0", fontsize=7)
+XW_, YW_ = 0.5 * (X(x_Ws) + X(x_Wi)), 0.5 * (Yw(X(x_Ws)) + Yw(X(x_Wi)))
+XP_, XT_ = X(x_P), 0.5 * (X(x_T) + X(x_Ti))
+YT_ = (XT_ - XP_) * math.tan(rad(sig_ax))
+ax.plot([XW_, XP_], [YW_, 0], "r", lw=1.6)
+ax.plot([XW_, XP_], [-YW_, 0], "r", lw=1.6)
+ax.plot([XP_, XT_], [0, YT_], "r", lw=1.0, ls="--")
+ax.plot([XP_, XT_], [0, -YT_], "r", lw=1.0, ls="--")
+ax.plot([XT_, XT_], [-YT_, YT_], color="m", lw=1.8)
+LF = 0.22
+for sgn in (1, -1):
+    ax.plot([XT_, XT_ + LF * math.cos(rad(sig_T))], [sgn * YT_, sgn * (YT_ + LF * math.sin(rad(sig_T)))], color="m", lw=1.4)
+    ax.plot([XT_, XT_ + 0.12], [sgn * YT_, sgn * (YT_ + 0.02)], color="m", lw=0.8, ls=":")
+    ax.plot([XW_, XT_ + 0.1], [sgn * YW_, sgn * (YW_ + 0.012 * (XT_ + 0.1 - XW_))], color="C1", lw=1.2, ls="--")
+ax.text(XW_ - 0.03, YW_ + 0.03, "W")
+ax.text(XW_ - 0.04, -YW_ - 0.08, "W'")
+ax.text(XP_ - 0.03, 0.03, "P")
+ax.text(XT_ - 0.07, YT_ + 0.01, "T")
+ax.text(XT_ - 0.08, -YT_ - 0.06, "T'")
+for (x, y, t) in [(0.45, 0.0, "1"), (0.62, 0.38, "2"), (0.62, -0.38, "2'"), (XT_ + 0.07, 0.0, "3"),
+                  (XT_ + 0.14, 0.42, "4"), (XT_ + 0.14, -0.42, "4'"), (0.78, 0.62, "B"), (0.78, -0.62, "B'")]:
+    ax.text(x, y, t, fontsize=10, ha="center", va="center", bbox=dict(boxstyle="circle,pad=0.2", fc="white", ec="k", lw=0.6))
 ax.set_aspect("equal")
-ax.set_xlim(-0.3, Xe + 0.05)
+ax.set_xlim(-0.3, XT_ + 0.25)
 ax.set_ylim(-0.95, 0.95)
 ax.set_xlabel("x / h*")
 ax.set_ylabel("y / h*")
@@ -458,65 +390,56 @@ fig.tight_layout()
 fig.savefig(os.path.join(FIG, "schema.pdf"))
 plt.close(fig)
 
-# --- distribuzione del numero di Mach
-fig, ax = plt.subplots(figsize=(6.6, 4.2))
-Xp = np.linspace(X(556), X_W, 40)
-Mpar = [M_da_nu(max(thw_sup(z), 1e-6)) for z in Xp]
-ax.plot(Xp, Mpar, "C3", lw=1.6, label="parete (Prandtl–Meyer, ν = θ$_w$)")
-ax.plot([0, Xp[0]], [1, Mpar[0]], "C3", lw=1.0, ls=":")
-Xm = np.linspace(X(560), X_W, 40)
-M1d = [gd.mach_da_area(max((np.polyval(c_inf, x_gola + z * h_star) - np.polyval(c_sup, x_gola + z * h_star)) / h_star,
-                           1.0 + 1e-6), aria, "supersonico") for z in Xm]
-ax.plot(np.r_[0, Xm], np.r_[1, M1d], "C0", lw=1.6, label="media sulla sezione (legge delle aree)")
-XA = [d["XA"] for d in asse]
-MA = [d["MA"] for d in asse]
-ax.plot(XA, MA, "C2", lw=1.6, label="asse (invariante θ+ν lungo le C$^-$)")
-ax.plot([0, XA[0]], [1, MA[0]], "C2", lw=1.0, ls=":")
-ax.text(0.30, 1.13, "regione transonica\n(non risolta)", fontsize=7, color="C2")
-ax.plot([XP - 0.02], [1 / math.sin(rad(sig_P))], "v", color="k", ms=5, mfc="none",
-        label="1/sin σ in P (vale solo come limite inferiore)")
-ax.plot([X_W, X_W], [uW.valle.M, M_W], "C3", lw=0.8, ls="--")
-ax.plot([X_W], [uW.valle.M], "s", color="C3", ms=5, label="dietro l'urto in W (2)")
-ax.plot([XP, XP], [s2P.M, M_P], "C2", lw=0.8, ls="--")
-ax.plot([XP], [s2P.M], "s", color="C2", ms=5, label="dietro l'urto in P (2)")
-ax.plot([XP + 0.03], [s3P.M], "D", color="C2", ms=5, label="dopo l'incrocio (3)")
-ax.axvline(X_W, color="gray", lw=0.6, ls=":")
-ax.axvline(XP, color="gray", lw=0.6, ls=":")
-ax.text(X_W + 0.01, 1.02, "W", fontsize=8)
-ax.text(XP + 0.01, 1.02, "P", fontsize=8)
+# --- distribuzione del numero di Mach (parete: onda semplice; asse: valori stimati)
+fig, ax = plt.subplots(figsize=(6.6, 4.0))
+XWi = X(x_Wi)
+Xp = np.linspace(X(560), XWi, 40)
+Mpar = [M_da_nu(max(-theta_inf(x_gola + z * h_star), 1e-6)) for z in Xp]
+ax.plot(Xp, Mpar, "C3", lw=1.6, label="parete (onda semplice, ν = |θ$_w$|)")
+ax.plot([-0.03, Xp[0]], [1.0, Mpar[0]], "C3", lw=1.0, ls=":")
+ax.plot([XWi, XWi], [M_sep, uW.valle.M], "C3", lw=0.9, ls="--")
+ax.plot([XWi], [M_sep], "o", color="C3", ms=4, label=f"monte dell'urto di separazione (θ–σ–M)")
+ax.plot([XWi], [uW.valle.M], "s", color="C3", ms=5, label="dietro l'urto di separazione (2')")
+XTm = 0.5 * (X(x_T) + X(x_Ti))
+ax.plot([0.03, XP_], [1.0, M_ax], "C2", lw=1.2, ls=":", label="asse, andamento qualitativo")
+ax.plot([XP_, XTm], [M_ax, M_ax], "C2", lw=1.6, label="asse (angolo di Mach dell'onda in P)")
+ax.plot([XP_], [M_ax], "o", color="C2", ms=4)
+ax.plot([XTm, XTm], [M_ax, s3.M], "C2", lw=0.9, ls="--")
+ax.plot([XTm], [s3.M], "s", color="C2", ms=5, label="dietro il gambo di Mach (3)")
+ax.plot([XTm + 0.02], [uF.valle.M], "D", color="C4", ms=5, label="dietro l'urto forte da T' (4')")
+for xv, t in ((XWi, "W'"), (XP_, "P"), (XTm, "T")):
+    ax.axvline(xv, color="gray", lw=0.6, ls=":")
+    ax.text(xv + 0.01, 0.62, t, fontsize=8)
 ax.set_xlabel("x / h*  (dalla gola)")
 ax.set_ylabel("M")
-ax.set_xlim(0, XP + 0.12)
-ax.set_ylim(0.95, 1.85)
+ax.set_xlim(-0.05, XTm + 0.08)
+ax.set_ylim(0.6, 1.8)
 ax.grid(alpha=0.3)
-ax.legend(fontsize=7, loc="upper center", bbox_to_anchor=(0.47, 1.0))
+ax.legend(fontsize=7, loc="upper left", bbox_to_anchor=(0.24, 1.0))
 fig.tight_layout()
 fig.savefig(os.path.join(FIG, "mach.pdf"))
 plt.close(fig)
 
-# --- piano p-theta (p/p0, scala lineare: le pressioni stanno in poco più di un fattore 2)
+# --- piano p-theta (p/p0, scala lineare: le pressioni stanno fra 0,2 e 0,7 p0)
 fig, ax = plt.subplots(figsize=(6.6, 4.4))
-for st, fam, col, nm in [(sW, "C-", "C3", "W"), (s1P, "C-", "C2", "P")]:
-    u = gd.polare_p_theta(st, famiglia=fam, p_min_rel=0.5)["urto"]
-    deb = np.array(u["ramo"]) == "debole"
-    ax.plot(np.array(u["theta"])[deb], np.array(u["p"])[deb], color=col, lw=1.3, label=f"polare {fam} di 1 in {nm}")
-u = gd.polare_p_theta(s2P, famiglia="C+", p_min_rel=0.8)["urto"]
-deb = np.array(u["ramo"]) == "debole"
-ax.plot(np.array(u["theta"])[deb], np.array(u["p"])[deb], color="C2", lw=1.0, ls="--", label="polare C+ di 2 in P")
-th_is = np.linspace(0, 20, 60)
-ax.plot(th_is, [p_p0(M_da_nu(max(t, 1e-6))) for t in th_is], color="gray", lw=1.0, ls=":",
-        label="corrente attaccata a parete (ν = θ)")
-for st, t, off in [(sW, "1 (W)", (5, -10)), (uW.valle, "2 (W)", (5, 4)), (s1P, "1 (P)", (5, -10)), (s2P, "2 (P)", (-28, 4)),
-                   (s3P, "3", (5, 3))]:
+u = gd.polare_p_theta(s1W, famiglia="C+", p_min_rel=0.5)["urto"]
+ax.plot(u["theta"], u["p"], color="C3", lw=1.3, label="polare C$^+$ di 1 a parete (W')")
+u = gd.polare_p_theta(s1T, famiglia="C-", p_min_rel=0.5)["urto"]
+ax.plot(u["theta"], u["p"], color="C2", lw=1.3, label="polare C$^-$ di 1 sull'asse (T')")
+th_is = np.linspace(0, 16, 60)
+ax.plot(-th_is, [p_p0(M_da_nu(max(t, 1e-6))) for t in th_is], color="gray", lw=1.0, ls=":",
+        label="corrente attaccata a parete (ν = |θ|)")
+for st, t, off in [(s1W, "1 (W')", (5, -10)), (uW.valle, "2'", (5, 4)), (s1T, "1 (asse)", (5, -10)),
+                   (s3, "3", (5, 3)), (uF.valle, "4'", (-14, 4))]:
     ax.plot(st.theta, st.p, "ko", ms=3.5)
     ax.annotate(t, (st.theta, st.p), textcoords="offset points", xytext=off, fontsize=8)
 ax.axhline(p_B, color="C1", lw=0.9, ls="--")
-ax.text(8.0, p_B + 0.006, "zone separate B, B'", color="C1", fontsize=8)
+ax.text(-21, p_B + 0.008, "zona separata B'", color="C1", fontsize=8)
 ax.set_xlabel("θ [°]")
 ax.set_ylabel("p / p$_0$")
-ax.set_xlim(-12, 22)
+ax.set_xlim(-22, 12)
 ax.grid(alpha=0.3)
-ax.legend(fontsize=7, loc="upper left")
+ax.legend(fontsize=7, loc="center right", bbox_to_anchor=(1.0, 0.6))
 fig.tight_layout()
 fig.savefig(os.path.join(FIG, "p_theta.pdf"))
 plt.close(fig)

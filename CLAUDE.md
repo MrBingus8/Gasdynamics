@@ -35,14 +35,25 @@ Il PDF ha una sezione per ciascun passo, in quest'ordine:
 
 Regole aggiuntive:
 - Ogni passo va argomentato: non basta dire cosa si fa, bisogna dire perché.
-- Nel calcolo, per ogni stato: formula del formulario usata (con la sezione), valori sostituiti, risultato. Per i procedimenti iterativi: primo tentativo come lo imposta il docente, criterio di convergenza, risultato finale.
+- Nel calcolo, per ogni stato: formula usata, valori sostituiti, risultato (il rimando alla sezione del formulario va solo nei commenti di `calcoli.py`). Per i procedimenti iterativi: primo tentativo come lo imposta il docente, risultato finale e il controllo fisico che usa lui (es. |p2 − p3| trascurabile).
 - Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
 - Ogni diagramma va commentato nel testo.
 - Prima di consegnare, controlla lo svolgimento contro la lista (e).
 
+## Registro del PDF: soluzione d'esame
+Il PDF è la soluzione da consegnare al professore all'esame, scritta come la scriverebbe uno studente eccellente che ha solo goniometro, righello e calcolatrice: chiara e nello schema del docente.
+- **Niente apparato numerico**: niente incertezze, intervalli, propagazione degli errori, scarti, pixel, fit, codice, nomi di funzioni, "gasdyn", "fuori modulo", algoritmi (Newton, bisezione…). Le misure su un'immagine si scrivono come misure con goniometro e righello ("misurando sulla figura σ ≈ 12°").
+- **Niente rimandi "(F §n)"** accanto alle formule: formula, valori sostituiti e risultato.
+- Se un risultato è molto sensibile a una misura o a un'ipotesi, basta **una frase fisica** (es. "per M elevati ν(M) varia poco, quindi M_S è solo indicativo"), senza intervalli.
+- **Ogni cosa si dice una volta**: le strutture si descrivono in un solo punto, le ipotesi non ripetono quella descrizione, le verifiche occupano una riga ciascuna, la discussione non ripete il calcolo.
+- Le sezioni "Bilancio equazioni/incognite" e "Scorciatoie fisiche" compaiono solo se hanno un contenuto proprio; altrimenti quel contenuto va nel calcolo, in una frase.
+- Correlazioni empiriche o modelli esterni solo come confronto breve, se pertinenti.
+- 2–3 cifre significative; "≈" per i valori stimati, "=" per quelli esatti, così resta chiaro cosa è esatto e cosa è stimato.
+- Incertezze, scelte numeriche, parti fuori modulo e problemi del modulo vanno nella **sintesi in chat** e nell'output di `calcoli.py`, mai nel PDF.
+
 ## Calcoli
 - Tutti i calcoli numerici si fanno con `gasdyn.py` (vedi `gasdyn_guida.md`). Non fare a mano calcoli iterativi o non banali.
-- Se un calcolo non è coperto dal modulo, scrivi il codice necessario in `svolgimenti/<cartella>/calcoli.py` riusando il modulo, verificalo con casi limite noti e segnala nello svolgimento che quella parte è "fuori modulo".
+- Se un calcolo non è coperto dal modulo, scrivi il codice necessario in `svolgimenti/<cartella>/calcoli.py` riusando il modulo, verificalo con casi limite noti e segnala nella sintesi in chat che quella parte è "fuori modulo".
 - Non modificare `gasdyn.py` durante la risoluzione di un esercizio. Se trovi un errore o una funzione mancante utile in generale, segnalamelo nella sintesi: lo correggeremo a parte, con i test.
 - Nello svolgimento non mostrare il codice: formule, passaggi e valori, come in uno svolgimento scritto.
 
@@ -77,7 +88,7 @@ Hanno la stessa importanza degli esercizi numerici e lo stesso livello di comple
 1. **Lettura del testo e dell'immagine.** Cosa mostra, tecnica di visualizzazione (cosa rende visibile: gradienti di densità, densità, livelli quantizzati), stazionario o instazionario, verso della corrente, scala e riferimenti disponibili.
 2. **Identificazione delle strutture**, nell'ordine dell'immagine o dei numeri del testo: per ciascuna tipo, famiglia, natura e giustificazione fisica del suo aspetto. Separa ciò che è fisico dagli artefatti della tecnica.
 3. **Ipotesi ancorate all'immagine**, ciascuna motivata con ciò che si vede: per esempio linea sonica in gola, regione supersonica dove compaiono onde di Mach rettilinee, contorno del getto a p = p_a, parete come condizione θ = θ_w, uscita adattata o no a seconda delle strutture visibili. Distingui ciò che l'immagine mostra da ciò che si assume.
-4. **Misure sull'immagine** (angoli delle onde, inclinazioni degli urti, distanze, posizioni a istanti diversi). Esegui le misure sull'immagine con il codice (coordinate in pixel, angoli rispetto a un riferimento identificato) e riporta incertezza e propagazione sui risultati. Se l'immagine non è abbastanza nitida per una misura affidabile, dillo e chiedimi i valori o un'immagine migliore invece di inventarli.
+4. **Misure sull'immagine** (angoli delle onde, inclinazioni degli urti, distanze, posizioni a istanti diversi). Esegui le misure sull'immagine con il codice (coordinate in pixel, angoli rispetto a un riferimento identificato) e riporta incertezza e propagazione sui risultati nella sintesi in chat; nel PDF compaiono solo i valori misurati. Se l'immagine non è abbastanza nitida per una misura affidabile, dillo e chiedimi i valori o un'immagine migliore invece di inventarli.
 5. **Ricostruzione del campo** a partire dagli stati noti e dalle ipotesi: da qui seguono i passi 2–11 della struttura dello svolgimento (modello, analisi qualitativa, topologia, calcolo con gasdyn.py, verifiche, risultati, rappresentazioni, discussione).
 6. **Coerenza tra calcolo e immagine.** Confronta ciò che il modello prevede (angoli, posizioni, presenza o assenza di strutture) con ciò che si vede; discuti le differenze (3D, viscosità, instazionarietà, limiti del modello).
 7. **Figura annotata.** Includi nel PDF l'immagine con sovrapposte le strutture identificate, i numeri degli stati e le misure effettuate, oltre ai diagrammi previsti (p–θ, x–t, ecc.).
@@ -86,7 +97,7 @@ L'immagine originale va copiata nella cartella dello svolgimento (`figure/origin
 
 ## Stile
 - Italiano, con la terminologia del docente (glossario in metodo_docente.md).
-- Nel PDF: completo e argomentato; evita solo ripetizioni e teoria non pertinente.
+- Nel PDF: completo e argomentato, nel registro di una soluzione d'esame (vedi "Registro del PDF"); evita ripetizioni e teoria non pertinente.
 - Nella risposta: sintetico, secondo lo schema sopra.
 - Distingui sempre ciò che è esatto da ciò che è approssimato o stimato.
 - Se trovi una traccia uguale o simile nel catalogo, citala (ID), ma risolvi in modo indipendente.

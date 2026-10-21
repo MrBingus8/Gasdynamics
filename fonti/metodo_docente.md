@@ -260,6 +260,19 @@ teoria.
 6. Separare il **fisico dall'artefatto**: le frange di un interferogramma sono curve di livello quantizzate dalla
    soglia dello strumento (come le medie di cella di Godunov); un salto di pressione vicino alla gola in una
    simulazione quasi-1D è la media sull'asse di urti obliqui a parete, non un errore [D].
+7. **Leggere l'immagine fino ai bordi** [D, soluzione ufficiale 14/09/2026 es. 2]: un contorno netto vicino al bordo
+   della finestra (cambio di luminosità con un tratto rettilineo o spezzato) è una struttura del campo finché la
+   misura non dimostra che coincide con il bordo della finestra o della stampa. Lì il docente vede gambetti di Mach,
+   punti tripli e urti forti.
+8. **Onda di Mach o urto?** [D] Una linea che attraversa l'asse (o un'altra onda) e riparte con la **stessa
+   inclinazione** è un'onda di Mach: M = 1/sin μ direttamente dall'angolo misurato, senza trattarla come urto in
+   riflessione regolare. Un urto di intensità finita cambierebbe inclinazione dopo l'incrocio.
+9. **Separazione in un ugello** [D]: la linea sottile che parte dalla parete dove si separa lo strato limite dice che
+   (a) la gola è efficace, (b) il divergente è supersonico, (c) la pressione d'uscita provoca la separazione nel
+   condotto. M a monte si ricava dalle **tabelle θ–σ–M**, con θ = angolo fra lo strato separato e la tangente alla
+   parete e σ = angolo fra urto e la stessa tangente. Il M sull'asse è minore che a parete (Sauer–Meyer: la linea
+   sonica parte a parete prima della gola e arriva sull'asse dopo), e l'urto di separazione, forte a parete, può
+   arrivare sull'asse come onda di Mach.
 
 Esempi commentati a lezione:
 - **Avviamento di un ugello (interferogramma Saitō–Takayama)**: primary shock (u+a, veloce, sottile), interface
@@ -271,6 +284,15 @@ Esempi commentati a lezione:
 - **Buffeting** (Album): urti la cui posizione dipende dall'istante; immagine mediata senza discontinuità.
 - **Getto impattante** (B64-E04): bocca, regione sottoespansa, onde deboli dall'ugello, disco di Mach, urto riflesso
   dal punto triplo, shear layer, regione subsonica fino al ristagno, lama radiale con urto di ricompressione.
+- **Esempio svolto, esame 14/09/2026 es. 2** (non nel catalogo; soluzione ufficiale): schlieren della gola di un
+  ugello piano C–D, "stimare la distribuzione di M a valle della gola". Campo circa simmetrico ⇒ basta una metà.
+  Linea sottile alla separazione ⇒ gola efficace, divergente supersonico, separazione indotta dalla pressione
+  d'uscita (fuori figura). Sauer–Meyer, solo qualitativo: M non uniforme, più alto a parete che sull'asse a parità
+  di ascissa. Misure col goniometro: strato separato a ≈16° dalla tangente alla parete, urto a ≈60° dalla stessa
+  ⇒ M ≈ 1,68 dalle tabelle; sull'asse l'urto arriva a ≈44° e riparte a ≈44° ⇒ onda di Mach, M ≈ 1,44. Ultima
+  regione visibile vicino all'asse: **gambetto di Mach** con **punto triplo** dove arriva l'onda di Mach e parte un
+  **urto obliquo forte** a ≈78° (con M = 1,44 e corrente assiale a monte) che ruota la corrente di ≈8°. Livello: niente
+  reticolo delle caratteristiche, niente legge delle aree come valore medio.
 - Tracciato di un trasduttore in un tubo d'urto: salto seguito subito da un calo senza plateau ⇒ l'espansione riflessa
   ha già raggiunto l'urto [D].
 
@@ -313,6 +335,10 @@ Inferiti dai suoi controlli [I]:
 15. Dare per scontata la condizione al contorno senza controllarla (uscita o imbocco sonico).
 16. Confondere le normalizzazioni (p_e di uscita vs p_a ambiente; grandezze iniziali vs di ristagno).
 17. Dimenticare il limite di vuoto (a ≥ 0) in espansioni forti e nei pistoni che arretrano.
+18. Nelle immagini, dichiarare artefatto un contorno netto (tipicamente al bordo della finestra) senza averlo
+    misurato: può essere un gambetto di Mach o un urto forte (14/09/2026 es. 2).
+19. Trattare come urto una linea che mantiene l'inclinazione attraversando l'asse, o stimare M sull'asse con un
+    reticolo di caratteristiche quando basta l'angolo di Mach misurato.
 
 ---
 
@@ -372,4 +398,5 @@ Inferiti dai suoi controlli [I]:
 | Ugello aerospike con onda semplice centrata | B59-E02; immagini B72-E01, B69-E03 | d6 |
 | Getto sottoespanso impattante | B64-E04; affini B42-E03 | d6, d8 |
 | Proiettile, stima del Mach dalla schlieren | B55-E03, B57-E02 | d8 |
+| Ugello separato dalla schlieren: M da θ–σ, onda di Mach sull'asse, gambetto di Mach (14/09/2026, soluzione ufficiale) | non in catalogo | d8 |
 | Godunov a mano su un contatto | B44-E03, B38-E02, B14-E02 | d9 |

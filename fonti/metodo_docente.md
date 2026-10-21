@@ -108,6 +108,15 @@ Il docente segue sempre questa sequenza [I, confermata da molte affermazioni D]:
 10. Avvertenze grafiche [D]: la polare p–θ **non parte dall'origine** (p1 > 0, al più p/p1 = 1); una scala
     logaritmica in p deforma la concavità del ramo debole.
 
+11. **Livello di dettaglio** [D, dalla soluzione ufficiale del 14/09/2026, es. 1]: gli stati uniformi si calcolano
+    stato per stato con le due equazioni disponibili (invariante dell'onda + condizione al contorno) e si
+    confrontano con il criterio fisico richiesto (es. p_tot di ogni stato con p_tot,lim). **Le zone d'interazione a
+    due famiglie non si risolvono**: basta dire che si potrebbero risolvere (compatibilità + caratteristiche +
+    condizione al contorno, soluzione non analitica) e qual è la conseguenza qualitativa (es. "la pressione a
+    parete è decrescente"). I tempi di arrivo si stimano trattando le caratteristiche come **semirette** anche
+    nella zona a due famiglie. Non introdurre parametri ausiliari (es. r = (1−δM)/(1+δM)) se non strettamente
+    necessari.
+
 All'esame sono ammessi tabelle, righello, **goniometro** e calcolatrice [D]: le misure di angoli sulle figure
 (onde di Mach, urti) fanno parte del lavoro atteso.
 
@@ -174,6 +183,15 @@ All'esame sono ammessi tabelle, righello, **goniometro** e calcolatrice [D]: le 
 - **Svuotamento di un serbatoio, B66-E01**: la portata adimensionale costante 0,578 = √γ(2/(γ+1))^((γ+1)/(2(γ−1)))
   rivela l'efflusso critico; poi "ginocchio" sotto la pressione critica. Modello: **bilancio integrale a parametri
   concentrati** d(ρV)/dt = −ṁ, non caratteristiche [D].
+- **Esempio svolto, esame 14/09/2026 es. 1** (non nel catalogo; soluzione ufficiale): tubo L = 10 m chiuso a
+  sinistra, a destra brusco restringimento A2/A1 = 0,506 con setto; p0 = 10 atm, T0 = 293,15 K, pa = 1 atm;
+  pressione sulla parete di testa fino alla fine dell'efflusso critico. Impostazione: ipotesi diametro ≪ L ⇒ onde
+  piane, modello 1D nel solo tubo; contorno destro M_e = 0,31 (legge delle aree con A2 critica) finché l'uscita è
+  strozzata, sinistro u = 0. Stati: 1 (u−a dall'apertura: a1+δu1 = a0, u1 = M_e a1 ⇒ p1 = 6,56 atm, p1,tot = 7,01),
+  2 (u+a riflessa a parete, u2 = 0 ⇒ 4,2 atm), 3 (u−a dall'uscita ⇒ 2,76 atm, p3,tot = 2,95), 4 (seconda
+  riflessione a parete ⇒ 1,76 atm < p_tot,lim = 1/0,528 = 1,892 atm) ⇒ l'uscita diventa adattata durante la seconda
+  riflessione all'uscita e lo studio termina. Tempi a parete con caratteristiche semirette: 0,029–0,045 s e
+  0,085–0,127 s; nelle zone di riflessione solo "pressione decrescente". Grafico p–t a gradini e piano x–t.
 - "Gola sonica ⇒ portata costante?" No: ṁ ∝ p0/√T0 varia se il serbatoio si svuota [D].
 
 ### d4. Quasi-1D e condotti
@@ -366,6 +384,7 @@ Inferiti dai suoi controlli [I]:
 | Pistone avviato e arrestato, pseudo-Riemann (Friedrichs) | B05-E01, B52-E03, B57-E01, B71-E02 | d2 |
 | Condotto tra serbatoio e ambiente (24/01/2019) | non in catalogo; affini B37-E01, B11-E01 | d3 |
 | Svuotamento di un serbatoio dal grafico | B66-E01 | d3 |
+| Svuotamento di un tubo da un orifizio, pressione in testa (14/09/2026, soluzione ufficiale) | non in catalogo | d3, c11 |
 | Brusca variazione d'area (avviamento) | affini (contrazione): B72-E02, B08-E02 | d4 |
 | Rampa: isentropica vs urto obliquo (M=2, θ=20°) | affini: B06-E02, B23-E01, B27-E03 | d5 |
 | Urto piano su rampa, RR/MR | B30-E01, B70-E01 | d5 |

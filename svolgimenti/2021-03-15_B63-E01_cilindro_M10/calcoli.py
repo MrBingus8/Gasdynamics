@@ -154,7 +154,12 @@ alto = prua[(prua[:, 1] > 150) & (prua[:, 1] < 260)]
 a_alto = np.polyfit(alto[:, 1], alto[:, 0], 1)[0]         # dx/dy
 sig_prua_alto = math.degrees(math.atan2(1.0, a_alto))      # angolo con l'orizzontale
 
-# incertezze adottate (dispersione tra i tratti e risoluzione)
+# valori adottati nello svolgimento: misure arrotondate al grado, come con il goniometro
+theta_s_mis, sig_ax_mis = theta_s, sig_ax
+theta_s = float(round(theta_s))
+sig_ax = float(round(sig_ax))
+
+# incertezze (solo per la sintesi in chat, non per il PDF)
 Dth = 18.0                       # inclinazione dello strato a monte del riattacco (adottata)
 Dth_err = 1.5
 sig_err = 1.0
@@ -175,25 +180,17 @@ Delta_Billig_R = 0.386 * math.exp(4.67 / M_inf ** 2)
 Delta_Billig = Delta_Billig_R * R_mm
 
 # e) Mach a monte dell'urto di riattacco: relazione theta-sigma-M invertita (F §12)
-
-
-def M_da_theta_sigma(theta, sigma, gam=1.4):
-    t, s = math.tan(math.radians(theta)), math.radians(sigma)
-    cot = 1.0 / math.tan(s)
-    return math.sqrt((2 * t + 2 * cot) / (2 * cot * math.sin(s) ** 2 - t * (gam + math.cos(2 * s))))
-
-
 sigma_R = sig_ax + Dth
-M_W = M_da_theta_sigma(Dth, sigma_R)
+M_W = gd.mach_da_theta_sigma(Dth, sigma_R, aria)
 assert abs(gd.theta_da_sigma(M_W, sigma_R, aria) - Dth) < 1e-9
 sens = {}
 for lab, th, sa in [("Dth-", Dth - Dth_err, sig_ax), ("Dth+", Dth + Dth_err, sig_ax),
                     ("sig-", Dth, sig_ax - sig_err), ("sig+", Dth, sig_ax + sig_err),
                     ("piede", Dth, sig_ax_piede)]:
-    sens[lab] = M_da_theta_sigma(th, sa + th)
-M_W_min = min(M_da_theta_sigma(Dth + i * Dth_err, sig_ax + j * sig_err + Dth + i * Dth_err)
+    sens[lab] = gd.mach_da_theta_sigma(th, sa + th, aria)
+M_W_min = min(gd.mach_da_theta_sigma(Dth + i * Dth_err, sig_ax + j * sig_err + Dth + i * Dth_err, aria)
               for i in (-1, 1) for j in (-1, 1))
-M_W_max = max(M_da_theta_sigma(Dth + i * Dth_err, sig_ax + j * sig_err + Dth + i * Dth_err)
+M_W_max = max(gd.mach_da_theta_sigma(Dth + i * Dth_err, sig_ax + j * sig_err + Dth + i * Dth_err, aria)
               for i in (-1, 1) for j in (-1, 1))
 stW = gd.State.da_totali(aria, M_W, p0=p0p, a0=st1.a0, theta=-Dth, nome="W")
 urR = gd.urto_obliquo(stW, theta=Dth, famiglia="C+")
@@ -253,8 +250,8 @@ print(f"cilindro: centro ({cx:.1f}, {cy:.1f}) px, R = {R:.1f} px = {R_mm:.2f} mm
 print(f"urto sull'asse x = {x_urto_asse:.1f} px, naso x = {x_naso:.1f} px -> Delta = {Delta_px:.1f} px"
       f" = {Delta_mm:.2f} +- {Delta_err:.2f} mm, Delta/R = {Delta_mm/R_mm:.3f}")
 print(f"strato di scorrimento: tratto 1 {ang_ss1:.2f} deg, tratto 2 {ang_ss2:.2f} deg, globale {ang_ss:.2f} deg")
-print(f"separazione: ({x_sep:.1f}, {y_sep:.1f}) px, theta_s = {theta_s:.1f} deg dal ristagno posteriore")
-print(f"urto di riattacco sull'asse: piede {sig_ax_piede:.2f}+-{se_ur0:.2f}, formato {sig_ax:.2f}+-{se_ur1:.2f},"
+print(f"separazione: ({x_sep:.1f}, {y_sep:.1f}) px, theta_s = {theta_s_mis:.1f} deg dal ristagno posteriore (adottato {theta_s:.0f})")
+print(f"urto di riattacco sull'asse: piede {sig_ax_piede:.2f}+-{se_ur0:.2f}, formato {sig_ax_mis:.2f}+-{se_ur1:.2f} (adottato {sig_ax:.0f}),"
       f" oltre l'incrocio {sig_ax_oltre:.2f}+-{se_ur2:.2f} deg; radice sullo strato x = {x_radice_ur:.0f} px,"
       f" incrocio con l'urto di separazione x = {x_incrocio:.0f} px")
 print(f"collo (strato prolungato sull'asse) x = {(y_asse - b_ss2)/a_ss2:.0f} px")
@@ -327,8 +324,7 @@ ax.text(560, 625, f"{ang_ss1:.0f}°", color="orange", fontsize=7)
 ax.text(1180, 585, f"{sig_ax:.0f}° (formato)", color="magenta", fontsize=7)
 ax.text(840, 625, f"{sig_ax_piede:.0f}° (piede)", color="magenta", fontsize=7)
 ax.set_xlim(0, W); ax.set_ylim(H, 0)
-ax.set_xlabel("x [px]"); ax.set_ylabel("y [px]")
-ax.set_title(f"Schlieren annotata (scala {px_mm:.2f} px/mm)")
+ax.axis("off")
 fig.tight_layout()
 fig.savefig(os.path.join(FIG, "annotata.png"), dpi=200)
 plt.close(fig)

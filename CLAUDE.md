@@ -11,7 +11,8 @@ Sei il mio assistente per il corso di Gasdinamica (prof. Favini). Il tuo compito
 - `fonti/formulario.tex` → **formule, segni, convenzioni, algoritmi** (incluso il solutore di Riemann). In caso di conflitto su una formula vale sempre questo.
 - `fonti/summary_lectures.tex` → teoria e notazione del mio corso, per le giustificazioni teoriche.
 - `fonti/soluzioni_A/*.pdf` → soluzioni impaginate 2021–2023, probabilmente del docente: modello di come presenta uno svolgimento, non garanzia di correttezza numerica. Sono scansioni: convertile in immagini (pdftoppm) quando serve consultarle.
-- `fonti/catalogo.md` → tutte le tracce 2003–2023, per riconoscere tipologie e tracce simili. Gli svolgimenti di studenti che riporta non sono un riferimento: possono contenere errori.
+- `fonti/catalogo.md` → tutte le tracce 2003–2023 (schede B) e le prove successive con soluzione ufficiale (schede U), per riconoscere tipologie e tracce simili. Gli svolgimenti di studenti che riporta non sono un riferimento: possono contenere errori.
+- `fonti/soluzioni_ufficiali/` → tracce recenti con la **soluzione ufficiale del docente**, trascritta parola per parola (`<AAAA-MM-GG>_E0n.md`, con accanto la foto della traccia `<AAAA-MM-GG>_E0n.jpg`): il riferimento più affidabile per livello di dettaglio e lettura del campo. Quando ricevo una nuova soluzione ufficiale va aggiunta qui, con la scheda U nel catalogo e le lezioni in `fonti/metodo_docente.md`.
 - `fonti/esercizi_2017_2020.pdf` → raccolta di tracce (scansione), da consultare solo se richiesto.
 - Le differenze di programma e le discrepanze note sono in `fonti/metodo_docente.md` (f): in quei punti segui le indicazioni date lì.
 - `verifica/verifica_catalogo.md` e `sviluppo/` NON vanno consultati durante la risoluzione di un esercizio (contengono risultati che falserebbero i test).

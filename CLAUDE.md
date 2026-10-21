@@ -38,6 +38,7 @@ Regole aggiuntive:
 - Nel calcolo, per ogni stato: formula usata, valori sostituiti, risultato (il rimando alla sezione del formulario va solo nei commenti di `calcoli.py`). Per i procedimenti iterativi: primo tentativo come lo imposta il docente, risultato finale e il controllo fisico che usa lui (es. |p2 − p3| trascurabile).
 - Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
 - Ogni diagramma va commentato nel testo.
+- Se le pressioni da rappresentare coprono un intervallo ampio (più di un ordine di grandezza circa), riporta nella soluzione **entrambi** i grafici esatti, in scala logaritmica e in scala lineare (p–u, p–θ, …), e commenta in breve cosa mostra ciascuno.
 - Prima di consegnare, controlla lo svolgimento contro la lista (e).
 
 ## Registro del PDF: soluzione d'esame

@@ -366,44 +366,52 @@ fig.tight_layout()
 fig.savefig(os.path.join(FIG, "schema.pdf"))
 plt.close(fig)
 
-# --- piano p-theta (scala logaritmica in p/p1)
-fig, ax = plt.subplots(figsize=(7.2, 5.0))
-pol1 = gd.polare_p_theta(st1, "C+", n=600)
-u = pol1["urto"]; deb = u["ramo"] == "debole"
-ax.plot(u["theta"][deb], u["p"][deb], "C0", lw=1.5, label="polare di 1 (M = 10), urto di prua")
-ax.plot(u["theta"][~deb], u["p"][~deb], "C0", lw=1.5, ls=":")
-ax.plot(thmax1, pol1["punti"]["theta_max"][1], "C0|", ms=10)
-# punto sonico della polare 1 (regola di Busemann)
-st_son = gd.urto_obliquo(st1, theta=th_son, famiglia="C+")
-ax.plot(th_son, st_son.valle.p, "s", color="C2", ms=5)
-ax.annotate("punto sonico della polare\n(regola di Busemann)", (th_son, st_son.valle.p), xytext=(5, 230), fontsize=7.5, color="C2",
-            arrowprops=dict(arrowstyle="->", color="C2", lw=0.6))
-# curva isentropica della corrente di parete (p0 = p0', theta + nu = theta*)
-Ms = np.linspace(1.0, M_sep * 1.02, 600)
-ths = theta_star - gd.prandtl_meyer(Ms, aria)
-ps = p0p / gd.isentropiche(Ms, aria)["p0_p"]
-ax.plot(ths, ps, "C1--", lw=1.3, label="parete: onda semplice C+ (p0 = p0', θ + ν = θ*)")
-ax.plot([90, 90], [p0p * 0.95, p0p * 1.05], alpha=0)
-# polare dell'urto di riattacco da W
-polW = gd.polare_p_theta(stW, "C+", n=400)
-u = polW["urto"]; deb = u["ramo"] == "debole"
-ax.plot(u["theta"][deb], u["p"][deb], "C3", lw=1.3, label="polare di W (urto di riattacco)")
-ax.plot(u["theta"][~deb], u["p"][~deb], "C3", lw=1.0, ls=":")
-ax.axhline(pB, color="0.4", lw=0.8, ls="-.")
-ax.text(-75, pB * 1.15, f"p bolla = p_W = {pB:.2f} p1", fontsize=7.5, color="0.3")
-ax.axhline(1.0, color="0.7", lw=0.6)
-for st, nm, off in [(st1, "1", (5, 5)), (st2, "2 (normale)", (-55, 6)), (st3, "3 (M = 1)", (6, 0)),
-                    (st_sep, "S", (6, -2)), (stW, "W", (-14, -12)), (st6, "6", (6, 4))]:
-    ax.plot(st.theta, st.p, "ko", ms=4)
-    ax.annotate(nm, (st.theta, st.p), textcoords="offset points", xytext=off, fontsize=8)
-ax.set_yscale("log")
-ax.set_xlim(-80, 65); ax.set_ylim(2e-3, 400)
-ax.set_xlabel("θ [°]"); ax.set_ylabel("p / p1  (scala logaritmica)")
-ax.grid(alpha=0.25, which="both")
-ax.legend(fontsize=7.5, loc="lower right")
-fig.tight_layout()
-fig.savefig(os.path.join(FIG, "p_theta.pdf"))
-plt.close(fig)
+# --- piano p-theta: esatto, in scala logaritmica e lineare (ampio intervallo di pressioni)
+for scala in ("log", "lin"):
+    fig, ax = plt.subplots(figsize=(7.2, 5.0))
+    pol1 = gd.polare_p_theta(st1, "C+", n=600)
+    u = pol1["urto"]; deb = u["ramo"] == "debole"
+    ax.plot(u["theta"][deb], u["p"][deb], "C0", lw=1.5, label="polare di 1 (M = 10), urto di prua")
+    ax.plot(u["theta"][~deb], u["p"][~deb], "C0", lw=1.5, ls=":")
+    ax.plot(thmax1, pol1["punti"]["theta_max"][1], "C0|", ms=10)
+    # punto sonico della polare 1 (regola di Busemann)
+    st_son = gd.urto_obliquo(st1, theta=th_son, famiglia="C+")
+    ax.plot(th_son, st_son.valle.p, "s", color="C2", ms=5)
+    ax.annotate("punto sonico della polare\n(regola di Busemann)", (th_son, st_son.valle.p), xytext=(5, 230) if scala == "log" else (8, 110), fontsize=7.5, color="C2",
+                arrowprops=dict(arrowstyle="->", color="C2", lw=0.6))
+    # curva isentropica della corrente di parete (p0 = p0', theta + nu = theta*)
+    Ms = np.linspace(1.0, M_sep * 1.02, 600)
+    ths = theta_star - gd.prandtl_meyer(Ms, aria)
+    ps = p0p / gd.isentropiche(Ms, aria)["p0_p"]
+    ax.plot(ths, ps, "C1--", lw=1.3, label="parete: onda semplice C+ (p0 = p0', θ + ν = θ*)")
+    ax.plot([90, 90], [p0p * 0.95, p0p * 1.05], alpha=0)
+    # polare dell'urto di riattacco da W
+    polW = gd.polare_p_theta(stW, "C+", n=400)
+    u = polW["urto"]; deb = u["ramo"] == "debole"
+    ax.plot(u["theta"][deb], u["p"][deb], "C3", lw=1.3, label="polare di W (urto di riattacco)")
+    ax.plot(u["theta"][~deb], u["p"][~deb], "C3", lw=1.0, ls=":")
+    ax.axhline(pB, color="0.4", lw=0.8, ls="-.")
+    if scala == "log":
+        ax.text(-75, pB * 1.15, f"p bolla = p_W = {pB:.2f} p1", fontsize=7.5, color="0.3")
+    ax.axhline(1.0, color="0.7", lw=0.6)
+    for st, nm, off in [(st1, "1", (5, 5)), (st2, "2 (normale)", (-55, 6)), (st3, "3 (M = 1)", (6, 0)),
+                        (st_sep, "S", (6, -2)), (stW, "W", (-14, -12)), (st6, "6", (6, 4))]:
+        ax.plot(st.theta, st.p, "ko", ms=4)
+        ax.annotate(nm, (st.theta, st.p), textcoords="offset points", xytext=off, fontsize=8)
+    if scala == "log":
+        ax.set_yscale("log")
+        ax.set_xlim(-80, 65); ax.set_ylim(2e-3, 400)
+        ax.set_ylabel("p / p1  (scala logaritmica)")
+        ax.legend(fontsize=7.5, loc="lower right")
+    else:
+        ax.set_xlim(-60, 55); ax.set_ylim(0, 125)
+        ax.set_ylabel("p / p1")
+        ax.legend(fontsize=7.5, loc="center left")
+    ax.set_xlabel("θ [°]")
+    ax.grid(alpha=0.25, which="both")
+    fig.tight_layout()
+    fig.savefig(os.path.join(FIG, "p_theta.pdf" if scala == "log" else "p_theta_lin.pdf"))
+    plt.close(fig)
 
 # --- piano odografo (u*, v*) = V/a* (cos theta, sin theta): a* unico (h0 uniforme)
 fig, ax = plt.subplots(figsize=(7.0, 5.6))

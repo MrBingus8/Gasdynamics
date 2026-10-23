@@ -1,0 +1,44 @@
+% Preambolo comune delle simulazioni d'esame (vedi GUIDA.md).
+% Ogni esercizio: \input{../preambolo} e \graphicspath verso le figure dello
+% svolgimento di riferimento; si compila con compila.sh (svolgimento.pdf, A4).
+
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+
+\hypersetup{hidelinks}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\allowdisplaybreaks
+\sisetup{output-decimal-marker={,}, group-separator={\,}, per-mode=symbol,
+         exponent-product=\cdot, range-phrase={\text{--}}}
+
+% Notazione del formulario (come template/svolgimento.tex).
+\newcommand{\Cp}{C^{+}}
+\newcommand{\Cm}{C^{-}}
+\newcommand{\Mr}{M_{r}}
+\newcommand{\Ms}{M_{s}}
+
+% Separatore fra relazioni nella stessa formula: \begin{gather*} A \ee B \end{gather*}.
+\newcommand{\ee}{,\qquad}
+
+% Titolo dell'esercizio: \esercizio{Prova del GG/MM/AAAA -- Esercizio n}{argomento}.
+\newcommand{\esercizio}[2]{%
+  \title{#1\\[2pt]\large #2}\author{}\date{}%
+  \hypersetup{pdftitle={#1: #2}}}
+
+% Figura centrata: \figura[frazione della larghezza]{file}{didascalia\label{...}}.
+\newcommand{\figura}[3][0.7]{%
+  \begin{figure}[H]\centering\includegraphics[width=#1\textwidth]{#2}\caption{#3}\end{figure}}

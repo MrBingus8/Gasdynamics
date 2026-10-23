@@ -37,6 +37,7 @@ Il PDF ha una sezione per ciascun passo, in quest'ordine:
 Regole aggiuntive:
 - Ogni passo va argomentato: non basta dire cosa si fa, bisogna dire perché.
 - Nel calcolo, per ogni stato: formula analitica usata e risultato finale, **senza scrivere i valori sostituiti** (niente passaggi del tipo "= 1 + 0,2·2² = 1,8"); il rimando alla sezione del formulario va solo nei commenti di `calcoli.py`. Per i procedimenti iterativi: primo tentativo come lo imposta il docente, risultato finale e il controllo fisico che usa lui (es. |p2 − p3| trascurabile).
+- Se una formula usata nel calcolo discende da relazioni più generali (Rankine–Hugoniot, legge delle aree, invarianti…), mostra in una o due righe da dove viene (relazione di partenza → passaggio → formula), invece di scriverla già pronta.
 - Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
 - Ogni diagramma va commentato nel testo.
 - Se le pressioni da rappresentare coprono un intervallo ampio (più di un ordine di grandezza circa), riporta nella soluzione **entrambi** i grafici esatti, in scala logaritmica e in scala lineare (p–u, p–θ, …), e commenta in breve cosa mostra ciascuno.

@@ -36,7 +36,7 @@ Il PDF ha una sezione per ciascun passo, in quest'ordine:
 
 Regole aggiuntive:
 - Ogni passo va argomentato: non basta dire cosa si fa, bisogna dire perché.
-- Nel calcolo, per ogni stato: formula usata, valori sostituiti, risultato (il rimando alla sezione del formulario va solo nei commenti di `calcoli.py`). Per i procedimenti iterativi: primo tentativo come lo imposta il docente, risultato finale e il controllo fisico che usa lui (es. |p2 − p3| trascurabile).
+- Nel calcolo, per ogni stato: formula analitica usata e risultato finale, **senza scrivere i valori sostituiti** (niente passaggi del tipo "= 1 + 0,2·2² = 1,8"); il rimando alla sezione del formulario va solo nei commenti di `calcoli.py`. Per i procedimenti iterativi: primo tentativo come lo imposta il docente, risultato finale e il controllo fisico che usa lui (es. |p2 − p3| trascurabile).
 - Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
 - Ogni diagramma va commentato nel testo.
 - Se le pressioni da rappresentare coprono un intervallo ampio (più di un ordine di grandezza circa), riporta nella soluzione **entrambi** i grafici esatti, in scala logaritmica e in scala lineare (p–u, p–θ, …), e commenta in breve cosa mostra ciascuno.
@@ -45,7 +45,7 @@ Regole aggiuntive:
 ## Registro del PDF: soluzione d'esame
 Il PDF è la soluzione da consegnare al professore all'esame, scritta come la scriverebbe uno studente eccellente che ha solo goniometro, righello e calcolatrice: chiara e nello schema del docente.
 - **Niente apparato numerico**: niente incertezze, intervalli, propagazione degli errori, scarti, pixel, fit, codice, nomi di funzioni, "gasdyn", "fuori modulo", algoritmi (Newton, bisezione…). Le misure su un'immagine si scrivono come misure con goniometro e righello ("misurando sulla figura σ ≈ 12°").
-- **Niente rimandi "(F §n)"** accanto alle formule: formula, valori sostituiti e risultato.
+- **Niente rimandi "(F §n)"** accanto alle formule, e niente valori sostituiti: formula analitica e risultato.
 - Se un risultato è molto sensibile a una misura o a un'ipotesi, basta **una frase fisica** (es. "per M elevati ν(M) varia poco, quindi M_S è solo indicativo"), senza intervalli.
 - **Ogni cosa si dice una volta**: le strutture si descrivono in un solo punto, le ipotesi non ripetono quella descrizione, le verifiche occupano una riga ciascuna, la discussione non ripete il calcolo.
 - Le sezioni "Bilancio equazioni/incognite" e "Scorciatoie fisiche" compaiono solo se hanno un contenuto proprio; altrimenti quel contenuto va nel calcolo, in una frase.

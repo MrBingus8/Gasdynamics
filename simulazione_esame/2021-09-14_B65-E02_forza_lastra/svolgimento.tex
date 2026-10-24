@@ -1,0 +1,212 @@
+% Simulazione d'esame: prova del 14/09/2021, esercizio 2 (B65-E02) -- forza sul segmento sottile.
+% Stessi numeri e figure dello svolgimento di riferimento:
+% svolgimenti/2021-09-14_B65-E02_forza_lastra (calcoli.py e figure/).
+% Compilare con: bash simulazione_esame/compila.sh 2021-09-14_B65-E02_forza_lastra
+
+\input{../preambolo}
+\graphicspath{{../../svolgimenti/2021-09-14_B65-E02_forza_lastra/figure/}}
+
+\esercizio{Prova del 14/09/2021 -- Esercizio 2}{Forza sul segmento sottile davanti a un corpo piano}
+
+\begin{document}
+\maketitle
+
+\emph{Traccia.} Una corrente supersonica stazionaria a Mach $=5$ e angolo di incidenza $\alpha=\ang{11}$ investe un
+corpo piano ($b=0{,}38876$ e $h=1$). Calcolare la forza che agisce sul segmento $h$ (assumere il suo spessore nullo).
+
+\figura[0.75]{originale.png}{Traccia originale.}
+
+\section*{Che cosa dice il testo}
+Il corpo è un segmento sottile di lunghezza $h$ attaccato alla faccia anteriore di un corpo rettangolare di altezza
+$b$; la corrente arriva da sotto, inclinata di \ang{11} sul segmento. Mi serve la pressione su ciascuna faccia del
+segmento: la forza è la loro differenza per $h$.
+
+Il dato $b$ ha cinque cifre, e me lo spiego subito:
+\[
+\frac{b}{2h}=0{,}19438=\tan\ang{11}=\tan\alpha .
+\]
+Le rette dallo spigolo d'attacco O agli spigoli anteriori del corpo sono inclinate esattamente di $\pm\alpha$, se il
+segmento è in mezzeria. Il disegno non è in scala ($b/h$ disegnato vale circa 0,8) e mostra il segmento circa a metà
+altezza: lo assumo in mezzeria, come suggerisce questa coincidenza.
+
+Assumo aria, $\gamma=1{,}4$. Lo stato a monte non è dato: riferisco le pressioni a $p_1$ e le forze, per unità di
+apertura (corpo piano), a $p_1h$ e a $q_1=\tfrac{\gamma}{2}p_1M_1^2=17{,}5\,p_1$. Prendo l'asse $x$ lungo il segmento
+e $\theta$ antiorario: la corrente indisturbata ha $\theta_1=+\ang{11}$. La traccia è B65-E02 del catalogo; non ho
+trovato tracce simili con soluzione.
+
+\section*{Modello: la corrente separa e vede un cuneo}
+La corrente è piana e stazionaria, il gas perfetto, e fuori dalle zone separate la tratto come non viscosa: le onde
+sono urti obliqui e ventagli di Prandtl--Meyer.
+
+Il punto chiave è la faccia anteriore del corpo. Ai due lati del segmento è un gradino affacciato alla corrente: per
+aggirarlo senza separarsi la corrente dovrebbe deviare di \ang{90}, molto più di $\theta_{\max}(5)=\ang{41.1}$. Lo
+strato limite sul segmento non regge l'aumento di pressione davanti al gradino e si separa. Davanti al corpo si
+formano due bolle di fluido quasi fermo, A sopra e B sotto il segmento, delimitate da strati di scorrimento che
+partono da O e arrivano agli spigoli del corpo. È lo schema del corpo tozzo con l'ago: per la corrente esterna il
+corpo diventa un cuneo equivalente con vertice in O.
+
+Nelle bolle il fluido è quasi fermo, quindi non sostiene gradienti di pressione: la pressione è uniforme e, poiché
+attraverso lo strato di scorrimento è continua, è uguale a quella della corrente esterna lungo il contorno. Con
+pressione uniforme da entrambe le parti i contorni sono rettilinei: sono i segmenti da O agli spigoli, inclinati di
+$\pm\alpha$.
+
+Il resto delle ipotesi: urti sul ramo debole, perché la corrente è esterna e nulla impone una contropressione;
+regioni esterne supersoniche (lo controllerò), così ciò che sta a valle non influenza le bolle; forza di sola
+pressione, perché con spessore nullo non ci sono facce frontali e le due facce sono lambite da fluido quasi fermo,
+quindi l'attrito è trascurabile.
+
+\section*{Il campo, prima dei numeri}
+Il cuneo equivalente ha le facce a $+\ang{11}$ e $-\ang{11}$, e la corrente arriva a $+\ang{11}$. Come in un diedro, i
+due lati sono disaccoppiati perché la corrente è supersonica.
+\begin{itemize}
+\item Sopra la faccia del cuneo è parallela alla corrente indisturbata: \textbf{onda nulla}, la bolla A sta a $p_1$.
+\item Sotto la corrente deve ruotare di \ang{22} verso il basso, contro il contorno della bolla B che le sta sopra:
+  compressione $\Cm$ concentrata in O, cioè un \textbf{urto obliquo attaccato}, se $\ang{22}<\theta_{\max}$. La bolla
+  B sta a $p_2>p_1$.
+\item Agli spigoli del corpo la corrente torna parallela alle pareti, allontanandosi da esse in entrambi i casi: due
+  \textbf{ventagli d'espansione}, $\Cp$ sopra e $\Cm$ sotto, a valle delle bolle.
+\end{itemize}
+Quindi il segmento ha sotto la pressione dietro un urto di \ang{22} e sopra la pressione indisturbata: è spinto
+verso l'alto, normalmente a sé stesso.
+
+\figura[0.98]{campo.pdf}{Piano fisico in unità di $h$. Segmento in nero spesso, corpo in grigio, bolle A e B
+colorate, linee di scorrimento tratteggiate a $\pm\ang{11}$. Urto da O (nero) che, raggiunto dal ventaglio inferiore,
+si indebolisce e si incurva (tratteggio, qualitativo); ventagli d'espansione agli spigoli in blu ($\Cp$) e rosso
+($\Cm$). F è la forza sul segmento.\label{fig:campo}}
+
+Gli stati (fig.~\ref{fig:campo}) sono: 1 indisturbato, anche sopra A; A bolla superiore, $p_A=p_1$; 2 dietro l'urto,
+sotto la bolla B; B bolla inferiore, $p_B=p_2$; 3 e 4 sopra e sotto il corpo, a valle dei ventagli agli spigoli.
+
+La scelta $b=2h\tan\alpha$ è la scorciatoia: sopra non devo calcolare nulla, sotto c'è un solo urto con deviazione
+nota, $2\alpha$, e, essendo la corrente supersonica, il campo attorno al resto del corpo non serve per le bolle.
+
+\section*{Faccia superiore: bolla A}
+Il contorno di A è inclinato di $\arctan(b/2h)=\ang{11}=\theta_1$. Deviazione nulla, quindi
+\[
+p_A=p_1=1 .
+\]
+
+\section*{Faccia inferiore: l'urto di 22° e la bolla B}
+L'angolo d'urto viene da Rankine--Hugoniot applicate alla componente normale: si conservano la componente
+tangenziale e la portata normale,
+\begin{gather*}
+V_1\cos\sigma=V_2\cos(\sigma-\theta) \ee \rho_1V_1\sin\sigma=\rho_2V_2\sin(\sigma-\theta)
+\ \Rightarrow\ \frac{\tan(\sigma-\theta)}{\tan\sigma}=\frac{\rho_1}{\rho_2}=\frac{(\gamma-1)M_{n1}^2+2}{(\gamma+1)M_{n1}^2},
+\end{gather*}
+con $M_{n1}=M_1\sin\sigma$; sviluppando la tangente della differenza ottengo la relazione $\theta$--$\sigma$--$M$
+\[
+\tan\theta=2\cot\sigma\,\frac{M_1^2\sin^2\sigma-1}{M_1^2(\gamma+\cos2\sigma)+2}.
+\]
+Con $M_1=5$ e $\theta=\ang{22}$ la risolvo per tentativi sul ramo debole, partendo dalle tabelle: $\sigma=\ang{30}$
+dà $\theta=\ang{20.2}$, $\sigma=\ang{32}$ dà $\theta=\ang{21.9}$; interpolando,
+\[
+\sigma=\ang{32.1},\qquad M_{n1}=M_1\sin\sigma=2{,}66 .
+\]
+Controllo subito che l'urto sia attaccato e debole: $\ang{22}<\theta_{\max}(5)=\ang{41.1}$, e $\sigma=\ang{32.1}$ è
+minore di \ang{66.6}, angolo d'urto della deviazione massima. Il ramo forte ($\sigma=\ang{83.9}$) lo scarto: una
+corrente esterna non ha la contropressione che servirebbe.
+
+Con le relazioni dell'urto normale applicate a $M_{n1}$:
+\begin{gather*}
+\frac{p_2}{p_1}=1+\frac{2\gamma}{\gamma+1}\left(M_{n1}^2-1\right)=8{,}08 \ee
+\frac{\rho_2}{\rho_1}=\frac{(\gamma+1)M_{n1}^2}{(\gamma-1)M_{n1}^2+2}=3{,}51,\\
+M_{n2}^2=\frac{1+\delta M_{n1}^2}{\gamma M_{n1}^2-\delta}\ \Rightarrow\ M_{n2}=0{,}499 \ee
+M_2=\frac{M_{n2}}{\sin(\sigma-\theta)}=2{,}84,\\
+\frac{p_{02}}{p_{01}}=\left[\frac{(\gamma+1)M_{n1}^2}{(\gamma-1)M_{n1}^2+2}\right]^{\frac{\gamma}{\gamma-1}}
+\left[\frac{\gamma+1}{2\gamma M_{n1}^2-(\gamma-1)}\right]^{\frac{1}{\gamma-1}}=0{,}438 .
+\end{gather*}
+È un urto di compressione con entropia crescente ($M_{n1}>1$, $p_{02}<p_{01}$), e lo stato 2 è supersonico, come
+richiede il modello. Il fronte è inclinato di $\theta_1-\sigma=\ang{-21.1}$: in $x=h$ sta a $y=-0{,}387\,h$, sotto
+lo spigolo del corpo ($-0{,}194\,h$), quindi passa sotto bolla e corpo come avevo disegnato. Per la bolla B:
+\[
+p_B=p_2=8{,}08\,p_1 .
+\]
+
+\section*{La forza sul segmento}
+Su ciascuna faccia la pressione è uniforme, quindi per unità di apertura la forza è normale al segmento, diretta verso
+l'alto, e vale
+\begin{gather*}
+F=\int_0^h(p_B-p_A)\,dx=(p_2-p_1)\,h=7{,}08\,p_1h \ee
+\frac{F}{q_1h}=\frac{p_2-p_1}{\tfrac{\gamma}{2}p_1M_1^2}=0{,}405 .
+\end{gather*}
+Negli assi della corrente indisturbata, rispetto alla quale il segmento è inclinato di $\alpha$:
+\begin{gather*}
+L=F\cos\alpha=6{,}95\,p_1h\ \ (c_L=0{,}397) \ee D=F\sin\alpha=1{,}35\,p_1h\ \ (c_D=0{,}077).
+\end{gather*}
+Questi valori sono esatti una volta accettato lo schema delle bolle di fluido morto.
+
+\figura[0.7]{carico.pdf}{Pressione sulle due facce del segmento: con il corpo (continue) e per la lastra isolata alla
+stessa incidenza (tratteggiate). L'area verde è il carico $F/(p_1h)$.\label{fig:carico}}
+
+Il carico è uniforme lungo il segmento (fig.~\ref{fig:carico}), perché ciascuna faccia vede una bolla a pressione
+costante. Le tratteggiate sono la lastra isolata: la faccia inferiore scenderebbe a 3,35 e quella superiore a 0,21.
+
+\section*{Gli spigoli del corpo e il piano $p$--$\theta$}
+Per completare il quadro, e per controllare che non tocchino le bolle, calcolo i ventagli agli spigoli. Sopra,
+ventaglio $\Cp$ ($\theta+\nu$ costante) da \ang{11} a 0:
+\begin{gather*}
+\nu_3=\nu_1+(\theta_1-\theta_3)=\ang{87.9}\ \Rightarrow\ M_3=6{,}46 \ee
+p_3=p_1\left(\frac{1+\delta M_1^2}{1+\delta M_3^2}\right)^{\frac{\gamma}{\gamma-1}}=0{,}212 .
+\end{gather*}
+Sotto, ventaglio $\Cm$ ($\theta-\nu$ costante) da \ang{-11} a 0:
+\begin{gather*}
+\nu_4=\nu_2+(\theta_4-\theta_2)=\ang{57.5}\ \Rightarrow\ M_4=3{,}44 \ee
+p_4=p_2\left(\frac{1+\delta M_2^2}{1+\delta M_4^2}\right)^{\frac{\gamma}{\gamma-1}}=3{,}33 .
+\end{gather*}
+Sono entrambe espansioni, a valle delle bolle: non cambiano $p_A$ e $p_B$. Anche 3 e 4 sono supersonici, quindi tutte
+le regioni esterne lo sono e il modello 2D stazionario regge. La testa del ventaglio inferiore
+($\theta_2-\mu_2=\ang{-31.6}$) è più inclinata dell'urto e lo raggiunge a $x\approx1{,}8\,h$: da lì l'urto si
+indebolisce e si incurva, sempre a valle delle bolle.
+
+\figura[1.0]{p_theta.pdf}{Piano $p$--$\theta$ in scala lineare (sinistra) e logaritmica (destra): polare di 1 ($\Cm$
+rossa, $\Cp$ blu, ramo debole; il ramo forte è fuori scala), espansioni tratteggiate. Rette verticali: contorni delle
+bolle ($\pm\ang{11}$) e pareti ($\theta=0$). Il quadratino è la faccia inferiore della lastra isolata.\label{fig:pt}}
+
+Sul piano $p$--$\theta$ (fig.~\ref{fig:pt}) la polare di 1 parte da $(\ang{11},1)$, non dall'origine. Il contorno di
+A coincide con $\theta_1$, quindi lo stato di A è il punto 1 stesso; il contorno di B taglia il ramo $\Cm$ in 2, e il
+segmento verde fra 1 e 2 è proprio $F/(p_1h)$. Dagli stati 1 e 2 le espansioni portano a 3 e 4 su $\theta=0$. Lo
+stato 4 ha quasi la stessa pressione della faccia inferiore della lastra isolata (3,33 contro 3,35), ma vi arriva con
+un urto più forte seguito da un'espansione, quindi con pressione totale molto minore.
+
+Le pressioni vanno da 0,21 a 8,1, per questo riporto due scale. Quella lineare mostra in proporzione il carico, la
+distanza fra 1 e 2, e la ripidità della polare a $M=5$. Quella logaritmica separa gli stati a bassa pressione (3, 1)
+e mostra i rapporti: l'espansione di \ang{11} riduce la pressione di quasi 5 volte, l'urto di \ang{22} la aumenta di 8;
+deforma però la concavità della polare.
+
+\section*{Risultato e discussione}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+Grandezza & Valore \\
+\midrule
+$p_A$ (faccia superiore), $p_B$ (faccia inferiore) & $p_1$, $8{,}08\,p_1$ \\
+angolo d'urto, $M_2$ & \ang{32.1}, $2{,}84$ \\
+$F$ (normale al segmento, verso l'alto) & $7{,}08\,p_1h=0{,}405\,q_1h$ \\
+$L$, $D$ (assi della corrente) & $6{,}95\,p_1h$, $1{,}35\,p_1h$ \\
+\bottomrule
+\end{tabular}
+\caption{Risultati per unità di apertura, esatti nel modello a fluido morto.}
+\end{table}
+
+\textbf{Il corpo comanda il carico sul segmento.} Il segmento non vede direttamente la corrente: ciascuna faccia sta
+in una bolla la cui pressione è fissata dal cuneo equivalente. Per la lastra isolata alla stessa incidenza (urto di
+\ang{11} sotto, espansione di \ang{11} sopra) avrei $F=(3{,}35-0{,}21)\,p_1h=3{,}14\,p_1h$, cioè $0{,}179\,q_1h$: con il
+corpo il carico è 2,3 volte maggiore. La faccia inferiore guadagna molto perché l'urto devia la corrente di \ang{22}
+invece di \ang{11}; quella superiore perde l'aspirazione dell'espansione e torna a $p_1$, ma la perdita (0,8) è molto
+minore del guadagno sotto (4,7).
+
+\textbf{Direzione.} Senza attrito e con spessore nullo la forza è normale al segmento. Negli assi della corrente la
+resistenza è $F\sin\alpha$, appena un quinto della portanza: sul segmento la resistenza viene tutta
+dall'inclinazione. La resistenza del corpo intero, con le facce frontali a $p_1$ e $p_2$ e la base, è un'altra cosa
+e non è richiesta.
+
+\textbf{Limiti del modello.} Senza separazione il problema non avrebbe soluzione nel modello 2D supersonico: davanti
+alle facce frontali si staccherebbero urti curvi con regioni subsoniche, e il campo non si calcolerebbe con urti
+obliqui e polari. Lo schema delle bolle è quello dei corpi con l'ago, ed è il solo coerente con il dato
+$b=2h\tan\alpha$; resta un'idealizzazione. Nella realtà la separazione può avvenire un po' a valle dello spigolo, la
+pressione nella bolla non è perfettamente uniforme e lo strato di scorrimento, riattaccandosi allo spigolo, produce
+una piccola ricompressione locale. Il risultato va quindi letto come il valore del modello a fluido morto, che coglie
+l'effetto principale: un segmento sottile davanti a un corpo tozzo si comporta come il vertice di un cuneo.
+
+\end{document}

@@ -23,6 +23,7 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{caption}
 \usepackage{hyperref}
 
 \hypersetup{hidelinks}
@@ -30,6 +31,15 @@
 \setlength{\parskip}{4pt}
 \allowdisplaybreaks
 \graphicspath{{figure/}}
+
+% Testo e figura affiancati: \accanto[larghezza figura]{file}{didascalia}{testo}.
+% Le figure vanno vicino al testo che le discute (immagine ridotta o close-up
+% della zona discussa), per non far scorrere su e giù il documento.
+\newcommand{\accanto}[4][0.40]{%
+  \par\noindent
+  \begin{minipage}[t]{\dimexpr\textwidth-#1\textwidth-0.03\textwidth\relax}\vspace{0pt}#4\end{minipage}\hfill
+  \begin{minipage}[t]{#1\textwidth}\vspace{0pt}\centering\includegraphics[width=\linewidth]{#2}%
+  \captionof{figure}{#3}\end{minipage}\par\medskip}
 
 % Numeri all'italiana: virgola decimale, unità SI.
 \sisetup{output-decimal-marker={,}, group-separator={\,}, per-mode=symbol,
@@ -139,7 +149,9 @@
 
 \section{Rappresentazioni}
 % Diagrammi (x--t, p--u, p--theta, ...) generati da calcoli.py, assi e stati
-% etichettati. Ogni figura va commentata nel testo.
+% etichettati. Ogni figura va commentata nel testo. Le figure che servono a un
+% passo precedente (schema, close-up, dettaglio di un diagramma) vanno accanto a
+% quel passo con \accanto, non solo qui.
 % \begin{figure}[H]
 %   \centering
 %   \includegraphics[width=0.8\textwidth]{<<nome_figura>>}

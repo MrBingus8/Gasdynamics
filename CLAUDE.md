@@ -40,6 +40,7 @@ Regole aggiuntive:
 - Se una formula usata nel calcolo discende da relazioni più generali (Rankine–Hugoniot, legge delle aree, invarianti…), mostra in una o due righe da dove viene (relazione di partenza → passaggio → formula), invece di scriverla già pronta.
 - Ogni verifica va scritta esplicitamente con il suo esito. Se una fallisce, torna indietro, correggi l'impostazione e spiega cosa cambia.
 - Ogni diagramma va commentato nel testo.
+- **Figure vicino al testo che le discute**: quando un passo dipende da un'immagine, uno schema o un diagramma, la figura (o una sua copia ridotta, o un close-up della zona discussa) va accanto o subito sopra al paragrafo che la usa, in modo che non si debba scorrere su e giù nel documento per leggerlo. Per l'affiancamento testo-figura c'è la macro `\accanto` (template e preambolo della simulazione); la figura completa può restare anche nelle Rappresentazioni.
 - Se le pressioni da rappresentare coprono un intervallo ampio (più di un ordine di grandezza circa), riporta nella soluzione **entrambi** i grafici esatti, in scala logaritmica e in scala lineare (p–u, p–θ, …), e commenta in breve cosa mostra ciascuno.
 - Prima di consegnare, controlla lo svolgimento contro la lista (e).
 

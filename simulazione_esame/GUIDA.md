@@ -58,6 +58,9 @@ Il preambolo comune è `preambolo.tex` (`\input{../preambolo}`).
 
 - Titolo con `\esercizio{Prova del GG/MM/AAAA -- Esercizio n}{argomento}` (va anche nel titolo del PDF).
 - Figure con `\figura[frazione della larghezza]{file}{didascalia\label{...}}` (sempre `[H]`).
+- Figure vicino al testo che le discute (regola di CLAUDE.md): testo e figura affiancati con
+  `\accanto[frazione per la figura]{file}{didascalia\label{...}}{testo}`; per i dettagli si usano
+  copie ridotte o close-up generati da `calcoli.py`, così non si scorre su e giù per leggere.
 - Più relazioni nella stessa formula: `\begin{gather*} A \ee B \ee C \end{gather*}`.
 - Formule lunghe: spezzarle su più righe; tabelle con poche colonne.
 

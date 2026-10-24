@@ -42,3 +42,11 @@
 % Figura centrata: \figura[frazione della larghezza]{file}{didascalia\label{...}}.
 \newcommand{\figura}[3][0.7]{%
   \begin{figure}[H]\centering\includegraphics[width=#1\textwidth]{#2}\caption{#3}\end{figure}}
+
+% Testo a sinistra e figura (anche un dettaglio ingrandito) accanto, per tenere la figura vicino al punto che
+% si discute: \accanto[larghezza della figura]{file}{didascalia\label{...}}{testo}.
+\newcommand{\accanto}[4][0.40]{%
+  \par\noindent
+  \begin{minipage}[t]{\dimexpr\textwidth-#1\textwidth-0.03\textwidth\relax}\vspace{0pt}#4\end{minipage}\hfill
+  \begin{minipage}[t]{#1\textwidth}\vspace{0pt}\centering\includegraphics[width=\linewidth]{#2}%
+  \captionof{figure}{#3}\end{minipage}\par\medskip}

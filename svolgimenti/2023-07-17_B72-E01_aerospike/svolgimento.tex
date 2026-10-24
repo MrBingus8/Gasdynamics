@@ -26,6 +26,13 @@
 
 \newcommand{\Cp}{C^{+}}
 \newcommand{\Cm}{C^{-}}
+% Testo a sinistra e figura accanto, per non dover cercare la figura altrove nel documento:
+% \accanto[larghezza figura]{file}{didascalia}{testo}
+\newcommand{\accanto}[4][0.40]{%
+  \par\noindent
+  \begin{minipage}[t]{\dimexpr\textwidth-#1\textwidth-0.03\textwidth\relax}\vspace{0pt}#4\end{minipage}\hfill
+  \begin{minipage}[t]{#1\textwidth}\vspace{0pt}\centering\includegraphics[width=\linewidth]{#2}%
+  \captionof{figure}{#3}\end{minipage}\par\medskip}
 
 \title{Gasdinamica -- Prova del 17/07/2023, esercizio 1 (B72-E01)\\[2pt]
 \large Ugello aerospike piano: lettura della schlieren}
@@ -121,15 +128,17 @@ scuro sotto per l'illuminazione non uniforme.
 %==============================================================================
 \section{Misure sull'immagine}
 Con righello e goniometro, prendendo l'asse come la mezzeria fra i due labbri e la base (angoli antiorari
-dall'asse; i valori sono quelli della metà superiore, e la metà inferiore dà gli stessi valori con segno opposto):
-\begin{table}[H]
-  \centering
-  \begin{tabular}{lc}
+dall'asse; i valori sono quelli della metà superiore, e la metà inferiore dà gli stessi valori con segno opposto).
+Accanto, la figura annotata in piccolo per ritrovare le linee misurate.
+
+\accanto[0.36]{annotata.png}{Le linee misurate (colori come in fig.~\ref{fig:ann}).}{%
+  \small
+  \begin{tabular}{@{}p{0.62\linewidth}@{\ }l@{}}
     \toprule
-    Grandezza & Valore misurato \\
+    Grandezza & Valore \\
     \midrule
-    pareti della feritoia al labbro (direzione della corrente in gola) & $\theta_0\approx\ang{-45}$ \\
-    contorno 1, primo tratto (fino a circa $0{,}5\,h$) & $\approx\ang{-4}$ \\
+    pareti della feritoia al labbro (corrente in gola) & $\theta_0\approx\ang{-45}$ \\
+    contorno 1, primo tratto (fino a $\approx0{,}5\,h$) & $\approx\ang{-4}$ \\
     contorno 1, a valle & $\theta_C\approx\ang{-8.5}$ \\
     urto 3 & $\approx\ang{-28}$ \\
     onde di Mach fra 3 e 1 (zona C) & $\approx\ang{12}$ \\
@@ -138,14 +147,24 @@ dall'asse; i valori sono quelli della metà superiore, e la metà inferiore dà 
     urto riflesso 4 & $\approx\ang{12}$ \\
     urti di ricompressione della scia & $\approx\pm\ang{18}$ \\
     \midrule
-    punto di riflessione R di 3 sulla spina & $x_R\approx1{,}7\,h$ dal labbro \\
-    base della spina & $x\approx1{,}95\,h$, altezza $\approx0{,}13\,h$ \\
+    punto R in cui 3 tocca la spina & $x_R\approx1{,}7\,h$ \\
+    base della spina & $x\approx1{,}95\,h$ \\
+    altezza della base & $\approx0{,}13\,h$ \\
     \bottomrule
-  \end{tabular}
-\end{table}
+  \end{tabular}}
 
 %==============================================================================
 \section{Analisi qualitativa}
+Lo schema della fig.~\ref{fig:schema} riassume il meccanismo descritto sotto.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.80\textwidth]{schema.pdf}
+  \caption{Schema della metà superiore in unità di $h$, con la spina e i labbri misurati: gola G (ciano), raggi del
+  ventaglio al labbro e coda prevista (ocra), espansioni dal lato della spina (blu) che si riflettono sul contorno
+  come compressioni (rosso tratteggiato) convergenti nell'urto 3, riflessione 4, zona di ricircolo W, urto di
+  ricompressione 2 e scia sull'asse.}
+  \label{fig:schema}
+\end{figure}
 \begin{itemize}
 \item In gola $p^*=0{,}528\,p_0$, molto più della pressione ambiente: il getto in uscita dalle feritoie è fortemente
   \textbf{sottoespanso} e il resto dell'espansione avviene fuori, a valle del labbro. È il principio
@@ -167,16 +186,7 @@ dall'asse; i valori sono quelli della metà superiore, e la metà inferiore dà 
 
 %==============================================================================
 \section{Topologia del campo}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.88\textwidth]{schema.pdf}
-  \caption{Schema della metà superiore in unità di $h$, con la spina e i labbri misurati: gola G (ciano), raggi del
-  ventaglio al labbro e coda prevista (ocra), espansioni dal lato della spina (blu) che si riflettono sul contorno
-  come compressioni (rosso tratteggiato) convergenti nell'urto 3, riflessione 4, zona di ricircolo W, urto di
-  ricompressione 2 e scia sull'asse.}
-  \label{fig:schema}
-\end{figure}
-
+Gli stati sono indicati nello schema qui sopra (fig.~\ref{fig:schema}) e nell'immagine annotata.
 \begin{table}[H]
   \centering
   \small
@@ -218,6 +228,7 @@ Sul contorno $p=p_a$ e $p_0$ è quello di camera:
 \]
 
 \subsection*{c) Ventaglio al labbro: stato A e coda del ventaglio}
+\accanto[0.40]{dettaglio_labbro.png}{Dettaglio del labbro: gola G (ciano), raggi del ventaglio (giallo) e coda prevista (punteggiato), contorno 1 (verde) che parte quasi assiale e poi si piega, urto 3 (rosso).\label{fig:labbro}}{%
 Le onde del ventaglio sono $\Cm$; attraversandole ci si muove lungo una $\Cp$, su cui si conserva $\theta-\nu$. Dalla
 gola ($\nu=0$, $\theta=\theta_0$) al contorno ($\nu=\nu_a$):
 \[
@@ -230,9 +241,12 @@ dello stato A:
 \theta_{\rm coda}=\theta_A-\mu_a\approx\ang{-21.7},
 \]
 e raggiungerebbe l'asse a $x=h/\tan\mu_a\approx2{,}56\,h$: la spina reale, lunga $1{,}95\,h$, è troncata a circa tre
-quarti. La linea 3 è inclinata di circa \ang{-28}, sei gradi più della coda: \textbf{3 non è la coda del ventaglio}.
+quarti. La linea 3 (rossa nel dettaglio qui accanto) è inclinata di circa \ang{-28}, sei gradi più della coda
+(gialla punteggiata): \textbf{3 non è la coda del ventaglio}.
+}
 
 \subsection*{d) Contorno piegato verso l'asse: ampiezza delle espansioni}
+Nel dettaglio della fig.~\ref{fig:labbro} si vede il contorno (verde) che si piega verso l'asse a breve distanza dal labbro.
 Il contorno lascia il labbro quasi nella direzione $\theta_A$ e a valle è inclinato di $\theta_C\approx\ang{-8.5}$.
 Un'espansione $\Cp$ di ampiezza $\Delta\nu$ che arriva sul contorno: attraversandola si va lungo una $\Cm$, dove
 $\theta+\nu$ è costante, quindi $\theta$ cala di $\Delta\nu$. La riflessa $\Cm$ riporta $p$ a $p_a$, cioè $\nu$ a
@@ -243,13 +257,19 @@ $\Delta\nu$. In tutto il contorno ruota di $2\Delta\nu$:
 \]
 
 \subsection*{e) Stato B, davanti all'urto 3}
+\accanto[0.44]{p_theta_dettaglio.pdf}{Piano $p$--$\theta$ vicino a $p_a$ (scala lineare): ventaglio al labbro (marrone), espansioni dal lato spina (blu), polare $\Cm$ di B (rosso), polare $\Cp$ di C (arancio).\label{fig:pthd}}{%
 È lo stato vicino al contorno raggiunto dalle espansioni e non ancora dalle compressioni riflesse:
 \begin{gather*}
-\nu_B=\nu_a+\Delta\nu\approx\ang{48.7}\ \Rightarrow\ M_B\approx2{,}94,\qquad
+\nu_B=\nu_a+\Delta\nu\approx\ang{48.7}\ \Rightarrow\ M_B\approx2{,}94,\\
 \theta_B=\theta_A-\Delta\nu\approx\ang{-4.4},\\
 \frac{p_B}{p_a}=\frac{p_0}{p_a}\big(1+\delta M_B^2\big)^{-\frac{\gamma}{\gamma-1}}\approx0{,}74 .
 \end{gather*}
 In B il getto è localmente sovraespanso.
+Nel piano $p$--$\theta$ qui accanto: da A le espansioni del lato spina (blu, $\theta+\nu$ costante) portano a B, sotto
+$p_a$; la polare $\Cm$ di B (urto 3, rosso, punto f) torna sulla retta $p=p_a$ in C, con $\theta_C$ uguale
+all'inclinazione misurata del contorno; la polare $\Cp$ di C (arancio, punto l), percorsa verso $\theta=0$, dà lo stato F
+dietro la ricompressione della scia.
+}
 
 \subsection*{f) Urto 3}
 Le compressioni riflesse riportano la corrente a $p_a$ e la ruotano di altri $\Delta\nu$: raccolte nell'urto 3 (famiglia
@@ -271,12 +291,14 @@ Il fronte dell'urto è inclinato di
 contro \ang{-28} misurati: la linea 3 è proprio l'urto formato dalle compressioni riflesse.
 
 \subsection*{g) Mach nella zona C dalle onde di Mach}
-Nella zona C le onde $\Cp$ sono rettilinee e inclinate di $\theta_C+\mu_C$; con le due inclinazioni misurate:
+\accanto[0.40]{dettaglio_zonaC.png}{Dettaglio della zona C: onde di Mach $\Cp$ rettilinee (azzurro) fra l'urto 3 (rosso) e il contorno 1 (verde); in basso la spina e il punto R.\label{fig:zonaC}}{%
+Nella zona C (dettaglio qui accanto) le onde $\Cp$ (azzurro) sono rettilinee e inclinate di $\theta_C+\mu_C$; con le due inclinazioni misurate:
 \[
 \mu_C=\phi_{\Cp}-\theta_C\approx\ang{20.5}\quad\Rightarrow\quad M_C=\frac1{\sin\mu_C}\approx2{,}9 ,
 \]
 vicino a $M_a=2{,}75$ (in C $p\simeq p_a$). Per $M$ elevati $\mu$ varia poco con $M$, quindi questo valore è solo
 indicativo.
+}
 
 \subsection*{h) La spina non è la linea di corrente dell'onda semplice}
 Sia $\phi_R\approx\ang{-25}$ l'inclinazione della retta che va dal labbro allo spigolo della base. Se il campo fosse
@@ -291,6 +313,7 @@ richiede l'onda semplice, quindi genera espansioni $\Cp$ di qualche grado, dello
 ricavato dal contorno.
 
 \subsection*{i) Riflessione 4}
+\accanto[0.42]{dettaglio_base.png}{Dettaglio dell'estremità della spina: punti R (cerchi) e urti riflessi 4 (magenta), base e ricircolo W, urti di ricompressione (arancio), scia sull'asse (punteggiato).\label{fig:base}}{%
 La deviazione dell'urto incidente, $\approx\ang{4}$, è molto minore dell'angolo di distacco
 $\theta_D(M_B)\approx\ang{21}$: la riflessione è \textbf{regolare}, come si vede (nessun gambetto di Mach). Stima con la
 corrente lungo l'ultimo tratto della spina ($\theta_w=\ang{-9}$, $M\simeq M_B$): l'incidente devia di $-\Delta\nu$ con
@@ -299,10 +322,11 @@ quindi il suo fronte è inclinato di
 \[
 \theta_w-\Delta\nu+\sigma_r\approx\ang{11},\qquad \frac{p_D}{p_a}\approx1{,}3 ,
 \]
-contro circa \ang{12} misurati.
+contro circa \ang{12} misurati (magenta nel dettaglio qui accanto, dove la riflessione è indicata nella metà inferiore dalla traccia).
+}
 
 \subsection*{l) Scia della base (2)}
-Nella zona di ricircolo W la corrente è subsonica e il modello 2D supersonico non vale: so solo che $p_W<p_a$ (la
+Nel dettaglio della fig.~\ref{fig:base}: nella zona di ricircolo W la corrente è subsonica e il modello 2D supersonico non vale: so solo che $p_W<p_a$ (la
 corrente vi entra espandendo attorno agli spigoli della base). Stimo la ricompressione con un solo urto $\Cp$ che
 riporta all'asse il getto della zona C ($M_a$, $\theta_C$), con deviazione $|\theta_C|$:
 \[
@@ -368,21 +392,13 @@ stime.
   $\Cp$ di C (ricompressione, arancio).}
   \label{fig:pth}
 \end{figure}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.58\textwidth]{p_theta_dettaglio.pdf}
-  \caption{Dettaglio del piano $p$--$\theta$ vicino a $p_a$ (scala lineare).}
-  \label{fig:pthd}
-\end{figure}
-\textbf{Piano $p$--$\theta$} (fig.~\ref{fig:pth}--\ref{fig:pthd}). Le pressioni vanno da $13{,}2\,p_a$ in gola a
+\textbf{Piano $p$--$\theta$} (fig.~\ref{fig:pth}). Le pressioni vanno da $13{,}2\,p_a$ in gola a
 $0{,}74\,p_a$ in B, più di un ordine di grandezza, quindi riporto entrambe le scale. Nella scala logaritmica si vede
 tutto il percorso: dalla gola G il ventaglio al labbro scende lungo la curva $\theta-\nu=\theta_0$ e taglia la retta
-$p=p_a$ in A, quasi a $\theta=0$; con una pressione ambiente più bassa la curva proseguirebbe oltre A e il contorno ruoterebbe verso
-l'esterno. Nella scala lineare si vede che quasi tutta la caduta di pressione
-avviene nel ventaglio, e che le onde successive sono piccole perturbazioni attorno a $p_a$. Il dettaglio mostra il
-ciclo vicino a $p_a$: da A le espansioni del lato spina (blu, $\theta+\nu$ costante) portano a B, sotto $p_a$; la polare
-$\Cm$ di B (urto 3) torna sulla retta $p=p_a$ in C, con $\theta_C$ uguale all'inclinazione misurata del contorno.
-Infine la polare $\Cp$ di C, percorsa verso $\theta=0$, dà lo stato F dietro la ricompressione della scia.
+$p=p_a$ in A, quasi a $\theta=0$; con una pressione ambiente più bassa la curva proseguirebbe oltre A e il contorno
+ruoterebbe verso l'esterno. Nella scala lineare si vede che quasi tutta la caduta di pressione avviene nel ventaglio, e
+che le onde successive sono piccole perturbazioni attorno a $p_a$: il ciclo A--B--C--F è quello del dettaglio
+commentato al punto e) (fig.~\ref{fig:pthd}).
 
 Lo schema (fig.~\ref{fig:schema}) e l'immagine annotata (fig.~\ref{fig:ann}) riportano la stessa topologia: la
 coda prevista del ventaglio (punteggiato) cade sensibilmente sopra la linea 3, mentre i fronti calcolati di 3, 4 e

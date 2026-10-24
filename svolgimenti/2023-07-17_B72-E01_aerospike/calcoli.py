@@ -303,14 +303,8 @@ print("\nRiepilogo: p/pa  G={:.2f}  A=1  B={:.2f}  C={:.2f}  F={:.2f}".format(pG
 # =============================================================================
 plt.rcParams.update({"font.size": 10, "font.family": "DejaVu Sans"})
 
-# --- 3a. Immagine annotata ------------------------------------------------------
-fig, ax = plt.subplots(figsize=(7.2, 6.84), dpi=200)
-ax.imshow(np.asarray(Image.open(os.path.join(FIG, "originale.jpg")).convert("RGB")))
-ax.set_xlim(0, W)
-ax.set_ylim(H, 0)
-ax.axis("off")
-
-
+# --- 3a. Immagine annotata e dettagli -----------------------------------------
+RGB = np.asarray(Image.open(os.path.join(FIG, "originale.jpg")).convert("RGB"))
 PARETE_SUP = np.array(GOLA_SPINA[:-1] + SPINA_SUP[1:], float)
 
 
@@ -330,7 +324,8 @@ def raggio_fino_alla_spina(ang_deg):
 
 
 def seg(p, ang_deg, L, **kw):
-    """segmento da p con angolo 'matematico' (y in su) e lunghezza L px."""
+    """segmento da p con angolo 'matematico' (y in su) e lunghezza L px (sugli assi correnti)."""
+    ax = plt.gca()
     x0, y0 = p
     x1 = x0 + L * math.cos(rad(ang_deg))
     y1 = y0 - L * math.sin(rad(ang_deg))
@@ -338,52 +333,76 @@ def seg(p, ang_deg, L, **kw):
     return x1, y1
 
 
-for sgn, lab in ((1, LABBRO_SUP), (-1, LABBRO_INF)):
-    # gola
-    ag = rad(THETA0 * sgn - 90 * sgn)
-    ax.plot([lab[0], lab[0] + h_gola * math.cos(ag)], [lab[1], lab[1] - h_gola * math.sin(ag)],
-            color="cyan", lw=2.2)
-    # ventaglio al labbro: alcuni raggi (tratteggio giallo) fra la testa e la coda ideale
-    for M in (1.15, 1.4, 1.7, 2.0, 2.3):
-        th = THETA0 + nu(M)
-        seg(lab, sgn * (th - mu(M)), raggio_fino_alla_spina(th - mu(M)), color="yellow", lw=0.9,
-            ls="--", alpha=0.95)
-    # coda ideale (onda di Mach θ_A - μ_a): non coincide con 3
-    seg(lab, sgn * coda, 330, color="yellow", lw=1.2, ls=":", alpha=0.95)
-    # contorno del getto 1
-    seg(lab, sgn * THETA_LAB, 70, color="lime", lw=2.0)
-    x1, y1 = lab[0] + 70 * math.cos(rad(THETA_LAB)), lab[1] - sgn * 70 * math.sin(rad(THETA_LAB))
-    seg((x1, y1), sgn * THETA_C, 400, color="lime", lw=2.0)
-# linee 3 (misurate)
-xx = np.array([180, xR])
-ax.plot(xx, a3s + b3s * xx, color="red", lw=2.0)
-xx = np.array([180, xRi])
-ax.plot(xx, a3i + b3i * xx, color="red", lw=2.0)
-# riflessioni 4 (direzione stimata del riflesso)
-for sgn, (x0, y0), p4 in ((1, (xR, yR), (xR, yR)), (-1, (xRi, a3i + b3i * xRi), quattro_inf[0])):
-    ax.plot([x0], [y0], "o", ms=5, mfc="none", mec="magenta", mew=1.6)
-    seg(p4, sgn * (i4.valle.theta + r4.sigma), 95, color="magenta", lw=2.0)
-# urti di ricompressione della scia e scia
-for sgn in (1, -1):
-    seg((BASE[0] + 4, Y_ASSE - sgn * 4), sgn * PHI_RIC, 180, color="orange", lw=2.0)
-ax.plot([BASE[0], W - 5], [Y_ASSE, Y_ASSE], color="white", lw=1.0, ls=":")
-# linee C+ / C- di esempio nella zona C
-for (x0, y0) in ((330, 214), (365, 228)):
-    seg((x0, y0), PHI_CP, 90, color="deepskyblue", lw=1.2)
-for (x0, y0) in ((330, 370), (365, 357)):
-    seg((x0, y0), -PHI_CP, 90, color="deepskyblue", lw=1.2)
 
-kws = dict(fontsize=9, fontweight="bold", color="black", ha="center", va="center",
-           bbox=dict(boxstyle="round,pad=0.15", fc="khaki", ec="none", alpha=0.9))
-for t, (x, y) in {"G": (160, 165), "A": (232, 152), "B": (300, 222), "C": (420, 200), "D": (452, 262),
-                  "W": (490, 288), "F": (585, 286), "a": (470, 95)}.items():
-    ax.text(x, y, t, **kws)
+
+def disegna_annotazioni(ax, fs=1.0):
+    """strutture, misure e stati sovrapposti all'immagine (assi in pixel)."""
+    plt.sca(ax)
+    ax.imshow(RGB)
+    ax.axis("off")
+    for sgn, lab in ((1, LABBRO_SUP), (-1, LABBRO_INF)):
+        # gola
+        ag = rad(THETA0 * sgn - 90 * sgn)
+        ax.plot([lab[0], lab[0] + h_gola * math.cos(ag)], [lab[1], lab[1] - h_gola * math.sin(ag)],
+                color="cyan", lw=2.2)
+        # ventaglio al labbro: alcuni raggi (tratteggio giallo) fra la testa e la coda ideale
+        for M in (1.15, 1.4, 1.7, 2.0, 2.3):
+            th = THETA0 + nu(M)
+            seg(lab, sgn * (th - mu(M)), raggio_fino_alla_spina(th - mu(M)), color="yellow", lw=0.9,
+                ls="--", alpha=0.95)
+        # coda ideale (onda di Mach θ_A - μ_a): non coincide con 3
+        seg(lab, sgn * coda, 330, color="yellow", lw=1.2, ls=":", alpha=0.95)
+        # contorno del getto 1
+        seg(lab, sgn * THETA_LAB, 70, color="lime", lw=2.0)
+        x1, y1 = lab[0] + 70 * math.cos(rad(THETA_LAB)), lab[1] - sgn * 70 * math.sin(rad(THETA_LAB))
+        seg((x1, y1), sgn * THETA_C, 400, color="lime", lw=2.0)
+    # linee 3 (misurate)
+    xx = np.array([180, xR])
+    ax.plot(xx, a3s + b3s * xx, color="red", lw=2.0)
+    xx = np.array([180, xRi])
+    ax.plot(xx, a3i + b3i * xx, color="red", lw=2.0)
+    # riflessioni 4 (direzione stimata del riflesso)
+    for sgn, (x0, y0), p4 in ((1, (xR, yR), (xR, yR)), (-1, (xRi, a3i + b3i * xRi), quattro_inf[0])):
+        ax.plot([x0], [y0], "o", ms=5, mfc="none", mec="magenta", mew=1.6)
+        seg(p4, sgn * (i4.valle.theta + r4.sigma), 95, color="magenta", lw=2.0)
+    # urti di ricompressione della scia e scia
+    for sgn in (1, -1):
+        seg((BASE[0] + 4, Y_ASSE - sgn * 4), sgn * PHI_RIC, 180, color="orange", lw=2.0)
+    ax.plot([BASE[0], W - 5], [Y_ASSE, Y_ASSE], color="white", lw=1.0, ls=":")
+    # linee C+ / C- di esempio nella zona C
+    for (x0, y0) in ((330, 214), (365, 228)):
+        seg((x0, y0), PHI_CP, 90, color="deepskyblue", lw=1.2)
+    for (x0, y0) in ((330, 370), (365, 357)):
+        seg((x0, y0), -PHI_CP, 90, color="deepskyblue", lw=1.2)
+
+    kws = dict(fontsize=9 * fs, fontweight="bold", color="black", ha="center", va="center", clip_on=True,
+               bbox=dict(boxstyle="round,pad=0.15", fc="khaki", ec="none", alpha=0.9))
+    for t, (x, y) in {"G": (160, 165), "A": (232, 152), "B": (300, 222), "C": (420, 200), "D": (452, 262),
+                      "W": (490, 288), "F": (585, 286), "a": (470, 95)}.items():
+        ax.text(x, y, t, **kws)
+
+
+fig, ax = plt.subplots(figsize=(7.2, 6.84), dpi=200)
+disegna_annotazioni(ax)
+ax.set_xlim(0, W)
+ax.set_ylim(H, 0)
 ax.text(8, 598, "giallo: ventaglio al labbro (punteggiato: coda prevista)   verde: contorno 1   rosso: urto 3\n"
         "magenta: riflessione 4   arancio: urti di ricompressione   azzurro: onde di Mach",
         fontsize=6.5, color="white", va="bottom",
         bbox=dict(boxstyle="round,pad=0.25", fc="black", ec="none", alpha=0.65))
 fig.savefig(os.path.join(FIG, "annotata.png"), bbox_inches="tight", pad_inches=0.02)
 plt.close(fig)
+
+# dettagli (close-up) da affiancare al testo: labbro e inizio di 3; zona C; estremità della spina e scia
+DETTAGLI = {"dettaglio_labbro": (135, 335, 110, 260), "dettaglio_zonaC": (300, 470, 150, 290),
+            "dettaglio_base": (380, 620, 215, 360)}
+for nome, (x0, x1, y0, y1) in DETTAGLI.items():
+    fig, ax = plt.subplots(figsize=(4.0, 4.0 * (y1 - y0) / (x1 - x0)), dpi=250)
+    disegna_annotazioni(ax, fs=1.25)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y1, y0)
+    fig.savefig(os.path.join(FIG, nome + ".png"), bbox_inches="tight", pad_inches=0.01)
+    plt.close(fig)
 
 # --- 3b. Schema della metà superiore in unità di h ------------------------------
 def XY(p):

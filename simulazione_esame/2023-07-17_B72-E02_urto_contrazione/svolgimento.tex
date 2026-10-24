@@ -1,0 +1,267 @@
+% Simulazione d'esame: prova del 17/07/2023, esercizio 2 (B72-E02) -- urto contro una brusca riduzione d'area.
+% Stessi numeri e figure dello svolgimento di riferimento:
+% svolgimenti/2023-07-17_B72-E02_urto_contrazione (calcoli.py e figure/).
+% Compilare con: bash simulazione_esame/compila.sh 2023-07-17_B72-E02_urto_contrazione
+
+\input{../preambolo}
+\graphicspath{{../../svolgimenti/2023-07-17_B72-E02_urto_contrazione/figure/}}
+
+\newcommand{\uma}{u-a}
+\newcommand{\upa}{u+a}
+\newcommand{\Ar}{\mathcal{A}}
+
+\esercizio{Prova del 17/07/2023 -- Esercizio 2}{Urto piano contro una brusca riduzione d'area}
+
+\begin{document}
+\maketitle
+
+\emph{Traccia.} Un urto piano propaga in un condotto a sezione costante; a monte aria in quiete con $p=1$, $a=1$; il
+Mach assoluto a valle dell'urto è $M=\num{1.87}$. L'urto incontra una brusca riduzione d'area pari a \num{1.5}
+(fig.~\ref{fig:schema}). Determinare la variazione d'intensità dell'urto e disegnare il flusso sui piani $x$--$t$ e
+$p$--$u$.
+
+\figura[0.7]{schema.png}{Schema della traccia: condotto largo (altezza \num{1.5}) a sinistra, stretto (altezza 1) a
+destra; l'urto viaggia verso destra.\label{fig:schema}}
+
+\section*{Che cosa so e che cosa cerco}
+Il gas è aria, gas perfetto con $\gamma=\num{1.4}$ ($\delta=(\gamma-1)/2=\num{0.2}$) ovunque. Lavoro in grandezze
+adimensionali riferite al gas in quiete: $p_0=1$, $a_0=1$, quindi $\rho_0=\gamma p_0/a_0^2=\num{1.4}$. Non ci sono
+lunghezze: il piano $x$--$t$ lo potrò disegnare solo con le velocità delle onde, e mi basterà, perché vedremo che il
+campo è autosimile.
+
+Noto subito che il dato non è il Mach dell'urto ma il Mach \emph{assoluto} del gas dietro di esso,
+$M_1=u_1/a_1=\num{1.87}$: il gas messo in moto è supersonico rispetto al condotto, e il Mach dell'urto $\Ms$ lo devo
+ricavare. Il rapporto d'area è $A_1/A_2=\num{1.5}$ (in un condotto piano le altezze stanno come le aree).
+L'intensità dell'urto la misuro con il suo Mach e con il rapporto di pressione attraverso di esso.
+
+Chiamo 0 la quiete, 1 lo stato dietro l'urto incidente, 2 lo stato all'ingresso del condotto stretto, 3 e 4 gli stati
+ai due lati del contatto nel condotto stretto (3 a sinistra, dietro l'onda $\uma$; 4 a destra, dietro l'urto
+trasmesso).
+
+\section*{Modello}
+Lontano dal gradino il condotto ha sezione costante e l'urto è piano, quindi uso Eulero quasi-1D instazionario, non
+viscoso, con $\gamma$ costante: le grandezze sono medie sulla sezione e i dettagli 2D allo spigolo non li vedo.
+Il salto d'area ha lunghezza nulla rispetto alle distanze percorse dalle onde: appena l'urto lo ha superato, il gas
+lo attraversa in una geometria fissa, quindi lo tratto come un attraversamento istantaneo, stazionario e
+isentropico, cioè con portata, entalpia totale ed entropia conservate (legge delle aree con $p^0$ e $a^0$ uguali).
+Questo è lecito se il gas 1 è supersonico anche in assoluto, e lo è. Il gas che esce dal gradino incontra poi,
+nell'istante e nel punto d'arrivo dell'urto, il gas in quiete del condotto stretto: lì ho un nuovo problema di
+Riemann.
+
+\section*{Che cosa mi aspetto prima di calcolare}
+Il gas 1 è supersonico, quindi anche le caratteristiche $\uma$, le sole che potrebbero riportare indietro la notizia
+del gradino, vanno verso destra: il condotto largo non riceve informazione. Un'onda riflessa che risale il
+condotto largo potrebbe nascere solo se la contrazione non lasciasse passare la portata: allora il gradino
+farebbe in parte da parete e rifletterebbe un urto $\uma$ capace di risalire la corrente. Lo controllerò con la legge
+delle aree ($A_1/A_2\le\Ar(M_1)$).
+
+Nella contrazione una corrente supersonica rallenta e si comprime, restando sullo stesso ramo della legge delle aree
+(senza urti non si cambia ramo): $p_2>p_1$, $u_2<u_1$. Il gas 2 fa poi da pistone sul gas fermo nel condotto
+stretto, che diventa un tubo d'urto: urto trasmesso $\upa$, contatto e, per raccordare lo stato 2 (più lento e molto
+più compresso del gas dietro l'urto), un'onda $\uma$ che mi aspetto sia un'espansione. Con $u_2>a_2$ anche questa
+sarà trascinata verso destra. Infine, in un convergente un'onda di compressione si intensifica: l'urto trasmesso
+deve uscire più forte dell'incidente.
+
+Tutte le onde nascono dall'arrivo dell'urto sul gradino ($x=0$, $t=0$), quindi il campo è autosimile: a sinistra lo
+stato 1 invariato; in $x=0$ il collegamento stazionario $1\to2$; a destra stato 2 | espansione centrata $\uma$ |
+stato 3 | contatto | stato 4 | urto trasmesso $\upa$ | stato 0. Non ci sono zone d'interazione a due famiglie: il
+ventaglio è un'onda semplice con caratteristiche $\uma$ semirette, il resto è uniforme.
+
+Conto le incognite: lo stato 2 (3 grandezze), $p^*$ e $u^*$ comuni ai lati del contatto, $\rho_3$, $\rho_4$ e la
+velocità $w_t$ dell'urto trasmesso. Ho 3 equazioni nel salto d'area (portata, entalpia totale, entropia), 2
+attraverso l'espansione (invariante $a+\delta u$ e isentropia) e 3 di Rankine--Hugoniot sull'urto trasmesso: il conto
+torna. Il problema si disaccoppia: poiché il gas 2 è supersonico, lo stato 2 si trova con la sola legge delle aree e
+il problema di Riemann a valle non può modificarlo.
+
+\figura[0.86]{xt.pdf}{Piano $x$--$t$ con le velocità calcolate (scala dei tempi arbitraria). Origine nell'arrivo
+dell'urto sul salto d'area.\label{fig:xt}}
+
+Il piano $x$--$t$ (fig.~\ref{fig:xt}), disegnato con le velocità che calcolo sotto, riassume il quadro. Per $t<0$ c'è
+solo l'urto incidente e le particelle, ferme nello stato 0, partono quando l'urto le raggiunge. Le caratteristiche
+$\uma$ nello stato 1 (tratto-punto) hanno pendenza positiva: per $x<0$ lo stato 1 resta invariato anche dopo $t=0$.
+Dal punto d'arrivo partono, nel condotto stretto, il ventaglio $\uma$ (tutto con pendenza positiva, la testa appena
+inclinata rispetto alla verticale), il contatto e l'urto trasmesso, più veloce dell'incidente (retta più inclinata
+verso l'asse $x$). Fra il gradino e la testa del ventaglio c'è lo stato 2, che si allarga nel tempo. Le traiettorie
+delle particelle rallentano attraversando il gradino ($u_1\to u_2$), accelerano nel ventaglio e procedono con $u^*$
+nello stato 3; quelle dello stato 4 sono gas del condotto stretto messo in moto dall'urto trasmesso.
+
+\section*{L'urto incidente: $\Ms$ dal Mach assoluto a valle}
+Invece di iterare sulla velocità dell'urto, inverto direttamente le relazioni di salto. Nel riferimento dell'urto,
+con $u_0=0$, la massa e il rapporto delle temperature danno
+\begin{gather*}
+  \frac{u_1}{a_0}=\left(1-\frac{\rho_0}{\rho_1}\right)\Ms=\frac{2}{\gamma+1}\left(\Ms-\frac1{\Ms}\right)\ee
+  \frac{a_1^2}{a_0^2}=\frac{T_1}{T_0}=\frac{\left[2\gamma\Ms^2-(\gamma-1)\right]\left[(\gamma-1)\Ms^2+2\right]}{(\gamma+1)^2\Ms^2},
+\end{gather*}
+quindi $M_1^2=4(\Ms^2-1)^2\big/\{[2\gamma\Ms^2-(\gamma-1)][(\gamma-1)\Ms^2+2]\}$, che con $X=\Ms^2$ è un'equazione di
+secondo grado:
+\[
+  \left[4-2\gamma(\gamma-1)M_1^2\right]X^2-\left[8+\left(4\gamma-(\gamma-1)^2\right)M_1^2\right]X+4+2(\gamma-1)M_1^2=0 .
+\]
+Una radice dà $\Ms\approx\num{0.50}$ e non è un urto; l'altra
+\[
+  \Ms=\num{17.99},\qquad w_i=\Ms a_0=\num{17.99}.
+\]
+È un urto fortissimo, e capisco perché: il coefficiente di $X^2$ si annulla per $M_1=\sqrt{2/[\gamma(\gamma-1)]}=\num{1.89}$,
+il Mach assoluto massimo dietro un urto mobile in gas fermo (urto infinitamente forte), e $M_1=\num{1.87}$ gli è
+vicino. Per lo stesso motivo $\Ms$ è molto sensibile alla seconda cifra decimale di $M_1$.
+
+Con Rankine--Hugoniot trovo lo stato 1:
+\begin{gather*}
+  \frac{p_1}{p_0}=\frac{2\gamma\Ms^2-(\gamma-1)}{\gamma+1}=\num{377}\ee
+  \frac{\rho_1}{\rho_0}=\frac{(\gamma+1)\Ms^2}{(\gamma-1)\Ms^2+2}=\num{5.91}\ee
+  \frac{a_1}{a_0}=\sqrt{\frac{p_1/p_0}{\rho_1/\rho_0}}=\num{7.99},\\
+  u_1=w_i\left(1-\frac{\rho_0}{\rho_1}\right)=\num{14.94}\ee \rho_1=\num{8.27}.
+\end{gather*}
+Controllo subito: $u_1/a_1=\num{1.87}$ restituisce il dato, $\Ms>1$ e $s_1/s_0=\num{31.4}>1$. Inoltre
+$u_1-a_1=\num{6.95}>0$: come previsto, nessuna onda può risalire il condotto largo.
+
+\section*{Il gradino: passa tutta la portata?}
+La legge delle aree
+\[
+  \Ar(M)=\frac{A}{A^*}=\frac1M\left[\frac{2}{\gamma+1}\left(1+\delta M^2\right)\right]^{\frac{\gamma+1}{2(\gamma-1)}}
+\]
+dà per la corrente 1 $A_1/A^*=\Ar(M_1)=\num{1.519}$, appena più di $A_1/A_2=\num{1.5}$: la sezione critica è più
+piccola del condotto stretto, quindi la portata passa tutta, non c'è strozzamento e non nasce un urto riflesso.
+Nel condotto stretto
+\[
+  \frac{A_2}{A^*}=\frac{\Ar(M_1)}{A_1/A_2}=\num{1.013}\quad\Rightarrow\quad M_2=\num{1.126}\ \text{(ramo supersonico)}.
+\]
+Con $p^0$ e $a^0$ conservati, da $p^0/p=(1+\delta M^2)^{\gamma/(\gamma-1)}$ e $(a^0/a)^2=1+\delta M^2$:
+\begin{gather*}
+  p_2=p_1\left(\frac{1+\delta M_1^2}{1+\delta M_2^2}\right)^{\frac{\gamma}{\gamma-1}}=\num{1094}\ee
+  a_2=a_1\sqrt{\frac{1+\delta M_1^2}{1+\delta M_2^2}}=\num{9.30}\ee u_2=M_2a_2=\num{10.48}\ee \rho_2=\num{17.7}.
+\end{gather*}
+La pressione quasi triplica ($p_2/p_1=\num{2.90}$) e la velocità cala. Controllo il collegamento: $\rho_1u_1A_1=\rho_2u_2A_2$,
+$h^0_1=h^0_2$, $s_1=s_2$. E $u_2-a_2=\num{1.18}>0$: anche il gas 2 è supersonico, quindi qualunque onda nasca nel
+condotto stretto si stacca dal gradino e non disturba questo collegamento stazionario.
+
+\section*{Il condotto stretto: problema di Riemann fra 2 e 0}
+Ho lo stato 2 a sinistra e la quiete 0 a destra. L'onda destra, in gas fermo, è un urto se $u>0$; le relazioni di
+salto danno $u-u_0=\frac{2a_0}{\gamma+1}\left(\Mr-\frac1{\Mr}\right)$, di secondo grado in $\Mr$, da cui
+\[
+  \Mr=Y+\sqrt{1+Y^2},\quad Y=\frac{\gamma+1}{4}\,\frac{u-u_0}{a_0},\qquad
+  p_{\rm dx}(u)=p_0\left[1+\frac{2\gamma}{\gamma+1}\left(\Mr^2-1\right)\right].
+\]
+L'onda sinistra è un'espansione se $u>u_2$ ($a+\delta u$ uniforme e isentropia), un urto se $u<u_2$ (stessa relazione
+con $(u_2-u)/a_2$ e $p_2$):
+\[
+  p_{\rm sx}(u)=p_2\left[1-\delta\,\frac{u-u_2}{a_2}\right]^{\frac{2\gamma}{\gamma-1}}\quad(u>u_2).
+\]
+Il primo tentativo isentropico sulla velocità del contatto è
+\[
+  z=\frac{a_0}{a_2}\left(\frac{p_2}{p_0}\right)^{\frac{\gamma-1}{2\gamma}}=\num{0.292},\qquad
+  u^{(0)}=\frac{z\,(a_2+\delta u_2)-(a_0-\delta u_0)}{\delta(1+z)}=\num{9.01}.
+\]
+Viene $u^{(0)}<u_2$, che indicherebbe un urto a sinistra, ma non mi fido: l'urto destro avrà $\Mr\approx19$ e su di
+esso l'ipotesi isentropica non regge. Aggiorno $u$ intersecando le tangenti alle due curve:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ccccc}
+    \toprule
+    passo & $u$ & onda sinistra & $p_{\rm sx}$ & $p_{\rm dx}$ \\
+    \midrule
+    0 & \num{9.01}  & urto        & \num{1359} & \num{139} \\
+    1 & \num{14.36} & espansione  & \num{594}  & \num{349} \\
+    2 & \num{16.04} & espansione  & \num{448}  & \num{435} \\
+    3 & \num{16.148} & espansione & \num{440.27} & \num{440.23} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+Al passo 3 $|p_{\rm sx}-p_{\rm dx}|/p\approx10^{-4}$, fisicamente zero: $u^*=\num{16.15}$, $p^*=\num{440}$, configurazione
+\textbf{RCS}. Controllo la natura dell'onda sinistra: $u^*>u_2$ e $p^*<p_2$, è un'espansione, come mi aspettavo.
+
+Lo stato 3, alla coda dell'espansione, ha $a+\delta u$ uguale allo stato 2:
+\begin{gather*}
+  a_3=a_2-\delta\left(u^*-u_2\right)=\num{8.17}\ee
+  p_3=p_2\left(\frac{a_3}{a_2}\right)^{\frac{2\gamma}{\gamma-1}}=\num{440}\ee
+  \rho_3=\frac{\gamma p_3}{a_3^2}=\num{9.24}\ee M_3=\num{1.98}.
+\end{gather*}
+Il ventaglio ha la testa a $u_2-a_2=\num{1.18}$ e la coda a $u_3-a_3=\num{7.98}$: tutto nel condotto stretto, lontano
+dal gradino.
+
+Lo stato 4, dietro l'urto trasmesso:
+\begin{gather*}
+  \Mr=\num{19.43}\ee \frac{p_4}{p_0}=\frac{2\gamma\Mr^2-(\gamma-1)}{\gamma+1}=\num{440}\ee
+  \frac{\rho_4}{\rho_0}=\frac{(\gamma+1)\Mr^2}{(\gamma-1)\Mr^2+2}=\num{5.92},\\
+  w_t=u_0+\Mr a_0=\num{19.43}\ee a_4=\num{8.62}\ee M_4=\frac{u^*}{a_4}=\num{1.87}\ee \rho_4=\num{8.29}.
+\end{gather*}
+Controllo: $\Mr>1$ e $s_4/s_0=\num{36.5}>1$; l'ordine delle onde è giusto (testa \num{1.18} $<$ coda \num{7.98} $<$
+contatto \num{16.15} $<$ urto \num{19.43}); sul contatto $p_3=p_4$, $u_3=u_4$ e $\rho_3\neq\rho_4$; $a>0$ e $p>0$
+ovunque.
+
+\figura[1.0]{pu.pdf}{Piano $p$--$u$ in scala lineare (a) e logaritmica (b). Il tratteggio $1\to2$ è il collegamento
+stazionario nel salto d'area (al variare di $A$ da $A_1$ ad $A_2$), non un'onda.\label{fig:pu}}
+
+Nel piano $p$--$u$ (fig.~\ref{fig:pu}) le pressioni vanno da 1 a circa \num{1100}, quindi riporto entrambe le scale. Lo
+stato 1 sta sulla curva degli urti $\upa$ uscente da 0. Il salto d'area porta 1 in 2, più in alto e a sinistra
+(compressione con rallentamento). Da 2 la curva d'espansione $\uma$ scende verso destra e incontra di nuovo la curva
+degli urti uscente da 0 nel punto $3=4$, \emph{sopra} il punto 1: è il rinforzo dell'urto. Il contatto non si vede
+($\rho_3\neq\rho_4$). La scala lineare mostra quanto lo stato 2 sta sopra gli altri e quanto i punti 1 e $3=4$ sono
+vicini sulla stessa curva; quella logaritmica rende leggibili insieme la quiete e gli stati dietro gli urti, e i
+rapporti di pressione delle singole onde.
+
+\section*{Risposta: variazione d'intensità}
+\[
+  \frac{\Ms^{\rm trasm}}{\Ms^{\rm inc}}=\frac{w_t}{w_i}=\num{1.080},\qquad
+  \frac{p_4/p_0}{p_1/p_0}=\num{1.167},\qquad
+  \frac{p_4-p_0}{p_1-p_0}=\num{1.167}.
+\]
+L'urto si \textbf{rinforza}: il suo Mach passa da \num{17.99} a \num{19.43} (+8\,\%), il salto di pressione da
+\num{377} a \num{440} (+17\,\%), la velocità del gas dietro l'urto da \num{14.94} a \num{16.15}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{clrrrrr}
+    \toprule
+    Stato & Posizione & $p$ & $\rho$ & $u$ & $a$ & $M$ \\
+    \midrule
+    0 & quiete & 1 & \num{1.40} & 0 & 1 & 0 \\
+    1 & dietro l'urto incidente ($A_1$) & \num{377} & \num{8.27} & \num{14.94} & \num{7.99} & \num{1.87} \\
+    2 & ingresso del condotto stretto & \num{1094} & \num{17.7} & \num{10.48} & \num{9.30} & \num{1.13} \\
+    3 & coda dell'espansione & \num{440} & \num{9.24} & \num{16.15} & \num{8.17} & \num{1.98} \\
+    4 & dietro l'urto trasmesso & \num{440} & \num{8.29} & \num{16.15} & \num{8.62} & \num{1.87} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    Onda & Velocità nel piano $x$--$t$ & Intensità \\
+    \midrule
+    urto incidente $\upa$ & $w_i=\num{17.99}$ & $\Ms=\num{17.99}$, $p_1/p_0=\num{377}$ \\
+    salto d'area (stazionario) & $x=0$ & $p_2/p_1=\num{2.90}$ \\
+    espansione $\uma$ & testa \num{1.18}, coda \num{7.98} & $p_3/p_2=\num{0.40}$ \\
+    contatto & $u^*=\num{16.15}$ & $\rho_3/\rho_4=\num{1.11}$ \\
+    urto trasmesso $\upa$ & $w_t=\num{19.43}$ & $\Ms=\num{19.43}$, $p_4/p_0=\num{440}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section*{Discussione}
+\textbf{Perché l'urto si rinforza.} Il gas 1 entra nel condotto stretto rallentando e comprimendosi: lo stato 2 è un
+``driver'' a pressione quasi tripla rispetto al gas 1. Nel condotto stretto questo driver si espande verso il gas in
+quiete come in un tubo d'urto, e la pressione che riesce a mantenere dietro l'urto ($p^*=\num{440}$) è maggiore di
+$p_1$. È l'intensificazione di un'onda di compressione in un convergente.
+
+\textbf{Il risultato relativo non dipende dalla forza dell'urto.} Con $M_1$ vicino al limite \num{1.89}, $\Ms$ dipende
+molto dalla seconda cifra decimale di $M_1$, ma i rapporti $w_t/w_i\approx\num{1.08}$ e
+$(p_4-p_0)/(p_1-p_0)\approx\num{1.17}$ quasi no: per urti fortissimi la pressione a monte è trascurabile e il campo
+dietro l'urto dipende solo da $\gamma$ ($M_1\to\num{1.89}$), quindi il rinforzo dipende solo da $\gamma$ e da $A_1/A_2$.
+
+\textbf{Margine sullo strozzamento.} $\Ar(M_1)=\num{1.519}$ supera $A_1/A_2=\num{1.5}$ di poco più dell'1\,\%. Basta una
+perdita di pressione totale di circa l'1\,\% nel salto d'area per far salire $A^*$ oltre $A_2$: la contrazione
+strozzerebbe e dal gradino partirebbe un urto $\uma$ che risale il condotto largo, con un campo diverso (sezione
+sonica in $A_2$). Nella realtà allo spigolo vivo la corrente supersonica forma urti obliqui e perde pressione totale,
+quindi questa situazione è plausibile: il risultato isentropico quasi-1D va letto come il caso ideale.
+
+\textbf{Contatto e strato entropico.} Il gas 3 ha attraversato l'urto incidente e poi solo trasformazioni
+isentropiche; il gas 4 ha attraversato un urto più forte: $s_4>s_3$, $a_4>a_3$ e $\rho_4<\rho_3$ a pari $p$. Il contatto
+separa gas con entropia diversa, come avviene ogni volta che un urto cambia intensità.
+
+\textbf{Limiti del modello.} Trascuro la fase 2D dell'interazione (riflessione dell'urto sulla corona del gradino,
+diffrazione allo spigolo, urto trasmesso inizialmente curvo), che conta solo nei primi istanti. Con $\Ms\approx18$ il
+rapporto delle temperature $T_1/T_0\approx64$ è fuori dal campo del gas perfetto con $\gamma=\num{1.4}$
+(dissociazione e ionizzazione dell'aria): il calcolo vale come esercizio a $\gamma$ costante.
+
+\end{document}

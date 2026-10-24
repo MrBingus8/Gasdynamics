@@ -1,0 +1,251 @@
+% Simulazione d'esame: prova del 14/09/2021, esercizio 3 (B65-E03) -- pressione totale e urto obliquo.
+% Stessi numeri e figure dello svolgimento di riferimento:
+% svolgimenti/2021-09-14_B65-E03_pressione_totale_urto_obliquo (calcoli.py e figure/).
+% Compilare con: bash simulazione_esame/compila.sh 2021-09-14_B65-E03_pressione_totale_urto_obliquo
+
+\input{../preambolo}
+\graphicspath{{../../svolgimenti/2021-09-14_B65-E03_pressione_totale_urto_obliquo/figure/}}
+
+\newcommand{\Mn}{M_{n1}}
+\newcommand{\sth}{s_{\rm th}}
+\newcommand{\kk}{\frac{\gamma}{\gamma-1}}
+
+\esercizio{Prova del 14/09/2021 -- Esercizio 3}{Pressione totale e urto obliquo}
+
+\begin{document}
+\maketitle
+
+\emph{Traccia.} In un flusso comprimibile la pressione totale è una quantificazione del suo intero contenuto
+energetico, ma, d'altro canto, la variazione della pressione totale attraverso un urto obliquo stazionario è
+funzione della sola componente normale del Mach dell'urto. Giustificare la ragione di questa apparente incongruenza.
+
+\section*{Le due affermazioni da conciliare}
+La traccia accosta due fatti: (A) la pressione totale $p_0$ quantifica tutto il contenuto energetico della corrente,
+quindi dipende dall'energia interna e dall'energia cinetica, con entrambe le componenti della velocità; (B)
+attraverso un urto obliquo stazionario la sua variazione dipende solo da $\Mn=M_1\sin\sigma$, quindi non dalla
+componente tangenziale. Devo spiegare perché (B) non contraddice (A). Per ``variazione'' intendo il rapporto
+$p_{0,2}/p_{0,1}$, come nelle relazioni d'urto; alla fine guardo anche la differenza $p_{0,1}-p_{0,2}$. Non ci
+sono dati: per gli esempi uso aria ($\gamma=\num{1.4}$, $\delta=\num{0.2}$) e $M_1=5$, lo stesso Mach
+dell'esercizio~2, con un angolo d'urto che dà $\Mn=2$.
+
+Lavoro nel modello in cui l'urto obliquo stazionario è definito: Eulero 2D stazionario, gas perfetto a $\gamma$
+costante, urto piano di spessore nullo fra due stati uniformi 1 (monte) e 2 (valle). Se l'urto è curvo il
+ragionamento vale punto per punto con il $\sigma$ locale. L'urto è fermo, quindi non compie lavoro sul fluido e non
+scambia calore: è questo che rende costante l'entalpia totale, e me ne ricorderò quando cambierò riferimento.
+
+\section*{Che cosa misura la pressione totale}
+La pressione totale è la pressione che la particella raggiunge se la porto in quiete con una trasformazione
+isentropica:
+\begin{gather*}
+  \frac{T_0}{T}=1+\delta M^2 \ee \frac{p_0}{p}=\left(\frac{T_0}{T}\right)^{\kk}=\left(1+\delta M^2\right)^{\kk}.
+\end{gather*}
+Dipende dal modulo della velocità, quindi dal riferimento in cui la misuro; $p$, $\rho$, $T$ ed entropia invece no.
+
+Il contenuto energetico vero e proprio, per unità di massa, è l'entalpia totale $h_0=c_pT_0=h+|\boldsymbol V|^2/2$,
+e attraverso l'urto fermo \textbf{si conserva}: l'urto non toglie energia alla corrente. Allora che cosa misura
+$p_0$? Scrivo la sua definizione rispetto a un qualunque stato di riferimento (r), usando
+$\Delta\sth=c_p\ln(T/T_r)-R\ln(p/p_r)$:
+\[
+  p_0=p_r\left(\frac{T_0}{T_r}\right)^{\kk}\exp\!\left(-\frac{\sth-s_{\rm th,r}}{R}\right).
+\]
+Quindi $p_0$ porta due informazioni: il \emph{livello} dell'energia ($T_0$) e la sua \emph{qualità} (l'entropia). La
+qualità è ciò che conta per usarla: la massima velocità che ottengo espandendo la corrente fino a $p_b$ è
+\[
+  V^2=2c_pT_0\left[1-\left(\frac{p_b}{p_0}\right)^{\frac{\gamma-1}{\gamma}}\right],
+\]
+e a pari $T_0$ una $p_0$ più bassa vuol dire meno energia trasformabile in energia cinetica o lavoro. È in questo
+senso che $p_0$ quantifica ``l'intero contenuto energetico'': ne misura la parte utilizzabile.
+
+Poiché attraverso l'urto $T_0$ non cambia, la variazione di $p_0$ misura \textbf{solo l'entropia prodotta}.
+L'entropia è termodinamica, uguale per ogni osservatore, e l'urto comprime solo nella direzione normale al fronte:
+la velocità tangenziale passa invariata, senza gradienti. Mi aspetto quindi che $p_{0,2}/p_{0,1}$ dipenda solo da
+$\Mn$ e che l'energia cinetica tangenziale compaia in $p_{0,1}$ e in $p_{0,2}$ nella stessa misura. Lo verifico.
+
+\section*{L'urto obliquo visto da un osservatore che scorre lungo il fronte}
+Scompongo la velocità rispetto al fronte (fig.~\ref{fig:rif}a), con $\theta_1=0$ e $\sigma$ angolo fra urto e
+velocità di monte:
+\begin{gather*}
+  V_{n1}=|\boldsymbol V_1|\sin\sigma \ee V_{t1}=|\boldsymbol V_1|\cos\sigma \ee
+  \Mn=M_1\sin\sigma \ee M_{t1}=M_1\cos\sigma .
+\end{gather*}
+Noti lo stato 1 e $\sigma$, le incognite a valle sono quattro ($\rho_2$, $V_{n2}$, $V_{t2}$, $p_2$) e ho quattro
+relazioni di salto nel riferimento ruotato con l'urto (massa, quantità di moto normale e tangenziale, energia):
+\begin{gather*}
+  [\rho V_n]=0 \ee [p+\rho V_n^2]=0 \ee [\rho V_n V_t]=0 \ee
+  \left[\rho V_n\Big(h+\frac{V_n^2+V_t^2}{2}\Big)\right]=0 .
+\end{gather*}
+Il problema è chiuso e si spezza in due. Poiché $\rho V_n\neq0$ (è un urto, non una linea di scorrimento), la
+terza dà $[V_t]=0$: la velocità tangenziale si conserva e, dato che $V_t^2/2$ è uguale ai due lati, sparisce
+anche dall'energia. Restano
+\begin{gather*}
+  [\rho V_n]=0 \ee [p+\rho V_n^2]=0 \ee \Big[h+\frac{V_n^2}{2}\Big]=0,
+\end{gather*}
+che sono esattamente le relazioni di Rankine--Hugoniot di un urto normale con velocità di monte $V_{n1}$.
+
+Lo stesso risultato lo leggo con un cambio di riferimento galileiano. Un osservatore che scorre lungo il fronte con
+velocità $V_t$ (fig.~\ref{fig:rif}b) si muove parallelamente all'urto, quindi per lui l'urto è ancora fermo e il campo
+stazionario; le equazioni di Eulero non cambiano e $p$, $\rho$, $T$, entropia sono le stesse. Lui vede un
+\textbf{urto normale} a $\Mn$, quindi $p_2/p_1$, $\rho_2/\rho_1$, $T_2/T_1$ e $\Delta\sth$ sono quelli dell'urto
+normale a $\Mn$. Non sono invece invarianti $M$, $T_0$ e $p_0$: l'osservatore misura una $p_0$ diversa dalla mia.
+Devo quindi capire perché il \emph{rapporto} delle $p_0$ è lo stesso.
+
+\figura[0.95]{riferimenti.pdf}{Lo stesso urto in due riferimenti (proporzioni qualitative). (a) Laboratorio: $V_t$ si
+conserva, la componente normale si riduce da $V_{n1}$ a $V_{n2}$ e la corrente devia verso l'urto. (b) Osservatore
+che scorre lungo il fronte con $V_t$: urto normale a $\Mn$.\label{fig:rif}}
+
+Nella figura si vede che nel laboratorio la deviazione $\theta$ nasce solo dalla riduzione di $V_n$ a $V_t$ fissata;
+togliendo $V_t$ a entrambi gli stati resta un urto normale con gli stessi $p$, $\rho$, $T$ ai due lati.
+
+\section*{Il rapporto delle pressioni totali misura solo l'entropia}
+Applico $p_0=p\,(T_0/T)^{\gamma/(\gamma-1)}$ ai due lati con $T_{0,2}=T_{0,1}$:
+\[
+  \frac{p_{0,2}}{p_{0,1}}=\frac{p_2}{p_1}\left(\frac{T_1}{T_2}\right)^{\kk},
+\]
+e passando ai logaritmi, con $\gamma/(\gamma-1)=c_p/R$ e $\Delta\sth=c_p\ln(T_2/T_1)-R\ln(p_2/p_1)$:
+\[
+  \boxed{\ \frac{p_{0,2}}{p_{0,1}}=\exp\!\left(-\frac{\Delta\sth}{R}\right)\ }
+\]
+Con $p_2/p_1$ e $T_2/T_1$ dell'urto normale a $\Mn$ ritrovo la relazione nota,
+\[
+  \frac{p_{0,2}}{p_{0,1}}=
+  \left[\frac{(\gamma+1)\Mn^2}{(\gamma-1)\Mn^2+2}\right]^{\kk}
+  \left[\frac{\gamma+1}{2\gamma \Mn^2-(\gamma-1)}\right]^{\frac{1}{\gamma-1}},
+\]
+che contiene solo $\Mn$ e $\gamma$. Controllo subito i limiti:
+\begin{itemize}[nosep]
+  \item per $\sigma=\ang{90}$ ho $\Mn=M_1$ e ritrovo l'urto normale: verificato;
+  \item per $\sigma\to\mu$ ho $\Mn\to1$ e $p_{0,2}/p_{0,1}\to1$ (onda di Mach); l'entropia va a zero come
+    $\Delta\sth/R\simeq\frac{2\gamma}{3(\gamma+1)^2}(\Mn^2-1)^3$, del terzo ordine come per ogni urto debole:
+    verificato;
+  \item $\Delta\sth>0$, cioè $p_{0,2}<p_{0,1}$, se e solo se $\Mn>1$; con $\Mn<1$ avrei un urto di espansione,
+    impossibile: verificato.
+\end{itemize}
+
+\section*{Dove finisce l'energia cinetica tangenziale}
+Separo nella temperatura totale la parte dovuta a $V_t$:
+\begin{gather*}
+  T_0=T+\frac{V_n^2}{2c_p}+\frac{V_t^2}{2c_p}=T_{0n}+\frac{V_t^2}{2c_p} \ee
+  T_{0n}:=T+\frac{V_n^2}{2c_p},
+\end{gather*}
+dove $T_{0n}$ è la temperatura totale dell'osservatore mobile. Si conserva $T_0$ (energia nel laboratorio), si
+conserva $V_t$, quindi si conserva anche $T_{0n}$ (energia nel riferimento mobile): i due bilanci sono coerenti,
+$T_{0,2}=T_{0,1}$ e $T_{0n,2}=T_{0n,1}$. Allo stesso modo fattorizzo la pressione totale:
+\begin{gather*}
+  p_0=p\left(\frac{T_{0n}}{T}\right)^{\kk}\left(\frac{T_0}{T_{0n}}\right)^{\kk}=p_{0n}\,C \ee
+  C=\left(\frac{T_0}{T_{0n}}\right)^{\kk}=\left(1+\frac{V_t^2}{2c_pT_{0n}}\right)^{\kk}.
+\end{gather*}
+$C$ dipende solo da grandezze che l'urto conserva ($T_0$, $T_{0n}$, $V_t$), quindi è lo stesso a monte e a valle e
+\[
+  \frac{p_{0,2}}{p_{0,1}}=\frac{p_{0n,2}\,C}{p_{0n,1}\,C}=\frac{p_{0n,2}}{p_{0n,1}} .
+\]
+Ecco la risposta: l'energia cinetica tangenziale è contata sia in $p_{0,1}$ sia in $p_{0,2}$, che moltiplica per lo
+stesso fattore, e nel rapporto si elide.
+
+La stessa cosa si vede nel piano $T$--$s$ (fig.~\ref{fig:Ts}). L'urto porta da 1 a 2 con un aumento di entropia
+$\Delta s$; i ristagni isentropici sono segmenti verticali. I ristagni del laboratorio stanno a $T_0$, quelli
+dell'osservatore mobile a $T_{0n}$, più in basso della stessa quantità $V_t^2/(2c_p)$ da entrambi i lati. In un gas
+perfetto due isobare distanti $\Delta s$ hanno, a una data temperatura, rapporto di pressione $\exp(\Delta s/R)$
+\emph{a qualunque temperatura}: per questo il rapporto letto a $T_0$ coincide con quello letto a $T_{0n}$, anche se
+le pressioni totali sono molto diverse.
+
+\figura[0.72]{piano_Ts.pdf}{Piano $T$--$s$ per $M_1=5$, $\Mn=2$: stati statici 1 e 2, ristagni nel laboratorio
+($0,1$ e $0,2$) e per l'osservatore mobile ($0n,1$ e $0n,2$), con le isobare.\label{fig:Ts}}
+
+\section*{La perdita assoluta}
+La differenza delle pressioni totali è invece
+\begin{gather*}
+  p_{0,1}-p_{0,2}=p_{0,1}\left[1-\frac{p_{0,2}}{p_{0,1}}(\Mn)\right] \ee
+  \frac{p_{0,1}}{p_1}=\left(1+\delta M_1^2\right)^{\kk},
+\end{gather*}
+e dipende da tutto $M_1$ attraverso $p_{0,1}$: la perdita assoluta è proporzionale all'intero contenuto energetico,
+la sua frazione dipende solo da $\Mn$.
+
+\section*{Un esempio numerico}
+Con $M_1=5$ e $\Mn=2$:
+\begin{gather*}
+  \sigma=\arcsin\frac{\Mn}{M_1}=\ang{23.6} \ee \theta=\ang{14.3} \ee M_2=\num{3.57},\\
+  \frac{p_2}{p_1}=\num{4.50} \ee \frac{T_2}{T_1}=\num{1.69} \ee
+  \frac{V_{n1}}{V_{n2}}=\frac{\rho_2}{\rho_1}=\num{2.67} \ee V_{t2}=V_{t1}.
+\end{gather*}
+Lo stato 2 è supersonico (ramo debole), quindi il modello 2D stazionario regge. Nel laboratorio $T_0/T_1=6$ e
+$p_{0,1}/p_1=529$; per l'osservatore mobile $T_{0n}/T_1=\num{1.8}$ e $p_{0n,1}/p_1=\num{7.82}$. Il fattore comune è
+$C=\num{67.6}$ e
+\begin{gather*}
+  \frac{p_{0,2}}{p_{0,1}}=\frac{p_{0n,2}}{p_{0n,1}}=\num{0.721} \ee \frac{\Delta\sth}{R}=\num{0.327}.
+\end{gather*}
+Confronto questo urto con l'urto normale allo stesso $\Mn$ e con quello allo stesso $M_1$
+(tabella~\ref{tab:conf}). Le prime due righe confermano l'invarianza galileiana: stessi $p_2/p_1$, $T_2/T_1$,
+$p_{0,2}/p_{0,1}$ e $\Delta\sth$.
+
+\begin{table}[H]
+  \centering\small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lccccccc}
+    \toprule
+    Caso & $\Mn$ & $p_2/p_1$ & $T_2/T_1$ & $p_{0,1}/p_1$ & $p_{0,2}/p_{0,1}$ & $(p_{0,1}-p_{0,2})/p_1$ &
+    $\Delta\sth/R$ \\
+    \midrule
+    normale, $M_1=2$  & 2 & \num{4.50} & \num{1.69} & \num{7.82} & \num{0.721} & \num{2.18} & \num{0.327} \\
+    obliquo, $M_1=5$  & 2 & \num{4.50} & \num{1.69} & 529 & \num{0.721} & 148 & \num{0.327} \\
+    normale, $M_1=5$  & 5 & 29 & \num{5.80} & 529 & \num{0.0617} & 496 & \num{2.79} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Stesso $\Mn$: stesse grandezze termodinamiche e stesso rapporto delle $p_0$, perdita assoluta diversa.
+  Stesso $M_1$: perdita molto diversa a seconda di $\sigma$.}
+  \label{tab:conf}
+\end{table}
+
+Lo stesso confronto in forma generale è nelle figure~\ref{fig:rapp} e \ref{fig:ass}. Riportato in funzione di
+$\sigma$, $p_{0,2}/p_{0,1}$ parte da 1 all'angolo di Mach e scende fino al valore dell'urto normale, diverso per
+ogni $M_1$; in funzione di $\Mn$ tutte le curve \emph{collassano su un'unica curva}, quella dell'urto normale: è
+l'affermazione (B) della traccia in forma grafica.
+
+\figura[0.95]{rapporto_p0.pdf}{$p_{0,2}/p_{0,1}$ per $M_1=2,3,5,10$: (a) in funzione di $\sigma$, da $\mu$ a
+\ang{90}; (b) in funzione di $\Mn$. Il punto è l'esempio $M_1=5$, $\Mn=2$.\label{fig:rapp}}
+
+La perdita assoluta invece non collassa: a pari $\Mn$ cresce con $M_1$ come $p_{0,1}$. Va da quasi zero a decine
+di migliaia di volte $p_1$, quindi la riporto in due scale. Quella lineare mostra bene la crescita per $M_1=5$ ma
+schiaccia i casi $M_1=2$ e $3$ sull'asse; quella logaritmica li rende leggibili tutti e mostra che le curve sono la
+stessa curva traslata verticalmente di $\log p_{0,1}$, proprio perché la frazione persa è la stessa.
+
+\figura[0.95]{perdita_assoluta.pdf}{Perdita assoluta $(p_{0,1}-p_{0,2})/p_1$ in funzione di $\Mn$, per
+$M_1=2,3,5,10$: (a) scala lineare, (b) scala logaritmica. I punti sono i primi due casi della
+tabella~\ref{tab:conf}.\label{fig:ass}}
+
+\section*{Risposta}
+Non c'è incongruenza.
+\begin{itemize}
+  \item $p_0$ dipende dal livello di energia $T_0$, che attraverso l'urto stazionario si conserva, e
+    dall'entropia. Il rapporto delle pressioni totali misura quindi solo l'entropia prodotta,
+    $p_{0,2}/p_{0,1}=\exp(-\Delta\sth/R)$: l'urto non distrugge energia, ne degrada la qualità.
+  \item L'entropia è uguale per ogni osservatore, e per chi scorre lungo il fronte con $V_t$ l'urto obliquo è un
+    urto normale a $\Mn$: $\Delta\sth$ dipende solo da $\Mn$.
+  \item L'energia cinetica tangenziale attraversa l'urto invariata: compare in $p_{0,1}$ e in $p_{0,2}$ con lo
+    stesso fattore $C=(T_0/T_{0n})^{\gamma/(\gamma-1)}$ e si elide nel rapporto. $p_0$ contiene tutta l'energia,
+    ma la sua variazione relativa misura solo la parte processata dall'urto.
+  \item La perdita assoluta $p_{0,1}-p_{0,2}$ dipende invece anche da $M_1$, tramite $p_{0,1}$.
+\end{itemize}
+
+\section*{Discussione}
+\textbf{Perché solo la direzione normale.} L'entropia nasce dentro lo spessore dell'urto, per viscosità e
+conduzione, dove ci sono gradienti. Lungo la normale $V_n$ e $T$ variano bruscamente; $V_t$ è uguale ai due lati e
+la quantità di moto tangenziale non ha motivo di variare all'interno: niente sforzi di taglio, niente dissipazione
+legata a $V_t$. L'energia cinetica tangenziale è solo trasportata.
+
+\textbf{Conseguenza progettuale.} A pari $M_1$ la perdita dipende dall'inclinazione dell'urto, e un urto obliquo
+dissipa molto meno di uno normale. A $M_1=5$ un urto normale conserva solo $p_{0,2}/p_{0,1}=\num{0.062}$; due rampe da
+\ang{11} e un urto normale finale (a $M=\num{3.14}$) ne conservano $\num{0.22}$, più di tre volte tanto. È il principio
+delle prese d'aria supersoniche a più urti obliqui; e poiché $\Delta\sth$ va come $(\Mn^2-1)^3$, a bassi $\Mn$ la
+compressione per urto è praticamente isentropica.
+
+\textbf{Urto curvo.} Lungo un bow shock $\sigma$ va da \ang{90} davanti al ristagno a $\mu$ lontano dal corpo: ogni
+linea di corrente attraversa un $\Mn$ diverso e riceve un salto di entropia e di $p_0$ diverso, pur con $h_0$
+uniforme. Il gradiente di entropia genera vorticità (teorema di Crocco) e la linea sonica non è un'isobara.
+
+\textbf{Il ruolo della stazionarietà.} Il cambio di riferimento funziona perché l'osservatore si muove \emph{lungo}
+il fronte: l'urto resta fermo, non compie lavoro e $T_0$ si conserva in entrambi i riferimenti. Per un urto mobile
+1D le relazioni sono le stesse con il Mach relativo $\Mr$ al posto di $\Mn$, ma solo nel riferimento solidale
+all'urto: nel laboratorio l'urto in moto compie lavoro sul gas, $h_0$ non si conserva e il rapporto delle $p_0$ non
+misura più la sola entropia. In campo instazionario $p_0$ e $h_0$ non sono grandezze conservate.
+
+\end{document}

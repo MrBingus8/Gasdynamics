@@ -14,6 +14,7 @@ per gli svolgimenti. Le istruzioni per Claude sono in [`CLAUDE.md`](CLAUDE.md).
 | `requirements.txt` | Dipendenze Python |
 | `fonti/` | Formulario, summary delle lezioni, metodo del docente, catalogo delle tracce 2003–2023, raccolta 2017–2020, `soluzioni_A/` (17 soluzioni 2021–2023) |
 | `template/svolgimento.tex` | Template LaTeX degli svolgimenti |
+| `simulazione_esame/` | Seconda versione di ogni svolgimento, scritta in ordine di ragionamento come al banco d'esame (stesso contenuto, più leggibile): vedi `GUIDA.md` |
 | `svolgimenti/` | Una sottocartella per esercizio: `svolgimento.tex/.pdf`, `calcoli.py`, `figure/` |
 | `scripts/setup.sh` | Installazione idempotente dell'ambiente (Ubuntu): Python, LaTeX, poppler |
 | `tests/` | Test del modulo (livelli 1–3) |
